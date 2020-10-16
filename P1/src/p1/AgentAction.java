@@ -7,7 +7,7 @@ package p1;
 
 /**
  *
- * @author domin
+ * @author Domingo Lopez
  */
 public enum AgentAction {
     moveF,moveU,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES

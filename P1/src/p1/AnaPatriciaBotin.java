@@ -16,12 +16,21 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     String sessionKey;
     AgentStatus status;
     AgentAttributes attributes = new AgentAttributes();
-    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("distance", "lidar"));
-    ArrayList<String> authorizedSensors = new ArrayList();
     Perception perception = new Perception();
-    
+
+    // Selected sensors
+    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("alive", "payload", "ontarget", "gps", "compass", "distance", "angular", "altimeter", "visual", "lidar", "thermal", "energy", "payload"));
+
+    // Authorized sensors
+    ArrayList<String> authorizedSensors = new ArrayList();
+
+    // Control Panel
+    boolean showPanel = false; // True to show SensorControlPanel
     TTYControlPanel myControlPanel;
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     */
     @Override
     public void setup() {
         super.setup();
@@ -29,10 +38,15 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         doCheckinLARVA();
         this.receiver = this.whoLarvaAgent();
         this.status = AgentStatus.INITIALIZING;
-        this.myControlPanel = new TTYControlPanel(getAID());
+        if (this.showPanel) {
+            this.myControlPanel = new TTYControlPanel(getAID());
+        }
         _exitRequested = false;
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     */
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
@@ -51,6 +65,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     */
     @Override
     public void takeDown() {
         this.doCheckoutLARVA();
@@ -58,6 +75,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         super.takeDown();
     }
 
+    /**
+     * @author Jose Saldaña
+     * @param params
+     * @return
+     */
     JsonObject sendAndReceiveLogin(JsonObject params) {
         ACLMessage out = new ACLMessage();
         out.setSender(getAID());
@@ -74,13 +96,18 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         return parsedAnswer;
     }
 
+    /**
+     * @author Jose Saldaña
+     * @param params
+     * @return
+     */
     JsonObject sendAndReceiveMessage(JsonObject params) {
         String parsedParams = params.toString();
         Info("Request: " + parsedParams);
         this.outChannel.setContent(parsedParams);
         this.sendServer(this.outChannel);
         ACLMessage in = this.blockingReceive();
-        if (params.get("command").asString().equals("read")) {
+        if (this.showPanel && params.get("command").asString().equals("read")) {
             this.myControlPanel.feedData(in, this.attributes.mapWidth, this.attributes.mapHeight);
             this.myControlPanel.fancyShow();
         }
@@ -90,6 +117,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         return parsedAnswer;
     }
 
+    /**
+     * @author Jose Saldaña
+     * @param params
+     */
     void sendMessage(JsonObject params) {
         String parsedParams = params.toString();
         Info("Request: " + parsedParams);
@@ -97,6 +128,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.sendServer(this.outChannel);
     }
 
+    /**
+     * @author Jose Saldaña
+     * @param params
+     */
     void login() {
         JsonObject params = new JsonObject();
         params.add("command", "login");
@@ -118,6 +153,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @param answer
+     */
     void initializeAgent(JsonObject answer) {
         this.sessionKey = answer.get("key").asString();
         this.attributes.energy = 1000;
@@ -130,6 +169,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @param answer
+     */
     void p1Body() {
         this.readSensors();
         this.doAction(AgentAction.rotateL);
@@ -137,17 +180,25 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         Info("Changed status to: " + this.status);
     }
 
+    /**
+     * @author Jose Saldaña
+     */
     void logout() {
         JsonObject params = new JsonObject();
         params.add("command", "logout");
 
         this.sendMessage(params);
-        
-        myControlPanel.close();
+
+        if (this.showPanel) {
+            this.myControlPanel.close();
+        }
 
         _exitRequested = true;
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
     void readSensors() {
         JsonObject params = new JsonObject();
         params.add("command", "read");
@@ -164,12 +215,21 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param newPerception
+     */
     void updatePerception(JsonArray newPerception) {
-//        this.perception.asignValues(newPerception);
+        this.perception.asignValues(newPerception);
+        Info(this.perception.toString());
     }
 
     //TODO
     //Gestión de errores. En vez de void, que devuelva un Integer y si es código -1 por ejemplo ya sabemos que algo ha ido mal
+    /**
+     * @author Domingo Lopez
+     * @param action
+     */
     void doAction(AgentAction action) { // Recibe enumerado, hace 6 acciones, actualiza estado del mundo
 
         JsonObject params = new JsonObject();
@@ -189,6 +249,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     }
 
+    /**
+     * @author Domingo Lopez
+     * @param action
+     */
     void executeAction(AgentAction action) {
         switch (action) {
             case moveF:
@@ -219,7 +283,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     /**
      * @author Domingo Lopez
-     * @param action 
+     * @param action
      */
     void useEnergy(AgentAction action) {
         switch (action) {
@@ -238,7 +302,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             case rotateR:
                 this.attributes.energy -= 2;
                 break;
-                //TODO enterarse bien cuando es la energía del TOUCHD
+            //TODO enterarse bien cuando es la energía del TOUCHD
             case touchD:
                 this.attributes.energy -= 10;
                 break;

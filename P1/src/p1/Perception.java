@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package p1;
 
 import com.eclipsesource.json.JsonArray;
@@ -13,14 +8,10 @@ import java.util.HashMap;
 
 /**
  *
- * @author jose
- * @author manuel
+ * @author Manuel Pancorbo, Jose Saldaña
  */
 public class Perception {
-    
-    //HashMap <String, ArrayList<Float> sensores;
-    
-    //sensores
+
     Boolean alive;
     Boolean ontarget;
     ArrayList<Integer> gps;
@@ -31,10 +22,10 @@ public class Perception {
     Integer altimeter;
     ArrayList<Integer> visual;
     ArrayList<ArrayList<Integer>> lidar;
-    ArrayList<ArrayList<Integer>> thermal;
+    ArrayList<ArrayList<Float>> thermal;
     Integer energy;
-    
-    public Perception(){
+
+    public Perception() {
         this.alive = null;
         this.ontarget = null;
         this.gps = null;
@@ -48,141 +39,84 @@ public class Perception {
         this.thermal = null;
         this.energy = null;
     }
-    
-    public void asignValues(JsonArray perception){
-        for(int i = 0; i<perception.size(); i++){
-            switch(perception.get(i).asObject().get("sensor").asString()){
+
+    public void asignValues(JsonArray perception) {
+        for (int i = 0; i < perception.size(); i++) {
+            switch (perception.get(i).asObject().get("sensor").asString()) {
                 case "alive":
-                    this.alive = perception.get(i).asObject().get("data").asBoolean(); 
+                    this.alive = perception.get(i).asObject().get("data").asArray().get(0).asInt() == 1;
                     break;
                 case "ontarget":
-                    this.ontarget = perception.get(i).asObject().get("data").asBoolean(); 
+                    this.ontarget = perception.get(i).asObject().get("data").asArray().get(0).asInt() == 1;
                     break;
                 case "gps":
-                    this.gps = convertToIntegerArray(perception.get(i).asObject().get("data").asArray()); 
+                    this.gps = convertToIntegerArray(perception.get(i).asObject().get("data").asArray().get(0).asArray());
                     break;
                 case "compass":
-                    this.compass = perception.get(i).asObject().get("data").asInt(); 
+                    this.compass = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
                 case "payload":
-                    this.payload = perception.get(i).asObject().get("data").asInt(); 
+                    this.payload = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
                 case "distance":
-                    this.distance = perception.get(i).asObject().get("data").asFloat(); 
+                    this.distance = perception.get(i).asObject().get("data").asArray().get(0).asFloat();
                     break;
                 case "angular":
-                    this.angular = perception.get(i).asObject().get("data").asInt(); 
+                    this.angular = Math.round(perception.get(i).asObject().get("data").asArray().get(0).asFloat());
                     break;
                 case "altimeter":
-                    this.altimeter = perception.get(i).asObject().get("data").asInt(); 
+                    this.altimeter = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
                 case "visual":
-                    this.visual = convertToIntegerArray(perception.get(i).asObject().get("data").asArray()); 
+                    this.visual = convertToIntegerArray(perception.get(i).asObject().get("data").asArray().get(0).asArray());
                     break;
                 case "lidar":
-                    this.lidar = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray()); 
+                    this.lidar = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray());
                     break;
                 case "thermal":
-                    this.thermal = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray()); 
+                    this.thermal = convertToFloatMatrix(perception.get(i).asObject().get("data").asArray());
                     break;
                 case "energy":
-                    this.energy = perception.get(i).asObject().get("data").asInt(); 
+                    this.energy = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
             }
         }
     }
-    
-    public void convertToStringArray(JsonArray array){
-            ArrayList<String> stringArray = new ArrayList<>();
-            for(int i=0; i<array.size();i++){
-                stringArray.add(array.get(i).asString());
-            }
-    }
-    
-    public ArrayList<Integer> convertToIntegerArray(JsonArray array){
-            ArrayList<Integer> intArray = new ArrayList<>();
-            for(int i=0; i<array.size();i++){
-                intArray.add(array.get(i).asInt());
-            }
-            return intArray;
-    }
-    
-    public ArrayList<ArrayList<Integer>> convertToIntegerMatrix(JsonArray array){
-            ArrayList<ArrayList<Integer>> intMatrix= new ArrayList<>();
-            for(int i=0; i<array.size();i++){
-                intMatrix.add(convertToIntegerArray(array.get(i).asArray()));
-            }
-            return intMatrix;
-    }
-    
-    //Usar solo para añadir sensor
-    //añadimos el string noValue porque put nos devolvera null si no existe el sensor en updateSensor
-    /*
-    public boolean addSensor(String sensorName){
-        if(this.sensores.containsKey(sensorName)) return false;
-        String[] noValue = {"noValue"};
-        this.sensores.put(sensorName, noValue);
-        return true;
-    }
-    
-    public boolean updateSensor(String sensorName, String[] value){
-        String[] oldValue = this.sensores.put(sensorName, value);
-        if (oldValue == null) return false;
-        return true;
-    }
-    
-    public String[] getSensorData(String sensorName){
-        return this.sensores.get(sensorName);
-    }*/
-    
-    public Boolean getAlive() {
-        return alive;
+
+    public ArrayList<Integer> convertToIntegerArray(JsonArray array) {
+        ArrayList<Integer> intArray = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            intArray.add(array.get(i).asInt());
+        }
+        return intArray;
     }
 
-    public Boolean getOnTarget() {
-        return ontarget;
+    public ArrayList<ArrayList<Integer>> convertToIntegerMatrix(JsonArray array) {
+        ArrayList<ArrayList<Integer>> intMatrix = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            intMatrix.add(convertToIntegerArray(array.get(i).asArray()));
+        }
+        return intMatrix;
     }
 
-    public ArrayList<Integer> getGPS() {
-        return gps;
+    public ArrayList<Float> convertToFloatArray(JsonArray array) {
+        ArrayList<Float> floatArray = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            floatArray.add(array.get(i).asFloat());
+        }
+        return floatArray;
     }
 
-    public Integer getCompass() {
-        return compass;
+    public ArrayList<ArrayList<Float>> convertToFloatMatrix(JsonArray array) {
+        ArrayList<ArrayList<Float>> floatMatrix = new ArrayList<>();
+        for (int i = 0; i < array.size(); i++) {
+            floatMatrix.add(convertToFloatArray(array.get(i).asArray()));
+        }
+        return floatMatrix;
     }
 
-    public Integer getPayload() {
-        return payload;
+    @Override
+    public String toString() {
+        return "Perception{" + "alive=" + alive + ", ontarget=" + ontarget + ", gps=" + gps + ", compass=" + compass + ", payload=" + payload + ", distance=" + distance + ", angular=" + angular + ", altimeter=" + altimeter + ", visual=" + visual + ", lidar=" + lidar + ", thermal=" + thermal + ", energy=" + energy + '}';
     }
-
-    public Float getDistance() {
-        return distance;
-    }
-
-    public Integer getAngular() {
-        return angular;
-    }
-
-    public Integer getAltimeter() {
-        return altimeter;
-    }
-
-    public ArrayList<Integer> getVisual() {
-        return visual;
-    }
-
-    public ArrayList<ArrayList<Integer>> getLidar() {
-        return lidar;
-    }
-
-    public ArrayList<ArrayList<Integer>> getThermal() {
-        return thermal;
-    }
-
-    public Integer getEnergy() {
-        return energy;
-    }
-    
-    
-    
 }
