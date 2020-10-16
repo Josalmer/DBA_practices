@@ -10,5 +10,5 @@ package p1;
  * @author domin
  */
 public enum AgentAction {
-    moveF,moveUP,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES
+    moveF,moveU,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES
 }
