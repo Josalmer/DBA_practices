@@ -1,0 +1,10 @@
+/P1/build/
+/P1/cardID/
+/P1/config/
+/P1/dist/
+/P1/nbproject/
+/P1/test/
+
+*.log
+*.xml
+*.mf
