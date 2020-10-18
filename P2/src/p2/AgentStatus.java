@@ -10,5 +10,5 @@ package p2;
  * @author jose
  */
 public enum AgentStatus {
-    INITIALIZING, INITIALIZED, FINISHED
+    INITIALIZING, INITIALIZED, READY, RECHARGING, FINISHED
 }

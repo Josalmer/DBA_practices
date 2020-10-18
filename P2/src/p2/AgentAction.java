@@ -9,6 +9,6 @@ package p2;
  *
  * @author Domingo Lopez
  */
-public enum AgentAction {
-    moveF,moveU,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES
+public enum AgentAction { // RECHARGE todo, revisar nombre de acción de recargar batería
+    moveF,moveU,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES, RECHARGE
 }

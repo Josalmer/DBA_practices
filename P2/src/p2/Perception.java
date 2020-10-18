@@ -4,7 +4,6 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  *
@@ -20,7 +19,7 @@ public class Perception {
     Float distance;
     Integer angular;
     Integer altimeter;
-    ArrayList<Integer> visual;
+    ArrayList<ArrayList<Integer>> visual;
     ArrayList<ArrayList<Integer>> lidar;
     ArrayList<ArrayList<Float>> thermal;
     Integer energy;
@@ -68,7 +67,7 @@ public class Perception {
                     this.altimeter = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
                 case "visual":
-                    this.visual = convertToIntegerArray(perception.get(i).asObject().get("data").asArray().get(0).asArray());
+                    this.visual = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray());
                     break;
                 case "lidar":
                     this.lidar = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray());

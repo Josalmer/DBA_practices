@@ -12,14 +12,15 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     ACLMessage outChannel = new ACLMessage();
     AgentAction lastAction;
+    ArrayList <AgentAction> plan;
     String receiver;
     String sessionKey;
     AgentStatus status;
-    AgentAttributes attributes = new AgentAttributes();
+    Knowledge knowledge = new Knowledge();
     Perception perception = new Perception();
 
     // Selected sensors
-    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("alive", "payload", "ontarget", "gps", "compass", "distance", "angular", "altimeter", "visual", "lidar", "thermal", "energy", "payload"));
+    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "distance", "angular", "visual"));
 
     // Authorized sensors
     ArrayList<String> authorizedSensors = new ArrayList();
@@ -56,7 +57,13 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.login();
                     break;
                 case INITIALIZED:
-                    this.p1Body();
+                    this.readSensors();
+                    break;
+                case RECHARGING:
+                    this.rechargeBattery();
+                    break;
+                case READY:
+                    this.reactiveBehaviour();
                     break;
                 case FINISHED:
                     this.logout();
@@ -108,7 +115,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.sendServer(this.outChannel);
         ACLMessage in = this.blockingReceive();
         if (this.showPanel && params.get("command").asString().equals("read")) {
-            this.myControlPanel.feedData(in, this.attributes.mapWidth, this.attributes.mapHeight);
+            this.myControlPanel.feedData(in, this.knowledge.mapWidth, this.knowledge.mapHeight);
             this.myControlPanel.fancyShow();
         }
         String answer = in.getContent();
@@ -159,27 +166,61 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      */
     void initializeAgent(JsonObject answer) {
         this.sessionKey = answer.get("key").asString();
-        this.attributes.energy = 1000;
-        this.attributes.orientation = 90;
-        this.attributes.mapWidth = answer.get("width").asInt();
-        this.attributes.mapHeight = answer.get("height").asInt();
-        this.attributes.maxFlight = answer.get("maxflight").asInt();
         for (JsonValue j : answer.get("capabilities").asArray()) {
             authorizedSensors.add(j.asString());
         }
+        this.knowledge.initializeKnowledge(answer);
     }
 
     /**
      * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
      * @param answer
      */
-    void p1Body() {
-        this.readSensors();
-        this.doAction(AgentAction.rotateL);
+    void reactiveBehaviour() {
+        if (this.knowledge.energy < ((2 * (this.knowledge.currentHeight - this.knowledge.getFloorHeight())) + 30)) {
+            this.status = AgentStatus.RECHARGING;
+            Info("Changed status to: " + this.status);
+        } else {
+            if (this.plan != null) {
+                this.executePlan();
+            }
+            this.thinkPlan();
+        }
         this.status = AgentStatus.FINISHED;
-        Info("Changed status to: " + this.status);
     }
 
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void rechargeBattery() {
+        if (this.knowledge.currentHeight - this.knowledge.getFloorHeight() >= 5) {
+            this.doAction(AgentAction.moveD);
+        } else {
+            this.doAction(AgentAction.touchD);
+//            this.doAction(AgentAction.RECARGAR);
+            this.status = AgentStatus.READY;
+            Info("Changed status to: " + this.status);
+        }
+    }
+    
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @return nextAction 
+     */
+    void thinkPlan() {
+        ArrayList<AgentOption> options = new ArrayList<>(); 
+        for (int i = 0; i < 8; i++) {
+            
+        }
+    }
+    
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void executePlan() {
+        
+    }
+    
     /**
      * @author Jose Saldaña
      */
@@ -210,6 +251,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             Info("Valores de los sensores leídos...");
             this.useEnergy(AgentAction.LECTURA_SENSORES);
             this.updatePerception(answer.get("details").asObject().get("perceptions").asArray());
+            this.updateKnowledge();
         } else {
             this.logout();
         }
@@ -222,6 +264,24 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void updatePerception(JsonArray newPerception) {
         this.perception.asignValues(newPerception);
         Info(this.perception.toString());
+    }
+    
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void updateKnowledge() {
+        this.knowledge.currentPositionX = this.perception.gps.get(0);
+        this.knowledge.currentPositionY = this.perception.gps.get(1);
+        this.knowledge.currentHeight = this.perception.gps.get(2);
+        for (int i = 0; i < this.perception.visual.size(); i++) {
+            for (int j = 0; j < this.perception.visual.get(i).size(); j++) {
+                int xPosition = this.knowledge.currentPositionX - 3 + i;
+                int yPosition = this.knowledge.currentPositionY - 3 + j;
+                if (xPosition >= 0 && yPosition >= 0 && xPosition < this.knowledge.mapWidth && yPosition < this.knowledge.mapHeight) {
+                    this.knowledge.map.get(xPosition).set(yPosition, this.perception.visual.get(i).get(j));
+                }
+            }
+        }
     }
 
     //TODO
@@ -240,7 +300,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         JsonObject answer = this.sendAndReceiveMessage(params);
 
         if (answer.get("result").asString().equals("ok")) {
-            this.executeAction(action); //TOTO Gestión de errores al ejecutar la acción internamente
+            this.executeAction(action);
             Info("Acción realizada:" + action.toString());
             this.lastAction = action;
         } else {
@@ -258,24 +318,30 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             case moveF:
                 break;
             case moveU:
+                this.knowledge.currentHeight += 5;
                 break;
             case moveD:
+                this.knowledge.currentHeight -= 5;
                 break;
             case rotateL:
-                if (this.attributes.orientation != -135) {
-                    this.attributes.orientation -= 45;
+                if (this.knowledge.orientation != -135) {
+                    this.knowledge.orientation -= 45;
                 } else {
-                    this.attributes.orientation = 180;
+                    this.knowledge.orientation = 180;
                 }
                 break;
             case rotateR:
-                if (this.attributes.orientation != 180) {
-                    this.attributes.orientation += 45;
+                if (this.knowledge.orientation != 180) {
+                    this.knowledge.orientation += 45;
                 } else {
-                    this.attributes.orientation = -135;
+                    this.knowledge.orientation = -135;
                 }
                 break;
             case touchD:
+                this.knowledge.currentHeight = this.knowledge.getFloorHeight();
+                break;
+            case RECHARGE:
+                this.plan = null;
                 break;
         }
         this.useEnergy(action);
@@ -288,26 +354,30 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void useEnergy(AgentAction action) {
         switch (action) {
             case moveF:
-                this.attributes.energy -= 2;
+                this.knowledge.energy -= 2;
                 break;
             case moveU:
-                this.attributes.energy -= 10;
+                this.knowledge.energy -= (2 * 5);
                 break;
             case moveD:
-                this.attributes.energy -= 10;
+                this.knowledge.energy -= (2 * 5);
                 break;
             case rotateL:
-                this.attributes.energy -= 2;
+                this.knowledge.energy -= 2;
                 break;
             case rotateR:
-                this.attributes.energy -= 2;
+                this.knowledge.energy -= 2;
                 break;
             //TODO enterarse bien cuando es la energía del TOUCHD
             case touchD:
-                this.attributes.energy -= 10;
+                this.knowledge.energy -= 2;
                 break;
             case LECTURA_SENSORES:
-                this.attributes.energy -= this.authorizedSensors.size();
+                this.knowledge.energy -= this.authorizedSensors.size();
+                break;
+            case RECHARGE:
+                this.knowledge.energy = 1000;
+                break;
         }
     }
 
