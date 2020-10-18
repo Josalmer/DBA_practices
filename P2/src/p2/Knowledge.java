@@ -22,6 +22,8 @@ public class Knowledge {
     Integer mapWidth;
     Integer mapHeight;
     Integer maxFlight;
+    Integer angular;
+    Float distanceToObjective;
     
     ArrayList<ArrayList<Integer>> map;
     

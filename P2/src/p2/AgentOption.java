@@ -17,7 +17,15 @@ public class AgentOption {
     Integer floorHeight;
     Float distanceToObjetive;
     ArrayList<AgentAction> plan;
-    Float cost;
+    Integer cost;
     Float puntuation;
     Float puntuationCostRelation;
+
+    public AgentOption(Integer x, Integer y, Integer floorHeight) {
+        this.x = x;
+        this.y = y;
+        this.floorHeight = floorHeight;
+    }
+    
+    
 }

@@ -12,7 +12,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     ACLMessage outChannel = new ACLMessage();
     AgentAction lastAction;
-    ArrayList <AgentAction> plan;
+    ArrayList<AgentAction> plan;
     String receiver;
     String sessionKey;
     AgentStatus status;
@@ -20,7 +20,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     Perception perception = new Perception();
 
     // Selected sensors
-    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "distance", "angular", "visual"));
+    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
 
     // Authorized sensors
     ArrayList<String> authorizedSensors = new ArrayList();
@@ -72,69 +72,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
-    /**
-     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
-     */
-    @Override
-    public void takeDown() {
-        this.doCheckoutLARVA();
-        this.doCheckoutPlatform();
-        super.takeDown();
-    }
-
-    /**
-     * @author Jose Saldaña
-     * @param params
-     * @return
-     */
-    JsonObject sendAndReceiveLogin(JsonObject params) {
-        ACLMessage out = new ACLMessage();
-        out.setSender(getAID());
-        out.addReceiver(new AID(this.receiver, AID.ISLOCALNAME));
-        String parsedParams = params.toString();
-        Info("Request: " + parsedParams);
-        out.setContent(parsedParams);
-        this.sendServer(out);
-        ACLMessage in = this.blockingReceive();
-        this.outChannel = in.createReply();
-        String answer = in.getContent();
-        Info("Answer: " + answer);
-        JsonObject parsedAnswer = Json.parse(answer).asObject();
-        return parsedAnswer;
-    }
-
-    /**
-     * @author Jose Saldaña
-     * @param params
-     * @return
-     */
-    JsonObject sendAndReceiveMessage(JsonObject params) {
-        String parsedParams = params.toString();
-        Info("Request: " + parsedParams);
-        this.outChannel.setContent(parsedParams);
-        this.sendServer(this.outChannel);
-        ACLMessage in = this.blockingReceive();
-        if (this.showPanel && params.get("command").asString().equals("read")) {
-            this.myControlPanel.feedData(in, this.knowledge.mapWidth, this.knowledge.mapHeight);
-            this.myControlPanel.fancyShow();
-        }
-        String answer = in.getContent();
-        Info("Answer: " + answer);
-        JsonObject parsedAnswer = Json.parse(answer).asObject();
-        return parsedAnswer;
-    }
-
-    /**
-     * @author Jose Saldaña
-     * @param params
-     */
-    void sendMessage(JsonObject params) {
-        String parsedParams = params.toString();
-        Info("Request: " + parsedParams);
-        this.outChannel.setContent(parsedParams);
-        this.sendServer(this.outChannel);
-    }
-
+    // Login and Initializate -------------------------------------------
     /**
      * @author Jose Saldaña
      * @param params
@@ -161,6 +99,27 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * @author Jose Saldaña
+     * @param params
+     * @return
+     */
+    JsonObject sendAndReceiveLogin(JsonObject params) {
+        ACLMessage out = new ACLMessage();
+        out.setSender(getAID());
+        out.addReceiver(new AID(this.receiver, AID.ISLOCALNAME));
+        String parsedParams = params.toString();
+        Info("Request: " + parsedParams);
+        out.setContent(parsedParams);
+        this.sendServer(out);
+        ACLMessage in = this.blockingReceive();
+        this.outChannel = in.createReply();
+        String answer = in.getContent();
+        Info("Answer: " + answer);
+        JsonObject parsedAnswer = Json.parse(answer).asObject();
+        return parsedAnswer;
+    }
+
+    /**
      * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
      * @param answer
      */
@@ -172,6 +131,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.knowledge.initializeKnowledge(answer);
     }
 
+    // ------------------------------------------------------------------
+    // Execution --------------------------------------------------------
     /**
      * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
      * @param answer
@@ -191,6 +152,75 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     /**
      * @author Jose Saldaña, Manuel Pancorbo
+     * @return nextAction
+     */
+    void thinkPlan() {
+        ArrayList<AgentOption> options = this.generateOptions();
+    }
+    
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @return ArrayList(AgentOption)
+     */
+    ArrayList<AgentOption> generateOptions() {
+        ArrayList<AgentOption> options = new ArrayList<>();
+        int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
+        for (int i = 0; i < 9; i++) {
+            int xPosition = this.knowledge.currentPositionX - 1 + (i / 3);
+            int yPosition = this.knowledge.currentPositionY - 1 + (i % 3);
+            int orientation = orientations[i];
+            if (xPosition >= 0 && xPosition < this.knowledge.mapWidth && yPosition >= 0 && yPosition < this.knowledge.mapHeight && !(xPosition == 0 && yPosition == 0)) {
+                int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
+                if (targetHeight <= this.knowledge.maxFlight) {
+                    options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+                }
+            }
+        }
+        return options;
+    }
+    
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param xPosition
+     * @param yPosition
+     * @param targetHeight
+     * @param orientation
+     * @return AgentOption
+     */
+    AgentOption generateOption(int xPosition, int yPosition, int targetHeight, int orientation) {
+        AgentOption option = new AgentOption(xPosition, yPosition, targetHeight);
+        ArrayList<AgentAction> plan = new ArrayList<>();
+        int cost = 0;
+        boolean onTarget = false;
+        int provisionalOrientation = this.knowledge.orientation;
+        int provisionalHeight = this.knowledge.currentHeight;
+
+        while (!onTarget) {
+            if (orientation != this.knowledge.orientation) {
+
+            } else if (provisionalHeight <= targetHeight) {
+                plan.add(AgentAction.moveU);
+                cost += 5 * 2;
+            } else {
+                plan.add(AgentAction.moveF);
+                cost += 2;
+                onTarget = true;
+            }
+        }
+        option.plan = plan;
+        option.cost = cost;
+        return option;
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void executePlan() {
+
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
      */
     void rechargeBattery() {
         if (this.knowledge.currentHeight - this.knowledge.getFloorHeight() >= 5) {
@@ -202,41 +232,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             Info("Changed status to: " + this.status);
         }
     }
-    
-    /**
-     * @author Jose Saldaña, Manuel Pancorbo
-     * @return nextAction 
-     */
-    void thinkPlan() {
-        ArrayList<AgentOption> options = new ArrayList<>(); 
-        for (int i = 0; i < 8; i++) {
-            
-        }
-    }
-    
-    /**
-     * @author Jose Saldaña, Manuel Pancorbo
-     */
-    void executePlan() {
-        
-    }
-    
-    /**
-     * @author Jose Saldaña
-     */
-    void logout() {
-        JsonObject params = new JsonObject();
-        params.add("command", "logout");
 
-        this.sendMessage(params);
-
-        if (this.showPanel) {
-            this.myControlPanel.close();
-        }
-
-        _exitRequested = true;
-    }
-
+    // ------------------------------------------------------------------
+    // Read sensors and update perception--------------------------------
     /**
      * @author Jose Saldaña, Manuel Pancorbo
      */
@@ -265,7 +263,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.perception.asignValues(newPerception);
         Info(this.perception.toString());
     }
-    
+
     /**
      * @author Jose Saldaña, Manuel Pancorbo
      */
@@ -273,6 +271,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.knowledge.currentPositionX = this.perception.gps.get(0);
         this.knowledge.currentPositionY = this.perception.gps.get(1);
         this.knowledge.currentHeight = this.perception.gps.get(2);
+        this.knowledge.orientation = this.perception.angular;
         for (int i = 0; i < this.perception.visual.size(); i++) {
             for (int j = 0; j < this.perception.visual.get(i).size(); j++) {
                 int xPosition = this.knowledge.currentPositionX - 3 + i;
@@ -284,6 +283,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Agent low level functions ----------------------------------------
     //TODO
     //Gestión de errores. En vez de void, que devuelva un Integer y si es código -1 por ejemplo ya sabemos que algo ha ido mal
     /**
@@ -380,5 +381,70 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 break;
         }
     }
+
+    // ------------------------------------------------------------------
+    // Logout and takeDown-----------------------------------------------
+    /**
+     * @author Jose Saldaña
+     */
+    void logout() {
+        JsonObject params = new JsonObject();
+        params.add("command", "logout");
+
+        this.sendMessage(params);
+
+        if (this.showPanel) {
+            this.myControlPanel.close();
+        }
+
+        _exitRequested = true;
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     */
+    @Override
+    public void takeDown() {
+        this.doCheckoutLARVA();
+        this.doCheckoutPlatform();
+        super.takeDown();
+    }
+
+    // ------------------------------------------------------------------
+    // Communications----------------------------------------------------
+    /**
+     * @author Jose Saldaña
+     * @param params
+     * @return
+     */
+    JsonObject sendAndReceiveMessage(JsonObject params) {
+        String parsedParams = params.toString();
+        Info("Request: " + parsedParams);
+        this.outChannel.setContent(parsedParams);
+        this.sendServer(this.outChannel);
+        ACLMessage in = this.blockingReceive();
+        if (this.showPanel && params.get("command").asString().equals("read")) {
+            this.myControlPanel.feedData(in, this.knowledge.mapWidth, this.knowledge.mapHeight);
+            this.myControlPanel.fancyShow();
+        }
+        String answer = in.getContent();
+        Info("Answer: " + answer);
+        JsonObject parsedAnswer = Json.parse(answer).asObject();
+        return parsedAnswer;
+    }
+
+    /**
+     * @author Jose Saldaña
+     * @param params
+     */
+    void sendMessage(JsonObject params) {
+        String parsedParams = params.toString();
+        Info("Request: " + parsedParams);
+        this.outChannel.setContent(parsedParams);
+        this.sendServer(this.outChannel);
+    }
+
+    // ------------------------------------------------------------------
+    // Misc--------------------------------------------------------------
 
 }
