@@ -56,7 +56,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 case INITIALIZING:
                     this.login();
                     break;
-                case INITIALIZED:
+                case NEED_SENSOR:
                     this.readSensors();
                     break;
                 case RECHARGING:
@@ -91,7 +91,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
         if (answer.get("result").asString().equals("ok")) {
             this.initializeAgent(answer);
-            this.status = AgentStatus.INITIALIZED;
+            this.status = AgentStatus.NEED_SENSOR;
             Info("Changed status to: " + this.status);
         } else {
             this.logout();
@@ -156,6 +156,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      */
     void thinkPlan() {
         ArrayList<AgentOption> options = this.generateOptions();
+        if (options != null) {
+            // Todo Miguel, 
+        }
     }
     
     /**
@@ -166,13 +169,20 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         ArrayList<AgentOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
         for (int i = 0; i < 9; i++) {
-            int xPosition = this.knowledge.currentPositionX - 1 + (i / 3);
-            int yPosition = this.knowledge.currentPositionY - 1 + (i % 3);
-            int orientation = orientations[i];
-            if (xPosition >= 0 && xPosition < this.knowledge.mapWidth && yPosition >= 0 && yPosition < this.knowledge.mapHeight && !(xPosition == 0 && yPosition == 0)) {
-                int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
-                if (targetHeight <= this.knowledge.maxFlight) {
-                    options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+            if (i != 4) { // Not check current position
+                int xPosition = this.knowledge.currentPositionX - 1 + (i / 3);
+                int yPosition = this.knowledge.currentPositionY - 1 + (i % 3);
+                int orientation = orientations[i];
+                if (xPosition >= 0 && xPosition < this.knowledge.mapWidth && yPosition >= 0 && yPosition < this.knowledge.mapHeight) {
+                    int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
+                    if (targetHeight == -1) {
+                        this.status = AgentStatus.NEED_SENSOR;
+                        Info("Changed status to: " + this.status);
+                        return null;
+                    }
+                    if (targetHeight <= this.knowledge.maxFlight) {
+                        options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+                    }
                 }
             }
         }
@@ -196,10 +206,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         int provisionalHeight = this.knowledge.currentHeight;
 
         while (!onTarget) {
-            if (orientation != this.knowledge.orientation) {
-
+            if (orientation != provisionalOrientation) {
+                // TODO Manuel comprobar para que lado se gira, y añadir al plan la acción de giro y actualizar el coste de energia del plan
             } else if (provisionalHeight <= targetHeight) {
                 plan.add(AgentAction.moveU);
+                provisionalHeight += 5;
                 cost += 5 * 2;
             } else {
                 plan.add(AgentAction.moveF);
@@ -209,14 +220,16 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
         option.plan = plan;
         option.cost = cost;
+        option.puntuation = 99;
+        // TODO Jose asignar puntuación en función de angular y distance para cada casilla
         return option;
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Miguel García
      */
     void executePlan() {
-
+        // TODO miguel
     }
 
     /**
@@ -250,6 +263,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             this.useEnergy(AgentAction.LECTURA_SENSORES);
             this.updatePerception(answer.get("details").asObject().get("perceptions").asArray());
             this.updateKnowledge();
+            this.status = AgentStatus.READY;
+            Info("Changed status to: " + this.status);
         } else {
             this.logout();
         }
@@ -317,6 +332,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void executeAction(AgentAction action) {
         switch (action) {
             case moveF:
+                // TODO Funcion avanzar DOMINGO en la clase knowledge
                 break;
             case moveU:
                 this.knowledge.currentHeight += 5;
@@ -345,7 +361,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 this.plan = null;
                 break;
         }
-        this.useEnergy(action);
+        this.useEnergy(action); // Cambiar función useEnergy por estructura de datos que almacena la energia de cada acción, y usarla aqui y en el thinkplan
     }
 
     /**
