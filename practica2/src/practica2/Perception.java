@@ -1,4 +1,4 @@
-package p2;
+package practica2;
 
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
@@ -17,7 +17,7 @@ public class Perception {
     Integer compass;
     Integer payload;
     Float distance;
-    Integer angular;
+    Float angular;
     Integer altimeter;
     ArrayList<ArrayList<Integer>> visual;
     ArrayList<ArrayList<Integer>> lidar;
@@ -61,7 +61,7 @@ public class Perception {
                     this.distance = perception.get(i).asObject().get("data").asArray().get(0).asFloat();
                     break;
                 case "angular":
-                    this.angular = Math.round(perception.get(i).asObject().get("data").asArray().get(0).asFloat());
+                    this.angular = perception.get(i).asObject().get("data").asArray().get(0).asFloat();
                     break;
                 case "altimeter":
                     this.altimeter = perception.get(i).asObject().get("data").asArray().get(0).asInt();

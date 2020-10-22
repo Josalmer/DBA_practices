@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package p2;
+package practica2;
 
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
@@ -22,7 +22,7 @@ public class Knowledge {
     Integer mapWidth;
     Integer mapHeight;
     Integer maxFlight;
-    Integer angular;
+    Float angular;
     Float distanceToObjective;
     
     ArrayList<ArrayList<Integer>> map;
@@ -33,7 +33,6 @@ public class Knowledge {
      */
     public void initializeKnowledge(JsonObject answer) {
         this.energy = 1000;
-        this.orientation = 90;
         this.mapWidth = answer.get("width").asInt();
         this.mapHeight = answer.get("height").asInt();
         this.maxFlight = answer.get("maxflight").asInt();
@@ -58,5 +57,38 @@ public class Knowledge {
     public int getFloorHeight() {
         return this.map.get(this.currentPositionX).get(this.currentPositionY);
     }
+
+    public void moveForward(){
+        int ABScurrentOrientation = Math.abs(this.orientation); //Valor absoluto de la orientación
+        
+        //Posición X
+        if(ABScurrentOrientation != 0 || ABScurrentOrientation != 180)
+            this.currentPositionX += this.orientation/ABScurrentOrientation;
+
+        //Posición Y
+        if(ABScurrentOrientation != 90)
+            if(ABScurrentOrientation == 45 || ABScurrentOrientation == 0)
+                this.currentPositionY -= 1;
+            else
+                this.currentPositionY += 1;
+    }
     
+    /**
+     * @author Domingo Lopez
+     * @param action
+     * @return 
+     */
+    public int energyCost(AgentAction action, int nSensors) {
+        int energy = 0;
+        switch (action) {
+            case moveF: energy = 1; break;
+            case moveUp: energy = 5; break;
+            case moveD: energy = 5; break;
+            case rotateL: energy = 1; break;
+            case rotateR: energy = 1; break;
+            case touchD: energy = 1; break;
+            case LECTURA_SENSORES: energy = nSensors; break;
+        }
+        return energy;
+    }
 }

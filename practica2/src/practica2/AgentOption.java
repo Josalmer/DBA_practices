@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package p2;
+package practica2;
 
 import java.util.ArrayList;
 
@@ -15,11 +15,10 @@ public class AgentOption {
     Integer x;
     Integer y;
     Integer floorHeight;
-    Float distanceToObjetive;
     ArrayList<AgentAction> plan;
     Integer cost;
-    Float puntuation;
-    Float puntuationCostRelation;
+    double puntuation;
+    double puntuationCostRelation;
 
     public AgentOption(Integer x, Integer y, Integer floorHeight) {
         this.x = x;
@@ -27,5 +26,9 @@ public class AgentOption {
         this.floorHeight = floorHeight;
     }
     
-    
+    void calculatePuntuation(int squareOrientation, float targetOrientation) {
+        double desviation = Math.abs(Math.round(targetOrientation - squareOrientation));
+        this.puntuation = (180-desviation);
+        this.puntuationCostRelation = Math.pow(this.puntuation, 4) / this.cost;
+    }
 }

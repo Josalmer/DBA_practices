@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package p2;
+package practica2;
 
 /**
  *
  * @author Domingo Lopez
  */
 public enum AgentAction { // RECHARGE todo, revisar nombre de acción de recargar batería
-    moveF,moveU,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES, RECHARGE
+    moveF,moveUp,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES, RECHARGE
 }
