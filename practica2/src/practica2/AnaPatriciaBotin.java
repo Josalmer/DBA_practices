@@ -141,6 +141,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         if (this.knowledge.distanceToObjective == 0) {
             Info("Estoy en el objetivo");
             this.status = AgentStatus.FINISHED;
+        } else if (this.knowledge.nActionsExecuted > 200) {
+            Info("200 acciones y no encuentro el objetivo");
+            this.status = AgentStatus.FINISHED;
         } else {
             if (this.knowledge.energy < ((2 * (this.knowledge.currentHeight - this.knowledge.getFloorHeight())) + 30)) {
                 this.status = AgentStatus.RECHARGING;
@@ -255,6 +258,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.plan.remove(0);
         if (this.plan.size() == 0)  {
             this.plan = null;
+            if (this.knowledge.distanceToObjective < 3) {
+                this.status = AgentStatus.NEED_SENSOR;
+                Info("Changed status to: " + this.status);
+            }
         }
     }
 
@@ -390,6 +397,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 this.plan = null;
                 break;
         }
+        this.knowledge.nActionsExecuted += 1;
         this.useEnergy(action); // Cambiar función useEnergy por estructura de datos que almacena la energia de cada acción, y usarla aqui y en el thinkplan
     }
 

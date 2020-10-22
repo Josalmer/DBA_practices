@@ -24,6 +24,7 @@ public class Knowledge {
     Integer maxFlight;
     Float angular;
     Float distanceToObjective;
+    Integer nActionsExecuted;
     
     ArrayList<ArrayList<Integer>> map;
     
