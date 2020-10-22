@@ -26,7 +26,7 @@ public class AgentOption {
         this.floorHeight = floorHeight;
     }
     
-    void calculatePuntuation(int squareOrientation, float targetOrientation) {
+    void calculatePuntuation(int squareOrientation, double targetOrientation) {
         double desviation = Math.abs(Math.round(targetOrientation - squareOrientation));
         this.puntuation = (180-desviation);
         this.puntuationCostRelation = Math.pow(this.puntuation, 4) / this.cost;

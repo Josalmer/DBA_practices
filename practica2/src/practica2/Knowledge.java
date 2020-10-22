@@ -22,8 +22,8 @@ public class Knowledge {
     Integer mapWidth;
     Integer mapHeight;
     Integer maxFlight;
-    Float angular;
-    Float distanceToObjective;
+    Double angular;
+    Double distanceToObjective;
     Integer nActionsExecuted;
     
     ArrayList<ArrayList<Integer>> map;
@@ -72,6 +72,8 @@ public class Knowledge {
                 this.currentPositionY -= 1;
             else
                 this.currentPositionY += 1;
+        
+        this.updateObjectiveData();
     }
     
     /**
@@ -91,5 +93,13 @@ public class Knowledge {
             case LECTURA_SENSORES: energy = nSensors; break;
         }
         return energy;
+    }
+    
+    /**
+     * @author Domingo López
+     */
+    void updateObjectiveData() {
+        this.angular = 99.0;
+        this.distanceToObjective = 99.0;
     }
 }
