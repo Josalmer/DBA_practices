@@ -201,7 +201,7 @@ public class Knowledge {
         int ABScurrentOrientation = Math.abs(this.orientation); //Valor absoluto de la orientación
         
         //Posición X
-        if(ABScurrentOrientation != 0 || ABScurrentOrientation != 180)
+        if(ABScurrentOrientation != 0 && ABScurrentOrientation != 180)
             this.currentPositionX += this.orientation/ABScurrentOrientation;
 
         //Posición Y
