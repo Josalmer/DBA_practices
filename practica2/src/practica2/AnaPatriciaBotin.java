@@ -11,8 +11,8 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
     
     // AGENT CONFIGURATION  -------------------------------------------
-    String world = "Playground1";   // Select World
-    boolean showPanel = false;      // True to show SensorControlPanel
+    String world = "World1";   // Select World
+    boolean showPanel = true;      // True to show SensorControlPanel
     // Select sensors
     ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
     // END CONFIGURATION  ---------------------------------------------
@@ -72,6 +72,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.rechargeBattery();
                     break;
                 case READY:
+                    this.readSensors();
                     this.reactiveBehaviour();
                     break;
                 case ABOVE_LUDWIG:
@@ -185,11 +186,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void thinkPlan() {
         ArrayList<AgentOption> options = this.generateOptions();
         if (options != null) {
-            double max = 0;
-            AgentOption winner = null;
+            double min = options.get(0).distanceToLudwig;
+            AgentOption winner = options.get(0);
             for (AgentOption o : options) {
-                if (o.puntuationCostRelation > max) {
-                    max = o.puntuationCostRelation;
+                if (o.distanceToLudwig < min) {
+                    min = o.distanceToLudwig;
                     winner = o;
                 }
             }
@@ -211,8 +212,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
         for (int i = 0; i < 9; i++) {
             if (i != 4) { // Not check current position
-                int xPosition = this.knowledge.currentPositionX - 1 + (i / 3);
-                int yPosition = this.knowledge.currentPositionY - 1 + (i % 3);
+                int xPosition = this.knowledge.currentPositionX - 1 + (i % 3);
+                int yPosition = this.knowledge.currentPositionY - 1 + (i / 3);
                 int orientation = orientations[i];
                 if (this.knowledge.insideMap(xPosition, yPosition)) {
                     int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
@@ -221,7 +222,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                         Info("Changed status to: " + this.status);
                         return null;
                     }
-                    if (targetHeight <= this.knowledge.maxFlight) {
+                    if (targetHeight < this.knowledge.maxFlight) {
                         options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
                     }
                 }
@@ -259,18 +260,18 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, false);
                 }
             } else if (provisionalHeight < targetHeight) {
-                nextAction = AgentAction.moveUp;
+                nextAction = AgentAction.moveUP;
                 provisionalHeight += 5;
             } else {
                 nextAction = AgentAction.moveF;
                 onWantedBox = true;
             }
-            this.plan.add(nextAction);
+            plan.add(nextAction);
             cost += this.knowledge.energyCost(nextAction, 0);
         }
         option.plan = plan;
         option.cost = cost;
-        option.calculatePuntuation(this.knowledge.ludwigPositionX, this.knowledge.ludwigPositionY);
+        option.calculateDistanceToLudig(this.knowledge.ludwigPositionX, this.knowledge.ludwigPositionY);
         return option;
     }
 

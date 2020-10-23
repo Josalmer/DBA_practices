@@ -42,6 +42,7 @@ public class Knowledge {
         this.mapHeight = answer.get("height").asInt();
         this.maxFlight = answer.get("maxflight").asInt();
         this.initializeMap();
+        this.initializePossibleOrientations();
     }
     
     /**
@@ -90,8 +91,8 @@ public class Knowledge {
         this.distanceToLudwig = perception.distance;
         for (int i = 0; i < perception.visual.size(); i++) {
             for (int j = 0; j < perception.visual.get(i).size(); j++) {
-                int xPosition = this.currentPositionX - 3 + i;
-                int yPosition = this.currentPositionY - 3 + j;
+                int xPosition = this.currentPositionX - 3 + j;
+                int yPosition = this.currentPositionY - 3 + i;
                 if (xPosition >= 0 && yPosition >= 0 && xPosition < this.mapWidth && yPosition < this.mapHeight) {
                     this.map.get(xPosition).set(yPosition, perception.visual.get(i).get(j));
                 }
@@ -105,10 +106,14 @@ public class Knowledge {
      */    
     void calculateLudwigPosition() {
         double alpha = 90 - this.angular;
+        if (alpha < 0) {
+            alpha += 360;
+        }
+        alpha = alpha / 180 * Math.PI;
         int xVariation = (int)Math.round(this.distanceToLudwig * Math.cos(alpha));
         int yVariation = (int)Math.round(this.distanceToLudwig * Math.sin(alpha));
         this.ludwigPositionX = this.currentPositionX + xVariation;
-        this.ludwigPositionY = this.currentPositionY + yVariation;
+        this.ludwigPositionY = this.currentPositionY - yVariation;
     }
     
     /**
@@ -218,9 +223,10 @@ public class Knowledge {
      * @return where is the agent looking after doing that turn
      */
     public int getNextOrientation(int actualOrientation, boolean rightTurn) {
-        int turn = rightTurn ? 1 : -1;
+        int turn = rightTurn ? 1 : 7;
         int actual = this.orientations.indexOf(actualOrientation);
-        int next = actual + turn % this.orientations.size();
+        int next = (actual + turn) % this.orientations.size();
+        
 
         return this.orientations.get(next);
     }
@@ -235,7 +241,7 @@ public class Knowledge {
         int energy = 0;
         switch (action) {
             case moveF: energy = 1; break;
-            case moveUp: energy = 5; break;
+            case moveUP: energy = 5; break;
             case moveD: energy = 5; break;
             case rotateL: energy = 1; break;
             case rotateR: energy = 1; break;
@@ -255,7 +261,7 @@ public class Knowledge {
             case moveF:
                 this.moveForward();
                 break;
-            case moveUp:
+            case moveUP:
                 this.currentHeight += 5;
                 break;
             case moveD:

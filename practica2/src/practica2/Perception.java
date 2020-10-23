@@ -53,7 +53,7 @@ public class Perception {
                     this.gps = convertToIntegerArray(perception.get(i).asObject().get("data").asArray().get(0).asArray());
                     break;
                 case "compass":
-                    this.compass = perception.get(i).asObject().get("data").asArray().get(0).asInt();
+                    this.compass = (int)Math.round(perception.get(i).asObject().get("data").asArray().get(0).asDouble());
                     break;
                 case "payload":
                     this.payload = perception.get(i).asObject().get("data").asArray().get(0).asInt();
