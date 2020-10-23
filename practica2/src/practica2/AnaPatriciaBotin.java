@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
     
     // AGENT CONFIGURATION  -------------------------------------------
-    String world = "World1";   // Select World
+    String world = "World5";   // Select World
     boolean showPanel = true;      // True to show SensorControlPanel
     // Select sensors
     ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
@@ -72,7 +72,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.rechargeBattery();
                     break;
                 case READY:
-                    this.readSensors();
                     this.reactiveBehaviour();
                     break;
                 case ABOVE_LUDWIG:
@@ -222,8 +221,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                         Info("Changed status to: " + this.status);
                         return null;
                     }
-                    if (targetHeight < this.knowledge.maxFlight) {
-                        options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+                    if (targetHeight < this.knowledge.maxFlight) { // TODO poner esto bonito
+                        if ((this.knowledge.currentHeight + 5 < this.knowledge.maxFlight && this.knowledge.currentHeight < targetHeight) || targetHeight <= this.knowledge.currentHeight) {
+                            options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+                        }
                     }
                 }
             }

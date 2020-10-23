@@ -180,7 +180,7 @@ public class Knowledge {
      * @return 
      */
     public boolean amIAboveLudwig() {
-        return (this.currentPositionX == this.ludwigPositionX && this.currentPositionY == this.ludwigPositionY);
+        return ((int)this.currentPositionX == (int)this.ludwigPositionX && (int)this.currentPositionY == (int)this.ludwigPositionY);
     }
     
     /**
