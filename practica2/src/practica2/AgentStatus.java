@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package p2;
+package practica2;
 
 /**
  *
- * @author jose
+ * @author Jose Saldaña
  */
 public enum AgentStatus {
-    INITIALIZING, INITIALIZED, FINISHED
+    INITIALIZING, NEED_SENSOR, READY, RECHARGING, FINISHED, ABOVE_LUDWIG
 }

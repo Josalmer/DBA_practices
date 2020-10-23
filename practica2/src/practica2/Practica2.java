@@ -3,17 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package p2;
+package practica2;
 
 import AppBoot.ConsoleBoot;
 
-public class P2 {
+public class Practica2 {
 
     public static void main(String[] args) {
-        ConsoleBoot app = new ConsoleBoot("P1", args);
+        ConsoleBoot app = new ConsoleBoot("P2", args);
         app.selectConnection();
         
-        app.launchAgent("Ana Patricia Botín", AnaPatriciaBotin.class);
+        app.launchAgent("Ana Patricia Botin", AnaPatriciaBotin.class);
         app.shutDown();        
     }
     

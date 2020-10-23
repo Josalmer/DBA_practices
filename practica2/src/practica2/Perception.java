@@ -1,14 +1,14 @@
-package p2;
+package practica2;
 
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  *
- * @author Manuel Pancorbo, Jose Saldaña
+ * @author Manuel Pancorbo
+ * @author Jose Saldaña
  */
 public class Perception {
 
@@ -17,12 +17,12 @@ public class Perception {
     ArrayList<Integer> gps;
     Integer compass;
     Integer payload;
-    Float distance;
-    Integer angular;
+    Double distance;
+    Double angular;
     Integer altimeter;
-    ArrayList<Integer> visual;
+    ArrayList<ArrayList<Integer>> visual;
     ArrayList<ArrayList<Integer>> lidar;
-    ArrayList<ArrayList<Float>> thermal;
+    ArrayList<ArrayList<Double>> thermal;
     Integer energy;
 
     public Perception() {
@@ -40,7 +40,7 @@ public class Perception {
         this.energy = null;
     }
 
-    public void asignValues(JsonArray perception) {
+    public void update(JsonArray perception) {
         for (int i = 0; i < perception.size(); i++) {
             switch (perception.get(i).asObject().get("sensor").asString()) {
                 case "alive":
@@ -59,22 +59,22 @@ public class Perception {
                     this.payload = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
                 case "distance":
-                    this.distance = perception.get(i).asObject().get("data").asArray().get(0).asFloat();
+                    this.distance = perception.get(i).asObject().get("data").asArray().get(0).asDouble();
                     break;
                 case "angular":
-                    this.angular = Math.round(perception.get(i).asObject().get("data").asArray().get(0).asFloat());
+                    this.angular = perception.get(i).asObject().get("data").asArray().get(0).asDouble();
                     break;
                 case "altimeter":
                     this.altimeter = perception.get(i).asObject().get("data").asArray().get(0).asInt();
                     break;
                 case "visual":
-                    this.visual = convertToIntegerArray(perception.get(i).asObject().get("data").asArray().get(0).asArray());
+                    this.visual = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray());
                     break;
                 case "lidar":
                     this.lidar = convertToIntegerMatrix(perception.get(i).asObject().get("data").asArray());
                     break;
                 case "thermal":
-                    this.thermal = convertToFloatMatrix(perception.get(i).asObject().get("data").asArray());
+                    this.thermal = convertToDoubleMatrix(perception.get(i).asObject().get("data").asArray());
                     break;
                 case "energy":
                     this.energy = perception.get(i).asObject().get("data").asArray().get(0).asInt();
@@ -99,20 +99,20 @@ public class Perception {
         return intMatrix;
     }
 
-    public ArrayList<Float> convertToFloatArray(JsonArray array) {
-        ArrayList<Float> floatArray = new ArrayList<>();
+    public ArrayList<Double> convertToDoubleArray(JsonArray array) {
+        ArrayList<Double> doubleArray = new ArrayList<>();
         for (int i = 0; i < array.size(); i++) {
-            floatArray.add(array.get(i).asFloat());
+            doubleArray.add(array.get(i).asDouble());
         }
-        return floatArray;
+        return doubleArray;
     }
 
-    public ArrayList<ArrayList<Float>> convertToFloatMatrix(JsonArray array) {
-        ArrayList<ArrayList<Float>> floatMatrix = new ArrayList<>();
+    public ArrayList<ArrayList<Double>> convertToDoubleMatrix(JsonArray array) {
+        ArrayList<ArrayList<Double>> doubleMatrix = new ArrayList<>();
         for (int i = 0; i < array.size(); i++) {
-            floatMatrix.add(convertToFloatArray(array.get(i).asArray()));
+            doubleMatrix.add(convertToDoubleArray(array.get(i).asArray()));
         }
-        return floatMatrix;
+        return doubleMatrix;
     }
 
     @Override
