@@ -7,7 +7,8 @@ import java.util.ArrayList;
 
 /**
  *
- * @author Manuel Pancorbo, Jose Saldaña
+ * @author Manuel Pancorbo
+ * @author Jose Saldaña
  */
 public class Perception {
 

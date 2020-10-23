@@ -20,12 +20,23 @@ public class AgentOption {
     double puntuation;
     double puntuationCostRelation;
 
+    /**
+     * @author Jose Saldaña
+     * @param x
+     * @param y
+     * @param floorHeight 
+     */
     public AgentOption(Integer x, Integer y, Integer floorHeight) {
         this.x = x;
         this.y = y;
         this.floorHeight = floorHeight;
     }
     
+    /**
+     * @author Jose Saldaña
+     * @param squareOrientation
+     * @param targetOrientation 
+     */
     void calculatePuntuation(int squareOrientation, double targetOrientation) {
         double desviation = Math.abs(Math.round(targetOrientation - squareOrientation));
         this.puntuation = (180-desviation);

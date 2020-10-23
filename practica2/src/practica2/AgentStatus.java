@@ -7,7 +7,7 @@ package practica2;
 
 /**
  *
- * @author jose
+ * @author Jose Saldaña
  */
 public enum AgentStatus {
     INITIALIZING, NEED_SENSOR, READY, RECHARGING, FINISHED

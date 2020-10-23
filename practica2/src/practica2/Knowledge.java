@@ -34,6 +34,7 @@ public class Knowledge {
      */
     public void initializeKnowledge(JsonObject answer) {
         this.energy = 1000;
+        this.nActionsExecuted = 0;
         this.mapWidth = answer.get("width").asInt();
         this.mapHeight = answer.get("height").asInt();
         this.maxFlight = answer.get("maxflight").asInt();
@@ -41,8 +42,8 @@ public class Knowledge {
     }
     
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
-     * -1 (not known)
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      */
     public void initializeMap() {
         this.map = new ArrayList<>();
@@ -55,10 +56,17 @@ public class Knowledge {
         }
     }
     
+    /**
+     * @author Jose Saldaña
+     * @return current FlootHeight
+     */
     public int getFloorHeight() {
         return this.map.get(this.currentPositionX).get(this.currentPositionY);
     }
 
+    /**
+     * @author Domingo Lopez
+     */
     public void moveForward(){
         int ABScurrentOrientation = Math.abs(this.orientation); //Valor absoluto de la orientación
         
@@ -79,7 +87,7 @@ public class Knowledge {
     /**
      * @author Domingo Lopez
      * @param action
-     * @return 
+     * @return energyCost of an action
      */
     public int energyCost(AgentAction action, int nSensors) {
         int energy = 0;

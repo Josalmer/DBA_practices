@@ -30,7 +30,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     TTYControlPanel myControlPanel;
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Domingo Lopez
+     * @author Miguel García
      */
     @Override
     public void setup() {
@@ -46,7 +49,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Domingo Lopez
+     * @author Miguel García
      */
     @Override
     public void plainExecute() {
@@ -120,7 +126,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Domingo Lopez
+     * @author Miguel García
      * @param answer
      */
     void initializeAgent(JsonObject answer) {
@@ -134,16 +143,21 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Execution --------------------------------------------------------
     /**
-     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Domingo Lopez
+     * @author Miguel García
      * @param answer
      */
     void reactiveBehaviour() {
         if (this.knowledge.distanceToObjective == 0) {
             Info("Estoy en el objetivo");
             this.status = AgentStatus.FINISHED;
-        } else if (this.knowledge.nActionsExecuted > 200) {
-            Info("200 acciones y no encuentro el objetivo");
+            Info("Changed status to: " + this.status);
+        } else if (this.knowledge.nActionsExecuted > 1000) {
+            Info("1000 acciones y no encuentro el objetivo");
             this.status = AgentStatus.FINISHED;
+            Info("Changed status to: " + this.status);
         } else {
             if (this.knowledge.energy < ((2 * (this.knowledge.currentHeight - this.knowledge.getFloorHeight())) + 30)) {
                 this.status = AgentStatus.RECHARGING;
@@ -182,7 +196,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      * @return ArrayList(AgentOption)
      */
     ArrayList<AgentOption> generateOptions() {
@@ -210,7 +225,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      * @param xPosition
      * @param yPosition
      * @param targetHeight
@@ -266,7 +282,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      */
     void rechargeBattery() {
         if (this.knowledge.currentHeight - this.knowledge.getFloorHeight() >= 5) {
@@ -282,7 +299,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Read sensors and update perception--------------------------------
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      */
     void readSensors() {
         JsonObject params = new JsonObject();
@@ -304,7 +322,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      * @param newPerception
      */
     void updatePerception(JsonArray newPerception) {
@@ -313,7 +332,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
      */
     void updateKnowledge() {
         this.knowledge.currentPositionX = this.perception.gps.get(0);
@@ -428,7 +448,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Domingo Lopez
+     * @author Miguel García
      */
     @Override
     public void takeDown() {
