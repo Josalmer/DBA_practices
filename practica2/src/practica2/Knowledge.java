@@ -16,6 +16,8 @@ import java.util.ArrayList;
 public class Knowledge {
     Integer currentPositionX;
     Integer currentPositionY;
+    Integer ludwigPositionX;
+    Integer ludwigPositionY;
     Integer currentHeight;
     Integer energy;
     Integer orientation;
@@ -23,7 +25,7 @@ public class Knowledge {
     Integer mapHeight;
     Integer maxFlight;
     Double angular;
-    Double distanceToObjective;
+    Double distanceToLudwig;
     Integer nActionsExecuted;
     ArrayList<Integer> orientations;
     
@@ -74,6 +76,41 @@ public class Knowledge {
         this.orientations.add(-90);
     }
 
+
+    /**
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     */
+    void update(Perception perception) {
+        this.currentPositionX = perception.gps.get(0);
+        this.currentPositionY = perception.gps.get(1);
+        this.currentHeight = perception.gps.get(2);
+        this.orientation = perception.compass;
+        this.angular = perception.angular;
+        this.distanceToLudwig = perception.distance;
+        for (int i = 0; i < perception.visual.size(); i++) {
+            for (int j = 0; j < perception.visual.get(i).size(); j++) {
+                int xPosition = this.currentPositionX - 3 + i;
+                int yPosition = this.currentPositionY - 3 + j;
+                if (xPosition >= 0 && yPosition >= 0 && xPosition < this.mapWidth && yPosition < this.mapHeight) {
+                    this.map.get(xPosition).set(yPosition, perception.visual.get(i).get(j));
+                }
+            }
+        }
+        this.calculateLudwigPosition();
+    }    
+    
+    /**
+     * @author Jose Saldaña
+     */    
+    void calculateLudwigPosition() {
+        double alpha = 90 - this.angular;
+        int xVariation = (int)Math.round(this.distanceToLudwig * Math.cos(alpha));
+        int yVariation = (int)Math.round(this.distanceToLudwig * Math.sin(alpha));
+        this.ludwigPositionX = this.currentPositionX + xVariation;
+        this.ludwigPositionY = this.currentPositionY + yVariation;
+    }
+    
     /**
      * @author Manuel Pancorbo
      * @param wantedOrientation
@@ -105,6 +142,48 @@ public class Knowledge {
             rightTurn = true;
 
         return rightTurn;
+    }
+    
+    /**
+     * @author Jose Saldaña
+     * @return 
+     */
+    public boolean needRecharge() {
+        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
+    }
+    
+    /**
+     * @author Jose Saldaña
+     * @param x
+     * @param y
+     * @return 
+     */
+    public boolean insideMap(int x, int y) {
+        return (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight);
+    }
+    
+    /**
+     * @author Jose Saldaña
+     * @return 
+     */
+    public boolean canTouchDown() {
+        return (this.currentHeight - this.getFloorHeight() < 5);
+    }
+    
+    /**
+     * @author Jose Saldaña
+     * @return 
+     */
+    public boolean amIAboveLudwig() {
+        return (this.currentPositionX == this.ludwigPositionX && this.currentPositionY == this.ludwigPositionY);
+    }
+    
+    /**
+     * @author Jose Saldaña
+     * @return 
+     */
+    public boolean cantReachTarget() {
+        return this.nActionsExecuted > 1000;
     }
     
     /**
@@ -148,6 +227,7 @@ public class Knowledge {
     
     /**
      * @author Domingo Lopez
+     * @author Manuel Pancorbo
      * @param action
      * @return energyCost of an action
      */

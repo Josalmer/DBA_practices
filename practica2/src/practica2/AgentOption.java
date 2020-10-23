@@ -37,9 +37,22 @@ public class AgentOption {
      * @param squareOrientation
      * @param targetOrientation 
      */
-    void calculatePuntuation(int squareOrientation, double targetOrientation) {
+    void calculatePuntuationByAngular(int squareOrientation, double targetOrientation) {
         double desviation = Math.abs(Math.round(targetOrientation - squareOrientation));
         this.puntuation = (180-desviation);
+        this.puntuationCostRelation = Math.pow(this.puntuation, 4) / this.cost;
+    }
+    
+    /**
+     * @author Jose Saldaña
+     * @param ludwigX
+     * @param ludwigY 
+     */
+    void calculatePuntuation(int ludwigX, int ludwigY) {
+        // Distancia Manhattan
+        this.puntuation = Math.abs(x - ludwigX) + Math.abs(y - ludwigY);
+        // Distancia de Euclides
+//	this.puntuation = (Math.sqrt(Math.pow(2,(x - ludwigX)) + Math.pow(2,(y - ludwigY))));
         this.puntuationCostRelation = Math.pow(this.puntuation, 4) / this.cost;
     }
 }

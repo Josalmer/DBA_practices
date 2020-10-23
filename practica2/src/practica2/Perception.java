@@ -40,7 +40,7 @@ public class Perception {
         this.energy = null;
     }
 
-    public void asignValues(JsonArray perception) {
+    public void update(JsonArray perception) {
         for (int i = 0; i < perception.size(); i++) {
             switch (perception.get(i).asObject().get("sensor").asString()) {
                 case "alive":

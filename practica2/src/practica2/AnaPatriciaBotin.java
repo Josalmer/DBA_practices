@@ -9,7 +9,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
-
+    
+    // AGENT CONFIGURATION  -------------------------------------------
+    String world = "Playground1";   // Select World
+    boolean showPanel = false;      // True to show SensorControlPanel
+    // Select sensors
+    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
+    // END CONFIGURATION  ---------------------------------------------
+    
     ACLMessage outChannel = new ACLMessage();
     AgentAction lastAction;
     ArrayList<AgentAction> plan;
@@ -19,14 +26,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     Knowledge knowledge = new Knowledge();
     Perception perception = new Perception();
 
-    // Selected sensors
-    ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
-
     // Authorized sensors
     ArrayList<String> authorizedSensors = new ArrayList();
 
     // Control Panel
-    boolean showPanel = false; // True to show SensorControlPanel
     TTYControlPanel myControlPanel;
 
     /**
@@ -89,7 +92,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void login() {
         JsonObject params = new JsonObject();
         params.add("command", "login");
-        params.add("world", "BasePlayground");
+        params.add("world", this.world);
         JsonArray sensors = new JsonArray();
         for (String sensor : this.requestedSensors) {
             sensors.add(sensor);
@@ -153,16 +156,16 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @param answer
      */
     void reactiveBehaviour() {
-        if (this.knowledge.distanceToObjective == 0) {
+        if (this.knowledge.amIAboveLudwig()) {
             Info("Estoy encima de Ludwig");
             this.status = AgentStatus.ABOVE_LUDWIG;
             Info("Changed status to: " + this.status);
         } else if (this.knowledge.nActionsExecuted > 1000) {
-            Info("1000 acciones y no encuentro el objetivo");
+            Info("No encuentro el objetivo");
             this.status = AgentStatus.FINISHED;
             Info("Changed status to: " + this.status);
         } else {
-            if (this.knowledge.energy < ((2 * (this.knowledge.currentHeight - this.knowledge.getFloorHeight())) + 30)) {
+            if (this.knowledge.needRecharge()) {
                 this.status = AgentStatus.RECHARGING;
                 Info("Changed status to: " + this.status);
             } else {
@@ -211,7 +214,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 int xPosition = this.knowledge.currentPositionX - 1 + (i / 3);
                 int yPosition = this.knowledge.currentPositionY - 1 + (i % 3);
                 int orientation = orientations[i];
-                if (xPosition >= 0 && xPosition < this.knowledge.mapWidth && yPosition >= 0 && yPosition < this.knowledge.mapHeight) {
+                if (this.knowledge.insideMap(xPosition, yPosition)) {
                     int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
                     if (targetHeight == -1) {
                         this.status = AgentStatus.NEED_SENSOR;
@@ -250,12 +253,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 int turns = this.knowledge.howManyTurns(orientation);
                 if (this.knowledge.shouldTurnRight(turns)) {
                     nextAction = AgentAction.rotateR;
-                    provisionalOrientation = this.knowledge.getNextOrientation(orientation, true);
+                    provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, true);
                 } else { // shouldTurnLeft
                     nextAction = AgentAction.rotateL;
-                    provisionalOrientation = this.knowledge.getNextOrientation(orientation, false);
+                    provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, false);
                 }
-            } else if (provisionalHeight <= targetHeight) {
+            } else if (provisionalHeight < targetHeight) {
                 nextAction = AgentAction.moveUp;
                 provisionalHeight += 5;
             } else {
@@ -267,7 +270,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
         option.plan = plan;
         option.cost = cost;
-        option.calculatePuntuation(orientation, this.knowledge.angular);
+        option.calculatePuntuation(this.knowledge.ludwigPositionX, this.knowledge.ludwigPositionY);
         return option;
     }
 
@@ -279,10 +282,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.plan.remove(0);
         if (this.plan.size() == 0)  {
             this.plan = null;
-            if (this.knowledge.distanceToObjective < 3) {
-                this.status = AgentStatus.NEED_SENSOR;
-                Info("Changed status to: " + this.status);
-            }
         }
     }
     
@@ -291,12 +290,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @return 
      */
     boolean toLand() {
-        if (this.knowledge.currentHeight - this.knowledge.getFloorHeight() >= 5) {
-            this.doAction(AgentAction.moveD);
-            return false;
-        } else {
+        if (this.knowledge.canTouchDown()) {
             this.doAction(AgentAction.touchD);
             return true;
+        } else {
+            this.doAction(AgentAction.moveD);
+            return false;
         }
     }
     
@@ -339,44 +338,13 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         if (answer.get("result").asString().equals("ok")) {
             Info("Valores de los sensores leídos...");
             this.useEnergy(AgentAction.LECTURA_SENSORES);
-            this.updatePerception(answer.get("details").asObject().get("perceptions").asArray());
-            this.updateKnowledge();
+            this.perception.update(answer.get("details").asObject().get("perceptions").asArray());
+            Info(this.perception.toString());
+            this.knowledge.update(this.perception);
             this.status = AgentStatus.READY;
             Info("Changed status to: " + this.status);
         } else {
             this.logout();
-        }
-    }
-
-    /**
-     * @author Jose Saldaña
-     * @author Manuel Pancorbo
-     * @param newPerception
-     */
-    void updatePerception(JsonArray newPerception) {
-        this.perception.asignValues(newPerception);
-        Info(this.perception.toString());
-    }
-
-    /**
-     * @author Jose Saldaña
-     * @author Manuel Pancorbo
-     */
-    void updateKnowledge() {
-        this.knowledge.currentPositionX = this.perception.gps.get(0);
-        this.knowledge.currentPositionY = this.perception.gps.get(1);
-        this.knowledge.currentHeight = this.perception.gps.get(2);
-        this.knowledge.orientation = this.perception.compass;
-        this.knowledge.angular = this.perception.angular;
-        this.knowledge.distanceToObjective = this.perception.distance;
-        for (int i = 0; i < this.perception.visual.size(); i++) {
-            for (int j = 0; j < this.perception.visual.get(i).size(); j++) {
-                int xPosition = this.knowledge.currentPositionX - 3 + i;
-                int yPosition = this.knowledge.currentPositionY - 3 + j;
-                if (xPosition >= 0 && yPosition >= 0 && xPosition < this.knowledge.mapWidth && yPosition < this.knowledge.mapHeight) {
-                    this.knowledge.map.get(xPosition).set(yPosition, this.perception.visual.get(i).get(j));
-                }
-            }
         }
     }
 
