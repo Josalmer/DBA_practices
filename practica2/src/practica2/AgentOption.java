@@ -15,6 +15,7 @@ public class AgentOption {
     Integer x;
     Integer y;
     Integer floorHeight;
+    Integer visitedAt;
     ArrayList<AgentAction> plan;
     Integer cost;
     double distanceToLudwig;
@@ -26,10 +27,11 @@ public class AgentOption {
      * @param y
      * @param floorHeight 
      */
-    public AgentOption(Integer x, Integer y, Integer floorHeight) {
+    public AgentOption(Integer x, Integer y, Integer floorHeight, Integer visited) {
         this.x = x;
         this.y = y;
         this.floorHeight = floorHeight;
+        this.visitedAt = visited;
     }
     
     /**

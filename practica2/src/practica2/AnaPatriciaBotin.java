@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
     
     // AGENT CONFIGURATION  -------------------------------------------
-    String world = "World5";   // Select World
+    String world = "World6";   // Select World
     boolean showPanel = true;      // True to show SensorControlPanel
     // Select sensors
     ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
@@ -184,7 +184,16 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      */
     void thinkPlan() {
         ArrayList<AgentOption> options = this.generateOptions();
+        ArrayList<AgentOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
+            for (AgentOption o : options) {
+                if (o.visitedAt == -1) {
+                    noVisitedOptions.add(o);
+                }
+            }
+            if (noVisitedOptions.size() > 0) {
+                options = noVisitedOptions;
+            }
             double min = options.get(0).distanceToLudwig;
             AgentOption winner = options.get(0);
             for (AgentOption o : options) {
@@ -242,7 +251,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @return AgentOption
      */
     AgentOption generateOption(int xPosition, int yPosition, int targetHeight, int orientation) {
-        AgentOption option = new AgentOption(xPosition, yPosition, targetHeight);
+        AgentOption option = new AgentOption(xPosition, yPosition, targetHeight, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
         ArrayList<AgentAction> plan = new ArrayList<>();
         int cost = 0;
         boolean onWantedBox = false;

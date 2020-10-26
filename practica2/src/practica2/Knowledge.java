@@ -30,6 +30,7 @@ public class Knowledge {
     ArrayList<Integer> orientations;
     
     ArrayList<ArrayList<Integer>> map;
+    ArrayList<ArrayList<Integer>> visitedAtMap;
     
     /**
      * @author Jose Saldaña, Manuel Pancorbo
@@ -42,6 +43,7 @@ public class Knowledge {
         this.mapHeight = answer.get("height").asInt();
         this.maxFlight = answer.get("maxflight").asInt();
         this.initializeMap();
+        this.initializeVisitedAtMap();
         this.initializePossibleOrientations();
     }
     
@@ -57,6 +59,20 @@ public class Knowledge {
                 row.add(-1);
             }
             this.map.add(row);
+        }
+    }
+    
+    /**
+     * @author Jose Saldaña
+     */
+    public void initializeVisitedAtMap() {
+        this.visitedAtMap = new ArrayList<>();
+        for (int i = 0; i < this.mapWidth; i++) {
+            ArrayList<Integer> row = new ArrayList<>();
+            for (int j = 0; j < this.mapHeight; j++) {
+                row.add(-1);
+            }
+            this.visitedAtMap.add(row);
         }
     }
     
@@ -215,6 +231,9 @@ public class Knowledge {
                 this.currentPositionY -= 1;
             else
                 this.currentPositionY += 1;
+        
+        // Update memory
+        this.visitedAtMap.get(this.currentPositionX).set(this.currentPositionY, this.nActionsExecuted);
     }
 
     /**
