@@ -86,8 +86,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     // Login and Initializate -------------------------------------------
     /**
+     * Logea el agente en la plataforma e inicializa el agente,
+     * estableciendo los canales de comunicación
      * @author Jose Saldaña
-     * @param params
      */
     void login() {
         JsonObject params = new JsonObject();
@@ -111,10 +112,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Manda la petición de login y crea el outChannel para posteriores comunicaciones
      * @author Jose Saldaña
-     * @param params
-     * @return
-     * @description 
+     * @param params El JsonObject: command, world, attach
+     * @return La respuesta del login como JsonObject
      */
     JsonObject sendAndReceiveLogin(JsonObject params) {
         ACLMessage out = new ACLMessage();
@@ -309,8 +310,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
     
     /**
+     * Intenta aterrizar al agente en el suelo, si no puede baja 5 niveles en su lugar
      * @author Jose Saldaña
-     * @return 
+     * @return booleano que indica si ha conseguido aterrizar
      */
     boolean toLand() {
         if (this.knowledge.canTouchDown()) {
@@ -323,6 +325,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
     
     /**
+     * Rescata a Ludwig y cambia estado a Finished para finalizar Agente
      * @author Jose Saldaña
      */
     void getLudwig() {
@@ -373,8 +376,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     // ------------------------------------------------------------------
     // Agent low level functions ----------------------------------------
-    //TODO
-    //Gestión de errores. En vez de void, que devuelva un Integer y si es código -1 por ejemplo ya sabemos que algo ha ido mal
     /**
      * @author Domingo Lopez
      * @param action
@@ -429,6 +430,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Logout and takeDown-----------------------------------------------
     /**
+     * Envía mensaje de logout y comienza fin (_exitRequested = true)
      * @author Jose Saldaña
      */
     void logout() {
@@ -460,9 +462,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Communications----------------------------------------------------
     /**
+     * Envío bloqueante de un mensaje, el agente se bloquea hasta que recibe respuesta
      * @author Jose Saldaña
-     * @param params
-     * @return
+     * @param params JsonObject con la estructura de lo que se quiere mandar
+     * @return parsedAnswer JsonObject con la estructura según respuesta
      */
     JsonObject sendAndReceiveMessage(JsonObject params) {
         String parsedParams = params.toString();
@@ -481,8 +484,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Envío no bloqueante de un mensaje
      * @author Jose Saldaña
-     * @param params
+     * @param params JsonObject con la estructura de lo que se quiere mandar
      */
     void sendMessage(JsonObject params) {
         String parsedParams = params.toString();
@@ -490,7 +494,4 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.outChannel.setContent(parsedParams);
         this.sendServer(this.outChannel);
     }
-
-    // ------------------------------------------------------------------
-    // Misc--------------------------------------------------------------
 }

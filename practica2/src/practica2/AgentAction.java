@@ -6,9 +6,9 @@
 package practica2;
 
 /**
- *
+ * Distintas acciones que puede realizar el agente
  * @author Domingo Lopez
  */
-public enum AgentAction { // RECHARGE todo, revisar nombre de acción de recargar batería
+public enum AgentAction {
     moveF,moveUP,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES, recharge
 }
