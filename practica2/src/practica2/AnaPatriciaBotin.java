@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
     
     // AGENT CONFIGURATION  -------------------------------------------
-    String world = "World6";   // Select World
+    String world = "World8";   // Select World
     boolean showPanel = true;      // True to show SensorControlPanel
     // Select sensors
     ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
@@ -114,6 +114,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @author Jose Saldaña
      * @param params
      * @return
+     * @description 
      */
     JsonObject sendAndReceiveLogin(JsonObject params) {
         ACLMessage out = new ACLMessage();
@@ -160,7 +161,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             Info("Estoy encima de Ludwig");
             this.status = AgentStatus.ABOVE_LUDWIG;
             Info("Changed status to: " + this.status);
-        } else if (this.knowledge.nActionsExecuted > 1000) {
+        } else if (this.knowledge.nActionsExecuted > 10000) {
             Info("No encuentro el objetivo");
             this.status = AgentStatus.FINISHED;
             Info("Changed status to: " + this.status);
@@ -192,6 +193,17 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 }
             }
             if (noVisitedOptions.size() > 0) {
+                options = noVisitedOptions;
+            } else {
+                double lastVisited = options.get(0).visitedAt;
+                AgentOption olderOption = options.get(0);
+                for (AgentOption o : options) {
+                    if (o.visitedAt < lastVisited) {
+                        olderOption = o;
+                        lastVisited = o.visitedAt;
+                    }
+                }
+                noVisitedOptions.add(olderOption);
                 options = noVisitedOptions;
             }
             double min = options.get(0).distanceToLudwig;

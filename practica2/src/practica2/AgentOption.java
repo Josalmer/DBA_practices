@@ -23,9 +23,6 @@ public class AgentOption {
 
     /**
      * @author Jose Saldaña
-     * @param x
-     * @param y
-     * @param floorHeight 
      */
     public AgentOption(Integer x, Integer y, Integer floorHeight, Integer visited) {
         this.x = x;
@@ -36,8 +33,6 @@ public class AgentOption {
     
     /**
      * @author Jose Saldaña
-     * @param ludwigX
-     * @param ludwigY 
      */
     void calculateDistanceToLudig(int ludwigX, int ludwigY) {
         // Distancia Manhattan
