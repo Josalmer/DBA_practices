@@ -223,9 +223,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Genera opciones a partir de las casillas contiguas al agente, 
+     * descarta aquellas no viables y devuelve un array de AgentAction con las posibles.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
-     * @return ArrayList(AgentOption)
+     * @return array que contiene todas las AgentOption viables.
      */
     ArrayList<AgentOption> generateOptions() {
         ArrayList<AgentOption> options = new ArrayList<>();
@@ -254,16 +256,19 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Genera la opción para una determinada casilla, 
+     * genera un plan para llegar hasta ella y su coste y,
+     * finalmente, calcula una heurística para asociarle un valor.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
-     * @param xPosition
-     * @param yPosition
-     * @param targetHeight
-     * @param orientation
+     * @param xPosition, posición x de la casilla en el mundo
+     * @param yPosition, posición y de la casilla en el mundo
+     * @param height, altura del suelo de la casilla
+     * @param orientation, orientación a la que debe apuntar el agente para avanzar a esa casilla
      * @return AgentOption
      */
-    AgentOption generateOption(int xPosition, int yPosition, int targetHeight, int orientation) {
-        AgentOption option = new AgentOption(xPosition, yPosition, targetHeight, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
+    AgentOption generateOption(int xPosition, int yPosition, int height, int orientation) {
+        AgentOption option = new AgentOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
         ArrayList<AgentAction> plan = new ArrayList<>();
         int cost = 0;
         boolean onWantedBox = false;
@@ -281,7 +286,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     nextAction = AgentAction.rotateL;
                     provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, false);
                 }
-            } else if (provisionalHeight < targetHeight) {
+            } else if (provisionalHeight < height) {
                 nextAction = AgentAction.moveUP;
                 provisionalHeight += 5;
             } else {
@@ -334,6 +339,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Asegura que el agente esté en tierra y realiza la recarga de batería.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      */
@@ -348,6 +354,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Read sensors and update perception--------------------------------
     /**
+     * Solicita el estado de los sensores autorizados y se encarga de actualizar Perception y Knowledge.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      */
@@ -399,10 +406,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Ejecuta una acción del agente y maneja los correspondientes cambios
+     * que generará la acción.
      * @author Domingo Lopez
      * @author Jose Saldaña
      * @author Manuel Pancorbo
-     * @param action
+     * @param action, siguiente accion que realizara el agente
      */
     void executeAction(AgentAction action) {
         switch (action) {
