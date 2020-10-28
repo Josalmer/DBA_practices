@@ -396,8 +396,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Agent low level functions ----------------------------------------
     /**
+     * Ejecuta la acción y actualiza el estado interno
      * @author Domingo Lopez
-     * @param action
+     * @param action Acción a realizar
      */
     void doAction(AgentAction action) { // Recibe enumerado, hace 6 acciones, actualiza estado del mundo
 
@@ -439,8 +440,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Realiza el consumo de energia tras realizar una acción
      * @author Domingo Lopez
-     * @param action
+     * @param action Acción a realizar
      */
     void useEnergy(AgentAction action) {
         this.knowledge.energy -= this.knowledge.energyCost(action, this.authorizedSensors.size());

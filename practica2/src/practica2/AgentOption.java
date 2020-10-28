@@ -39,7 +39,9 @@ public class AgentOption {
     /**
      * Calcula e inicializa la distancia a Ludwig desde la casilla,
      * mediante el método de distancia Manhattan
-     * @author Jose Saldaña
+     * @author Jose Saldañ
+     * @param ludwigX componente x de posición de Ludwig
+     * @param ludwigY Componente y de posición de Ludwig
      */
     void calculateDistanceToLudig(int ludwigX, int ludwigY) {
         // Distancia Manhattan
