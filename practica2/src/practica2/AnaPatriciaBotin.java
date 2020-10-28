@@ -207,31 +207,61 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             if (noVisitedOptions.size() > 0) {
                 options = noVisitedOptions;
             } else {
-                double lastVisited = options.get(0).visitedAt;
-                AgentOption olderOption = options.get(0);
-                for (AgentOption o : options) {
-                    if (o.visitedAt < lastVisited) {
-                        olderOption = o;
-                        lastVisited = o.visitedAt;
-                    }
-                }
-                noVisitedOptions.add(olderOption);
+                AgentOption bestOption;
+                bestOption = chooseFromAlreadyVisitedOptions(options);
+                noVisitedOptions.add(bestOption);
                 options = noVisitedOptions;
             }
-            double min = options.get(0).distanceToLudwig;
-            AgentOption winner = options.get(0);
-            for (AgentOption o : options) {
-                if (o.distanceToLudwig < min) {
-                    min = o.distanceToLudwig;
-                    winner = o;
-                }
-            }
+            AgentOption winner;
+            winner = chooseFromNoVisitedOptions(options);
             if (winner != null) {
                 this.plan = winner.plan;
             } else {
                 throw new RuntimeException("No hay un plan ganador");
             }
         }
+    }
+    
+    /**
+     * Elige la mejor casilla de entre las ya visitadas que contenga la mejor valoración según el momento
+     * en el que la visitó.
+     * Escoge aquella que visitó antes, es decir, la menos reciente.
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Miguel García
+     * @param options, array de AgentOption que contiene las casillas disponibles que ya estan visitadas
+     * @return devuelve la mejor casilla a la que moverse
+     */
+    AgentOption chooseFromAlreadyVisitedOptions(ArrayList<AgentOption> options){
+         double lastVisited = options.get(0).visitedAt;
+         AgentOption bestOption = options.get(0);
+         for (AgentOption o : options) {
+            if (o.visitedAt < lastVisited) {
+                  bestOption = o;
+                  lastVisited = o.visitedAt;
+             }
+         }    
+         return bestOption;
+    }
+    
+   /**
+     * Elige la mejor casilla de entre las no visitadas que contenga la mejor valoración según la distancia al objetivo.
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @author Miguel García
+     * @param options, array de AgentOption que contiene las casillas disponibles que no estan visitadas
+     * @return devuelve la mejor casilla a la que moverse
+     */
+    AgentOption chooseFromNoVisitedOptions(ArrayList<AgentOption> options){
+        double min = options.get(0).distanceToLudwig;
+        AgentOption bestOption = options.get(0);
+        for (AgentOption o : options) {
+            if (o.distanceToLudwig < min) {
+                min = o.distanceToLudwig;
+                bestOption = o;
+            }
+        }
+         return bestOption;
     }
 
     /**
