@@ -23,7 +23,7 @@ public class AgentOption {
 
     /**
      * Constructor
-     * @author
+     * @author Jose Saldaña
      * @param x componente x de casilla destino
      * @param y componente y de casillo destino
      * @param floorHeight altura de casilla destino
