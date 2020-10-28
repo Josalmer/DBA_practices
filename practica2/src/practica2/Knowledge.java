@@ -9,10 +9,6 @@ import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.ArrayList;
 
-/**
- *
- * @author jose
- */
 public class Knowledge {
     Integer currentPositionX;
     Integer currentPositionY;
@@ -30,10 +26,16 @@ public class Knowledge {
     ArrayList<Integer> orientations;
     
     ArrayList<ArrayList<Integer>> map;
+    ArrayList<ArrayList<Integer>> visitedAtMap;
     
     /**
-     * @author Jose Saldaña, Manuel Pancorbo
-     * @param answer 
+     * Inicializa el mundo del agente con la información recibida al hacer login:
+     * ancho, alto, máximo vuelo, etc
+     * Además inicializa los mapas internos de altura de casillas y de
+     * casillas visitadas en -1
+     * @author Jose Saldaña
+     * @author Manuel Pancorbo
+     * @param answer JsonObject recibido al hacer login
      */
     public void initializeKnowledge(JsonObject answer) {
         this.energy = 1000;
@@ -42,9 +44,12 @@ public class Knowledge {
         this.mapHeight = answer.get("height").asInt();
         this.maxFlight = answer.get("maxflight").asInt();
         this.initializeMap();
+        this.initializeVisitedAtMap();
+        this.initializePossibleOrientations();
     }
     
     /**
+     * Inicializa el mapa de alturas de los terrenos a -1 = altura no conocida
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      */
@@ -60,6 +65,23 @@ public class Knowledge {
     }
     
     /**
+     * Inicializa el mapa de visitado en a -1 = no visitado
+     * @author Jose Saldaña
+     */
+    public void initializeVisitedAtMap() {
+        this.visitedAtMap = new ArrayList<>();
+        for (int i = 0; i < this.mapWidth; i++) {
+            ArrayList<Integer> row = new ArrayList<>();
+            for (int j = 0; j < this.mapHeight; j++) {
+                row.add(-1);
+            }
+            this.visitedAtMap.add(row);
+        }
+    }
+    
+    /**
+     * Inicializa los posibles valorse a los que puede orientarse el agente:
+     * -45 0 45 90 135 180 -135 -90
      * @author Manuel Pancorbo
      */
     public void initializePossibleOrientations() {
@@ -76,10 +98,11 @@ public class Knowledge {
         this.orientations.add(-90);
     }
 
-
     /**
+     * Actualiza el conocimiento del mundo con la última percepción recibida
      * @author Jose Saldaña
      * @author Manuel Pancorbo
+     * @param perception Percepción actualizada tras la lectura de sensores
      */
     void update(Perception perception) {
         this.currentPositionX = perception.gps.get(0);
@@ -90,8 +113,8 @@ public class Knowledge {
         this.distanceToLudwig = perception.distance;
         for (int i = 0; i < perception.visual.size(); i++) {
             for (int j = 0; j < perception.visual.get(i).size(); j++) {
-                int xPosition = this.currentPositionX - 3 + i;
-                int yPosition = this.currentPositionY - 3 + j;
+                int xPosition = this.currentPositionX - 3 + j;
+                int yPosition = this.currentPositionY - 3 + i;
                 if (xPosition >= 0 && yPosition >= 0 && xPosition < this.mapWidth && yPosition < this.mapHeight) {
                     this.map.get(xPosition).set(yPosition, perception.visual.get(i).get(j));
                 }
@@ -101,20 +124,27 @@ public class Knowledge {
     }    
     
     /**
+     * Calcula las coordenadas (x, y) en las que esta Ludwig usando:
+     * la distancia a Ludwig + angular + trigonometría
      * @author Jose Saldaña
      */    
     void calculateLudwigPosition() {
         double alpha = 90 - this.angular;
+        if (alpha < 0) {
+            alpha += 360;
+        }
+        alpha = alpha / 180 * Math.PI;
         int xVariation = (int)Math.round(this.distanceToLudwig * Math.cos(alpha));
         int yVariation = (int)Math.round(this.distanceToLudwig * Math.sin(alpha));
         this.ludwigPositionX = this.currentPositionX + xVariation;
-        this.ludwigPositionY = this.currentPositionY + yVariation;
+        this.ludwigPositionY = this.currentPositionY - yVariation;
     }
     
     /**
+     * Calcula el nº de rotaciones necesarias para alcanzar una orientación determinada
      * @author Manuel Pancorbo
-     * @param wantedOrientation
-     * @return how many turns are to be made
+     * @param wantedOrientation Orientación que queremos alcanzar
+     * @return nº de giros necesarios para alcanzar dicha orientación
      */
     public int howManyTurns(int wantedOrientation) {
         int turns = 0;
@@ -129,10 +159,11 @@ public class Knowledge {
     }    
 
     /**
+     * Determina si para alcanzar una orientación se debe girar a derecha o no,
+     * en función del nº de giros para llegar rotando hacia a la derecha
      * @author Manuel Pancorbo
-     * @param turns how many turns does agent have to do in order to get to his
-     *              wanted orientation
-     * @return 0 if agent should turn left, 1 if agent should turn right
+     * @param turns nº de turnos para alcanzar posición objetivo mediante rotaciones a derecha
+     * @return booleano que indica si agente debe girar a derecha (falso = girar izquierda)
      */
     public boolean shouldTurnRight(int turns) {
         boolean rightTurn;
@@ -145,56 +176,64 @@ public class Knowledge {
     }
     
     /**
+     * Determina si el agente debe comenzar a aproximarse al suelo para recargar
+     * la batería
      * @author Jose Saldaña
-     * @return 
+     * @return booleano que indica si el agente debe recargar
      */
     public boolean needRecharge() {
         return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
     }
     
     /**
+     * Consulta si una casilla se encuentra dentro de los límites del mundo
      * @author Jose Saldaña
-     * @param x
-     * @param y
-     * @return 
+     * @param x componente x de una casilla
+     * @param y componente y de una casilla
+     * @return booleano que indica si dicha casilla se encuentra dentro del mundo
      */
     public boolean insideMap(int x, int y) {
         return (x >= 0 && x < this.mapWidth && y >= 0 && y < this.mapHeight);
     }
     
     /**
+     * Comprueba si la distancia entre el agente y el suelo es menor que 5
      * @author Jose Saldaña
-     * @return 
+     * @return booleano que indica si se puede ejecutar touchD
      */
     public boolean canTouchDown() {
         return (this.currentHeight - this.getFloorHeight() < 5);
     }
     
     /**
+     * Consulta si estoy encima de Ludwig
      * @author Jose Saldaña
-     * @return 
+     * @return booleano que indica si estoy sobre Ludwig
      */
     public boolean amIAboveLudwig() {
-        return (this.currentPositionX == this.ludwigPositionX && this.currentPositionY == this.ludwigPositionY);
+        return ((int)this.currentPositionX == (int)this.ludwigPositionX && (int)this.currentPositionY == (int)this.ludwigPositionY);
     }
     
     /**
+     * Comprueba si he excedido límite de acciones sin encontrar el objetivo
      * @author Jose Saldaña
-     * @return 
+     * @return booleano que indica si no puedo alcanzar el objetivo
      */
     public boolean cantReachTarget() {
-        return this.nActionsExecuted > 1000;
+        return this.nActionsExecuted > 10000;
     }
     
     /**
+     * Consulta la altura a la que se encuentra el agente
      * @author Jose Saldaña
-     * @return current FlootHeight
+     * @return altura actual del agente
      */
     public int getFloorHeight() {
         return this.map.get(this.currentPositionX).get(this.currentPositionY);
     }
 
     /**
+     * Modifica el estado interno del agente tras avanzar a siguiente casilla
      * @author Domingo Lopez
      */
     public void moveForward(){
@@ -210,32 +249,39 @@ public class Knowledge {
                 this.currentPositionY -= 1;
             else
                 this.currentPositionY += 1;
+        
+        // Update memory
+        this.visitedAtMap.get(this.currentPositionX).set(this.currentPositionY, this.nActionsExecuted);
     }
 
     /**
+     * Realiza un giro a izquierda o derecha
      * @author Manuel Pancorbo
-     * @param rightTurn 1 if its a right turn, 0 if its a left turn
-     * @return where is the agent looking after doing that turn
+     * @param actualOrientation orientación actual del agente
+     * @param rightTurn booleano que indica si gira a la derecha, false = gira a izquierda
+     * @return Nueva orientación del agente tras giro
      */
     public int getNextOrientation(int actualOrientation, boolean rightTurn) {
-        int turn = rightTurn ? 1 : -1;
+        int turn = rightTurn ? 1 : 7;
         int actual = this.orientations.indexOf(actualOrientation);
-        int next = actual + turn % this.orientations.size();
-
+        int next = (actual + turn) % this.orientations.size();
+        
         return this.orientations.get(next);
     }
     
     /**
+     * Devuelve la energía que gasta una acción
      * @author Domingo Lopez
      * @author Manuel Pancorbo
-     * @param action
-     * @return energyCost of an action
+     * @param action acción para consultar energía
+     * @param nSensors nº de sensores cargados en dron
+     * @return cantidad de energía para la acción action
      */
     public int energyCost(AgentAction action, int nSensors) {
         int energy = 0;
         switch (action) {
             case moveF: energy = 1; break;
-            case moveUp: energy = 5; break;
+            case moveUP: energy = 5; break;
             case moveD: energy = 5; break;
             case rotateL: energy = 1; break;
             case rotateR: energy = 1; break;
@@ -246,16 +292,18 @@ public class Knowledge {
     }
 
     /**
+     * Modifica el estado interno del agente tras realizar una acción
      * @author Manuel Pancorbo
      * @author Domingo Lopez
-     * @param wantedMovement
+     * @param nextMovement acción a ejecutar
      */
     public void manageMovement(AgentAction nextMovement) {
+        this.nActionsExecuted += 1;
         switch (nextMovement) {
             case moveF:
                 this.moveForward();
                 break;
-            case moveUp:
+            case moveUP:
                 this.currentHeight += 5;
                 break;
             case moveD:
@@ -271,5 +319,13 @@ public class Knowledge {
                 this.currentHeight = this.getFloorHeight();
                 break;
         }
+    }
+    
+    /**
+     * Recarga completamente la batería
+     * @author Manuel Pancorbo
+     */
+    public void fullRecharge(){
+        this.energy = 1000;
     }
 }

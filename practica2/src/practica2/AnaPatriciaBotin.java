@@ -11,8 +11,8 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
     
     // AGENT CONFIGURATION  -------------------------------------------
-    String world = "Playground1";   // Select World
-    boolean showPanel = false;      // True to show SensorControlPanel
+    String world = "World8";   // Select World
+    boolean showPanel = true;      // True to show SensorControlPanel
     // Select sensors
     ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
     // END CONFIGURATION  ---------------------------------------------
@@ -33,10 +33,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     TTYControlPanel myControlPanel;
 
     /**
+     * Inizializa y confugira el agente en la plataforma de agentes
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
      * @author Miguel García
+     * 
      */
     @Override
     public void setup() {
@@ -52,6 +54,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Es el método principal de ejecución del agente.
+     * Dependiendo del estado en que se encuentre el agente se realizará una opción u otra
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
@@ -86,8 +90,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     // Login and Initializate -------------------------------------------
     /**
+     * Logea el agente en la plataforma e inicializa el agente,
+     * estableciendo los canales de comunicación
      * @author Jose Saldaña
-     * @param params
      */
     void login() {
         JsonObject params = new JsonObject();
@@ -111,9 +116,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Manda la petición de login y crea el outChannel para posteriores comunicaciones
      * @author Jose Saldaña
-     * @param params
-     * @return
+     * @param params El JsonObject: command, world, attach
+     * @return La respuesta del login como JsonObject
      */
     JsonObject sendAndReceiveLogin(JsonObject params) {
         ACLMessage out = new ACLMessage();
@@ -132,11 +138,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Inicializa el agente
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
      * @author Miguel García
-     * @param answer
+     * @param answer Objeto json  enviado por el agente de LARVA
      */
     void initializeAgent(JsonObject answer) {
         this.sessionKey = answer.get("key").asString();
@@ -149,18 +156,21 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Execution --------------------------------------------------------
     /**
+     * Contiene el comportamiento reactivo del agente. 
+     * En este método el agente valora cual es su situación en el mapa 
+     * y en función de esta actualiza su estado
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
      * @author Miguel García
-     * @param answer
+     * 
      */
     void reactiveBehaviour() {
         if (this.knowledge.amIAboveLudwig()) {
             Info("Estoy encima de Ludwig");
             this.status = AgentStatus.ABOVE_LUDWIG;
             Info("Changed status to: " + this.status);
-        } else if (this.knowledge.nActionsExecuted > 1000) {
+        } else if (this.knowledge.nActionsExecuted > 10000) {
             Info("No encuentro el objetivo");
             this.status = AgentStatus.FINISHED;
             Info("Changed status to: " + this.status);
@@ -179,17 +189,40 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Método que piensa el plan que va a seguir el agente.
+     * En este método se valora las distintas opciones posibles y se escoge la mejor 
+     * que será la que constituirá el plan que ejecutará el agente
      * @author Miguel García
-     * @return nextAction
+     * 
      */
     void thinkPlan() {
         ArrayList<AgentOption> options = this.generateOptions();
+        ArrayList<AgentOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
-            double max = 0;
-            AgentOption winner = null;
             for (AgentOption o : options) {
-                if (o.puntuationCostRelation > max) {
-                    max = o.puntuationCostRelation;
+                if (o.visitedAt == -1) {
+                    noVisitedOptions.add(o);
+                }
+            }
+            if (noVisitedOptions.size() > 0) {
+                options = noVisitedOptions;
+            } else {
+                double lastVisited = options.get(0).visitedAt;
+                AgentOption olderOption = options.get(0);
+                for (AgentOption o : options) {
+                    if (o.visitedAt < lastVisited) {
+                        olderOption = o;
+                        lastVisited = o.visitedAt;
+                    }
+                }
+                noVisitedOptions.add(olderOption);
+                options = noVisitedOptions;
+            }
+            double min = options.get(0).distanceToLudwig;
+            AgentOption winner = options.get(0);
+            for (AgentOption o : options) {
+                if (o.distanceToLudwig < min) {
+                    min = o.distanceToLudwig;
                     winner = o;
                 }
             }
@@ -202,17 +235,19 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Genera opciones a partir de las casillas contiguas al agente, 
+     * descarta aquellas no viables y devuelve un array de AgentAction con las posibles.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
-     * @return ArrayList(AgentOption)
+     * @return array que contiene todas las AgentOption viables.
      */
     ArrayList<AgentOption> generateOptions() {
         ArrayList<AgentOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
         for (int i = 0; i < 9; i++) {
             if (i != 4) { // Not check current position
-                int xPosition = this.knowledge.currentPositionX - 1 + (i / 3);
-                int yPosition = this.knowledge.currentPositionY - 1 + (i % 3);
+                int xPosition = this.knowledge.currentPositionX - 1 + (i % 3);
+                int yPosition = this.knowledge.currentPositionY - 1 + (i / 3);
                 int orientation = orientations[i];
                 if (this.knowledge.insideMap(xPosition, yPosition)) {
                     int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
@@ -221,8 +256,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                         Info("Changed status to: " + this.status);
                         return null;
                     }
-                    if (targetHeight <= this.knowledge.maxFlight) {
-                        options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+                    if (targetHeight < this.knowledge.maxFlight) { // TODO poner esto bonito
+                        if ((this.knowledge.currentHeight + 5 < this.knowledge.maxFlight && this.knowledge.currentHeight < targetHeight) || targetHeight <= this.knowledge.currentHeight) {
+                            options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation));
+                        }
                     }
                 }
             }
@@ -231,16 +268,19 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Genera la opción para una determinada casilla, 
+     * genera un plan para llegar hasta ella y su coste y,
+     * finalmente, calcula una heurística para asociarle un valor.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
-     * @param xPosition
-     * @param yPosition
-     * @param targetHeight
-     * @param orientation
+     * @param xPosition, posición x de la casilla en el mundo
+     * @param yPosition, posición y de la casilla en el mundo
+     * @param height, altura del suelo de la casilla
+     * @param orientation, orientación a la que debe apuntar el agente para avanzar a esa casilla
      * @return AgentOption
      */
-    AgentOption generateOption(int xPosition, int yPosition, int targetHeight, int orientation) {
-        AgentOption option = new AgentOption(xPosition, yPosition, targetHeight);
+    AgentOption generateOption(int xPosition, int yPosition, int height, int orientation) {
+        AgentOption option = new AgentOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
         ArrayList<AgentAction> plan = new ArrayList<>();
         int cost = 0;
         boolean onWantedBox = false;
@@ -258,23 +298,24 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     nextAction = AgentAction.rotateL;
                     provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, false);
                 }
-            } else if (provisionalHeight < targetHeight) {
-                nextAction = AgentAction.moveUp;
+            } else if (provisionalHeight < height) {
+                nextAction = AgentAction.moveUP;
                 provisionalHeight += 5;
             } else {
                 nextAction = AgentAction.moveF;
                 onWantedBox = true;
             }
-            this.plan.add(nextAction);
+            plan.add(nextAction);
             cost += this.knowledge.energyCost(nextAction, 0);
         }
         option.plan = plan;
         option.cost = cost;
-        option.calculatePuntuation(this.knowledge.ludwigPositionX, this.knowledge.ludwigPositionY);
+        option.calculateDistanceToLudig(this.knowledge.ludwigPositionX, this.knowledge.ludwigPositionY);
         return option;
     }
 
     /**
+     * Método que ejecuta el mejor plan pensado por el agente.
      * @author Miguel García
      */
     void executePlan() {
@@ -286,8 +327,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
     
     /**
+     * Intenta aterrizar al agente en el suelo, si no puede baja 5 niveles en su lugar
      * @author Jose Saldaña
-     * @return 
+     * @return booleano que indica si ha conseguido aterrizar
      */
     boolean toLand() {
         if (this.knowledge.canTouchDown()) {
@@ -300,6 +342,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
     
     /**
+     * Rescata a Ludwig y cambia estado a Finished para finalizar Agente
      * @author Jose Saldaña
      */
     void getLudwig() {
@@ -311,6 +354,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Asegura que el agente esté en tierra y realiza la recarga de batería.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      */
@@ -325,6 +369,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Read sensors and update perception--------------------------------
     /**
+     * Solicita el estado de los sensores autorizados y se encarga de actualizar Perception y Knowledge.
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      */
@@ -350,8 +395,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     // ------------------------------------------------------------------
     // Agent low level functions ----------------------------------------
-    //TODO
-    //Gestión de errores. En vez de void, que devuelva un Integer y si es código -1 por ejemplo ya sabemos que algo ha ido mal
     /**
      * @author Domingo Lopez
      * @param action
@@ -376,20 +419,20 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Maneja los correspondientes cambios que generará la acción en el knowledge del agente.
      * @author Domingo Lopez
      * @author Jose Saldaña
      * @author Manuel Pancorbo
-     * @param action
+     * @param action, siguiente accion que realizara el agente
      */
     void executeAction(AgentAction action) {
         switch (action) {
             case recharge:
                 this.plan = null;
-                this.knowledge.energy = 1000;
+                this.knowledge.fullRecharge();
                 break;
             default:
                 this.knowledge.manageMovement(action);
-                this.knowledge.nActionsExecuted += 1;
                 this.useEnergy(action);
                 break;
         }
@@ -406,6 +449,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Logout and takeDown-----------------------------------------------
     /**
+     * Envía mensaje de logout y comienza fin (_exitRequested = true)
      * @author Jose Saldaña
      */
     void logout() {
@@ -422,6 +466,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Método para desconectarse de la plataforma de agentes
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
@@ -437,9 +482,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Communications----------------------------------------------------
     /**
+     * Envío bloqueante de un mensaje, el agente se bloquea hasta que recibe respuesta
      * @author Jose Saldaña
-     * @param params
-     * @return
+     * @param params JsonObject con la estructura de lo que se quiere mandar
+     * @return parsedAnswer JsonObject con la estructura según respuesta
      */
     JsonObject sendAndReceiveMessage(JsonObject params) {
         String parsedParams = params.toString();
@@ -458,8 +504,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Envío no bloqueante de un mensaje
      * @author Jose Saldaña
-     * @param params
+     * @param params JsonObject con la estructura de lo que se quiere mandar
      */
     void sendMessage(JsonObject params) {
         String parsedParams = params.toString();
@@ -467,7 +514,4 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.outChannel.setContent(parsedParams);
         this.sendServer(this.outChannel);
     }
-
-    // ------------------------------------------------------------------
-    // Misc--------------------------------------------------------------
 }

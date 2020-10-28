@@ -8,51 +8,43 @@ package practica2;
 import java.util.ArrayList;
 
 /**
- *
- * @author jose
+ * Opciones a las que puede moverse un agente desde su posición actual
+ * @author Jose Saldaña
  */
 public class AgentOption {
     Integer x;
     Integer y;
     Integer floorHeight;
+    Integer visitedAt;
     ArrayList<AgentAction> plan;
     Integer cost;
-    double puntuation;
+    double distanceToLudwig;
     double puntuationCostRelation;
 
     /**
-     * @author Jose Saldaña
-     * @param x
-     * @param y
-     * @param floorHeight 
+     * Constructor
+     * @author
+     * @param x componente x de casilla destino
+     * @param y componente y de casillo destino
+     * @param floorHeight altura de casilla destino
+     * @param visited última vez visitada la casilla destino (-1 = no visitada)
      */
-    public AgentOption(Integer x, Integer y, Integer floorHeight) {
+    public AgentOption(Integer x, Integer y, Integer floorHeight, Integer visited) {
         this.x = x;
         this.y = y;
         this.floorHeight = floorHeight;
+        this.visitedAt = visited;
     }
     
     /**
+     * Calcula e inicializa la distancia a Ludwig desde la casilla,
+     * mediante el método de distancia Manhattan
      * @author Jose Saldaña
-     * @param squareOrientation
-     * @param targetOrientation 
      */
-    void calculatePuntuationByAngular(int squareOrientation, double targetOrientation) {
-        double desviation = Math.abs(Math.round(targetOrientation - squareOrientation));
-        this.puntuation = (180-desviation);
-        this.puntuationCostRelation = Math.pow(this.puntuation, 4) / this.cost;
-    }
-    
-    /**
-     * @author Jose Saldaña
-     * @param ludwigX
-     * @param ludwigY 
-     */
-    void calculatePuntuation(int ludwigX, int ludwigY) {
+    void calculateDistanceToLudig(int ludwigX, int ludwigY) {
         // Distancia Manhattan
-        this.puntuation = Math.abs(x - ludwigX) + Math.abs(y - ludwigY);
-        // Distancia de Euclides
+        this.distanceToLudwig = Math.abs(x - ludwigX) + Math.abs(y - ludwigY);
+//         Distancia de Euclides
 //	this.puntuation = (Math.sqrt(Math.pow(2,(x - ludwigX)) + Math.pow(2,(y - ludwigY))));
-        this.puntuationCostRelation = Math.pow(this.puntuation, 4) / this.cost;
     }
 }
