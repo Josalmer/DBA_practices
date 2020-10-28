@@ -276,6 +276,7 @@ public class Knowledge {
      * @param wantedMovement
      */
     public void manageMovement(AgentAction nextMovement) {
+        this.nActionsExecuted += 1;
         switch (nextMovement) {
             case moveF:
                 this.moveForward();
@@ -296,5 +297,13 @@ public class Knowledge {
                 this.currentHeight = this.getFloorHeight();
                 break;
         }
+    }
+    
+    /**
+     * Recarga completamente la batería
+     * @author Manuel Pancorbo
+     */
+    public void fullRecharge(){
+        this.energy = 1000;
     }
 }

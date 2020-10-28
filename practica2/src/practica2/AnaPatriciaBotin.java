@@ -406,8 +406,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
-     * Ejecuta una acción del agente y maneja los correspondientes cambios
-     * que generará la acción.
+     * Maneja los correspondientes cambios que generará la acción en el knowledge del agente.
      * @author Domingo Lopez
      * @author Jose Saldaña
      * @author Manuel Pancorbo
@@ -417,11 +416,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         switch (action) {
             case recharge:
                 this.plan = null;
-                this.knowledge.energy = 1000;
+                this.knowledge.fullRecharge();
                 break;
             default:
                 this.knowledge.manageMovement(action);
-                this.knowledge.nActionsExecuted += 1;
                 this.useEnergy(action);
                 break;
         }
