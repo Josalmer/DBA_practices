@@ -33,10 +33,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     TTYControlPanel myControlPanel;
 
     /**
+     * Inizializa y confugira el agente en la plataforma de agentes
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
      * @author Miguel García
+     * 
      */
     @Override
     public void setup() {
@@ -52,6 +54,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Es el método principal de ejecución del agente.
+     * Dependiendo del estado en que se encuentre el agente se realizará una opción u otra
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
@@ -134,11 +138,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Inicializa el agente
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
      * @author Miguel García
-     * @param answer
+     * @param answer Objeto json  enviado por el agente de LARVA
      */
     void initializeAgent(JsonObject answer) {
         this.sessionKey = answer.get("key").asString();
@@ -151,11 +156,14 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     // ------------------------------------------------------------------
     // Execution --------------------------------------------------------
     /**
+     * Contiene el comportamiento reactivo del agente. 
+     * En este método el agente valora cual es su situación en el mapa 
+     * y en función de esta actualiza su estado
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
      * @author Miguel García
-     * @param answer
+     * 
      */
     void reactiveBehaviour() {
         if (this.knowledge.amIAboveLudwig()) {
@@ -181,8 +189,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Método que piensa el plan que va a seguir el agente.
+     * En este método se valora las distintas opciones posibles y se escoge la mejor 
+     * que será la que constituirá el plan que ejecutará el agente
      * @author Miguel García
-     * @return nextAction
+     * 
      */
     void thinkPlan() {
         ArrayList<AgentOption> options = this.generateOptions();
@@ -304,6 +315,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Método que ejecuta el mejor plan pensado por el agente.
      * @author Miguel García
      */
     void executePlan() {
@@ -454,6 +466,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Método para desconectarse de la plataforma de agentes
      * @author Jose Saldaña
      * @author Manuel Pancorbo
      * @author Domingo Lopez
