@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
     
     // AGENT CONFIGURATION  -------------------------------------------
-    String world = "World8";   // Select World
+    String world = "World9";   // Select World
     boolean showPanel = true;      // True to show SensorControlPanel
     // Select sensors
     ArrayList<String> requestedSensors = new ArrayList<String>(Arrays.asList("gps", "compass", "distance", "angular", "visual"));
@@ -170,7 +170,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             Info("Estoy encima de Ludwig");
             this.status = AgentStatus.ABOVE_LUDWIG;
             Info("Changed status to: " + this.status);
-        } else if (this.knowledge.nActionsExecuted > 10000) {
+        } else if (this.knowledge.cantReachTarget()) {
             Info("No encuentro el objetivo");
             this.status = AgentStatus.FINISHED;
             Info("Changed status to: " + this.status);
