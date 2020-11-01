@@ -328,4 +328,14 @@ public class Knowledge {
     public void fullRecharge(){
         this.energy = 1000;
     }
+    
+    /**
+     * Comprueba si es necesario hacer una recarga antes de avanzar
+     * @author Manuel Pancorbo
+     * @return 1 si debería recargar en la casilla actual, 0 en caso contrario
+     */
+    public boolean shouldIRechargueFirst(AgentOption bestOption){
+        boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
+        return shouldIRechargue;
+    }
 }
