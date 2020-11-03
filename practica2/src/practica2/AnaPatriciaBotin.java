@@ -216,6 +216,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             winner = chooseFromNoVisitedOptions(options);
             if (winner != null) {
                 this.plan = winner.plan;
+                if (this.knowledge.shouldIRechargueFirst(winner))
+                    this.status = AgentStatus.RECHARGING;
             } else {
                 throw new RuntimeException("No hay un plan ganador");
             }
