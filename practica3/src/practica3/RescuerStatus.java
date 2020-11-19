@@ -6,9 +6,10 @@
 package practica3;
 
 /**
- * Distints estados en los que puede estar un agente
+ * Distintos estados en los que puede estar un agente
+ * 
  * @author Jose Saldaña
  */
 public enum RescuerStatus {
-    FINISHED
+    SUBSCRIBED_TO_PLATFORM, SUBSCRIBED_TO_WORLD, FINISHED
 }

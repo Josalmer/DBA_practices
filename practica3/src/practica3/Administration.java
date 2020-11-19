@@ -6,10 +6,16 @@
 package practica3;
 
 /**
- * Distintos estados en los que puede estar un agente
- * 
+ *
  * @author Jose Saldaña
  */
-public enum SeekerStatus {
-    SUBSCRIBED_TO_PLATFORM, SUBSCRIBED_TO_WORLD, FINISHED
+public class Administration {
+
+    String bankAccountNumber;
+    int angentsSubscribed;
+
+    public Administration() {
+        angentsSubscribed = 0;
+    }
+
 }

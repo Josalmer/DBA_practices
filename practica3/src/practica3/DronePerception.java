@@ -27,6 +27,7 @@ public class DronePerception {
 
     /**
      * Método constructor de la clase, inicializa a null todos los valores.
+     * 
      * @author Manuel Pancorbo
      */
     public DronePerception() {
@@ -45,9 +46,11 @@ public class DronePerception {
     }
 
     /**
-     * Parsea y actualiza los datos recibidos en un JSONArray que serán guardados variables de la clase.
-     * Estas variables harán más sencilla la tarea de construir el resto del código y la legibilidad.
-     * El JSONArray contiene los sensores recibidos y sus datos.
+     * Parsea y actualiza los datos recibidos en un JSONArray que serán guardados
+     * variables de la clase. Estas variables harán más sencilla la tarea de
+     * construir el resto del código y la legibilidad. El JSONArray contiene los
+     * sensores recibidos y sus datos.
+     * 
      * @author Manuel Pancorbo
      * @param perception, JSONArray que contiene los sensores y sus datos.
      */
@@ -97,8 +100,9 @@ public class DronePerception {
     }
 
     /**
-     * Parsea los datos recibidos en un JSONArray a un ArrayList de enteros.
-     * El JSONArray contiene únicamente los datos de un sensor (campo 'data').
+     * Parsea los datos recibidos en un JSONArray a un ArrayList de enteros. El
+     * JSONArray contiene únicamente los datos de un sensor (campo 'data').
+     * 
      * @author Manuel Pancorbo
      * @param array, JSONArray que contiene los datos de un sensor
      * @return Array de enteros con los datos parseados.
@@ -112,9 +116,11 @@ public class DronePerception {
     }
 
     /**
-     * Parsea los datos recibidos en un JSONArray en una matriz de enteros.
-     * El JSONArray contiene únicamente los datos de un sensor (campo 'data').
-     * La matriz está construida con la estructura ArrayList (ArrayList de ArrayList de enteros).
+     * Parsea los datos recibidos en un JSONArray en una matriz de enteros. El
+     * JSONArray contiene únicamente los datos de un sensor (campo 'data'). La
+     * matriz está construida con la estructura ArrayList (ArrayList de ArrayList de
+     * enteros).
+     * 
      * @author Manuel Pancorbo
      * @param array, JSONArray que contiene los datos de un sensor
      * @return Matriz de enteros con los datos parseados.
@@ -127,9 +133,10 @@ public class DronePerception {
         return intMatrix;
     }
 
-      /**
-     * Parsea los datos recibidos en un JSONArray a un ArrayList de doubles.
-     * El JSONArray contiene únicamente los datos de un sensor (campo 'data').
+    /**
+     * Parsea los datos recibidos en un JSONArray a un ArrayList de doubles. El
+     * JSONArray contiene únicamente los datos de un sensor (campo 'data').
+     * 
      * @author Manuel Pancorbo
      * @param array, JSONArray que contiene los datos de un sensor
      * @return Array de doubles con los datos parseados.
@@ -142,10 +149,12 @@ public class DronePerception {
         return doubleArray;
     }
 
-   /**
-     * Parsea los datos recibidos en un JSONArray en una matriz de doubles.
-     * El JSONArray contiene únicamente los datos de un sensor (campo 'data').
-     * La matriz está construida con la estructura ArrayList (ArrayList de ArrayList de doubles).
+    /**
+     * Parsea los datos recibidos en un JSONArray en una matriz de doubles. El
+     * JSONArray contiene únicamente los datos de un sensor (campo 'data'). La
+     * matriz está construida con la estructura ArrayList (ArrayList de ArrayList de
+     * doubles).
+     * 
      * @author Manuel Pancorbo
      * @param array, JSONArray que contiene los datos de un sensor
      * @return Matriz de doubles con los datos parseados.
@@ -160,8 +169,10 @@ public class DronePerception {
 
     /**
      * Devuelve todos los valores de los sensores de la clase DronePerception.
+     * 
      * @author Manuel Pancorbo
-     * @return devuelve en un string las variables de la clase y sus valores, incluidas las que tienen valor null.
+     * @return devuelve en un string las variables de la clase y sus valores,
+     *         incluidas las que tienen valor null.
      */
     @Override
     public String toString() {

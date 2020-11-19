@@ -7,8 +7,9 @@ package practica3;
 
 /**
  * Distintas acciones que puede realizar el agente
+ * 
  * @author Domingo Lopez
  */
 public enum DroneAction {
-    moveF,moveUP,moveD,rotateL,rotateR,touchD,LECTURA_SENSORES, recharge
+    moveF, moveUP, moveD, rotateL, rotateR, touchD, LECTURA_SENSORES, recharge
 }

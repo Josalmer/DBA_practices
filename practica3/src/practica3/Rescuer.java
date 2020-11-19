@@ -8,12 +8,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Rescuer extends IntegratedAgent {
-    
-    // AGENT CONFIGURATION  -------------------------------------------
-    // END CONFIGURATION  ---------------------------------------------
-    
-    ACLMessage outChannel = new ACLMessage(); // 1 para cada agente con el que se comunique
 
+    // AGENT CONFIGURATION -------------------------------------------
+    // END CONFIGURATION ---------------------------------------------
+
+    String APBAccountNumber;
+
+    CommunicationAssistant _communications;
     RescuerStatus status;
     AgentKnowledge knowledge = new AgentKnowledge();
     DronePerception perception = new DronePerception();
@@ -21,8 +22,16 @@ public class Rescuer extends IntegratedAgent {
     @Override
     public void setup() {
         super.setup();
-        this.status = RescuerStatus.FINISHED;
-        _exitRequested = false;
+
+        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID);
+
+        if (this._communications.chekingPlatform()) {
+            this.status = RescuerStatus.SUBSCRIBED_TO_PLATFORM;
+            _exitRequested = false;
+        } else {
+            System.out.println(this.getLocalName() + " failed subscribing to" + _identitymanager + " and DIE");
+            _exitRequested = true;
+        }
     }
 
     @Override
@@ -30,11 +39,32 @@ public class Rescuer extends IntegratedAgent {
         while (!_exitRequested) {
             Info("Current Status: " + this.status);
             switch (this.status) {
+                case SUBSCRIBED_TO_PLATFORM:
+                    this.getAPBAccountNumber();
+                    break;
+                case SUBSCRIBED_TO_WORLD:
+                    // Wait APB for instrucción and tickets for login
+                    this.login();
+                    break;
                 case FINISHED:
                     this.logout();
                     break;
             }
         }
+    }
+
+    void getAPBAccountNumber() {
+        APBAccountNumber = this._communications.queryRefAPB("subscribedToPlatform");
+        if (APBAccountNumber == "error") {
+            this.status = RescuerStatus.FINISHED;
+        } else {
+            // Suscribirse al mundo
+            this.status = RescuerStatus.SUBSCRIBED_TO_WORLD;
+        }
+    }
+
+    void login() {
+
     }
 
     void logout() {
