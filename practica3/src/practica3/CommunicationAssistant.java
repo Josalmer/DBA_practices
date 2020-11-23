@@ -5,6 +5,7 @@
  */
 package practica3;
 
+
 import IntegratedAgent.IntegratedAgent;
 import PublicKeys.PublicCardID;
 import YellowPages.YellowPages;
@@ -23,6 +24,8 @@ public class CommunicationAssistant {
     ACLMessage identityManagerChannel = new ACLMessage(); // Todos
     ACLMessage bankChannel = new ACLMessage(); // Solo APB
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
+    ACLMessage outChannel = new ACLMessage();
+    
 
     String bankAccountNumber;
 
@@ -146,5 +149,16 @@ public class CommunicationAssistant {
             return "error";
         }
     }
+    
+   public ArrayList<Integer> queryPlan(String content){
+       return null;
+   }
+   
+   public Boolean queryMove(){
+       return null;
+   }
 
+    JsonObject sendAndReceiveMessage(JsonObject params) {
+      return null;
+    }
 }

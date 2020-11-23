@@ -11,5 +11,5 @@ package practica3;
  * @author Jose Saldaña
  */
 public enum RescuerStatus {
-    SUBSCRIBED_TO_PLATFORM, SUBSCRIBED_TO_WORLD, FINISHED
+    SUBSCRIBED_TO_PLATFORM, SUBSCRIBED_TO_WORLD, FINISHED, FREE, BUSY, FREE_WITH_PLAN
 }
