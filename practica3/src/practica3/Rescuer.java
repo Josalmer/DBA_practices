@@ -7,49 +7,29 @@ import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class Rescuer extends IntegratedAgent {
+public class Rescuer extends Drone {
 
     // AGENT CONFIGURATION -------------------------------------------
     // END CONFIGURATION ---------------------------------------------
 
-    String APBAccountNumber;
-
-    CommunicationAssistant _communications;
-    RescuerStatus status;
-    AgentKnowledge knowledge = new AgentKnowledge();
-    DronePerception perception = new DronePerception();
-    DroneAction lastAction;
-    Boolean needRecharge = true;
-    ArrayList<DroneAction> plan;
-    ArrayList<Integer> planInMap;
-    ArrayList<String> authorizedSensors = new ArrayList();
+  
     
-    @Override
-    public void setup() {
-        super.setup();
-
-        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID);
-
-        if (this._communications.chekingPlatform()) {
-            this.status = RescuerStatus.SUBSCRIBED_TO_PLATFORM;
-            _exitRequested = false;
-        } else {
-            System.out.println(this.getLocalName() + " failed subscribing to" + _identitymanager + " and DIE");
-            _exitRequested = true;
-        }
-    }
 
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
             Info("Current Status: " + this.status);
             switch (this.status) {
+               
                 case SUBSCRIBED_TO_PLATFORM:
                     this.getAPBAccountNumber();
+                    this.checkingWorld("rescuer");
                     break;
                 case SUBSCRIBED_TO_WORLD:
                     // Wait APB for instrucción and tickets for login
                     this.login();
+                    this.login(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
+                    this.recharge();
                     break;
                 case FREE:
                     this.receivePlan();
@@ -66,81 +46,27 @@ public class Rescuer extends IntegratedAgent {
         }
     }
 
-    void getAPBAccountNumber() {
-        APBAccountNumber = this._communications.queryRefAPB("subscribedToPlatform");
-        if (APBAccountNumber == "error") {
-            this.status = RescuerStatus.FINISHED;
-        } else {
-            // Suscribirse al mundo
-            this.status = RescuerStatus.SUBSCRIBED_TO_WORLD;
-        }
-    }
-
+   @Override
     void login() {
-
+        JsonObject parsedData = this._communications.queryLogin("login");
+        this.knowledge.currentPositionX = parsedData.get("x").asInt();
+        this.knowledge.currentPositionY = parsedData.get("y").asInt();
+        this.rechargeTicket = parsedData.get("rechargeTicket").asString();
+        
+        JsonArray array = parsedData.get("map").asArray();
+        
+        this.knowledge.map = this.perception.convertToIntegerMatrix(array);
     }
 
-    void logout() {
-        _exitRequested = true;
-    }
-    void useEnergy(DroneAction action) {
-        this.knowledge.energy -= this.knowledge.energyCost(action, this.authorizedSensors.size());
-    }
-
-    boolean toLand() {
-        if (this.knowledge.canTouchDown()) {
-            this.doAction(DroneAction.touchD);
-            return true;
-        } else {
-            this.doAction(DroneAction.moveD);
-            return false;
+    @Override
+    void login(int x , int y){
+        String result = this._communications.requestLoginWorldManager("rescuer",x, y, new ArrayList<String>());
+        if(result.equals("error")){
+            _exitRequested =true;
         }
     }
-    void doAction(DroneAction action){
-        JsonObject params = new JsonObject();
-        params.add("command", "execute");
-        params.add("action", action.toString());
-        //params.add("key", this.sessionKey);
-
-        JsonObject answer = this._communications.sendAndReceiveMessage(params);
-
-        if (answer.get("result").asString().equals("ok")) {
-            this.executeAction(action);
-            Info("Acción realizada:" + action.toString());
-            this.lastAction = action;
-        } else {
-            this.logout();
-        }
-    }
-    void executePlan(){
-        if(this._communications.queryMove()){
-            if(this.knowledge.needRecharge()){
-                if(this.toLand()){
-                    this.doAction(DroneAction.recharge);  
-                }
-            }else{
-                this.doAction(this.plan.get(0));
-                this.plan.remove(0);
-                if(this.plan.size() == 0){
-                    this.status = RescuerStatus.FREE;
-                    this.plan = null;
-                }
-            }
-            
-        }
-    }
-    
-    void executeAction(DroneAction action){
-        switch(action){
-            case recharge:
-                //FALTA
-                break;
-            default:
-                this.knowledge.manageMovement(action);
-                this.useEnergy(action);
-                break;
-        }
-    }
+   
+    @Override
     void elaboratePlan(){
        
         int currentYPosition = this.knowledge.currentPositionY;
@@ -210,17 +136,14 @@ public class Rescuer extends IntegratedAgent {
            
         }
     }
+    @Override
     void receivePlan(){
-        this.planInMap = this._communications.queryPlan("Need Plan");
+        //this.planInMap = this._communications.queryPlan("Need Plan");
         this.elaboratePlan();
         this.status = RescuerStatus.BUSY;
         
     }
     
 
-    @Override
-    public void takeDown() {
-        super.takeDown();
-    }
-
+  
 }
