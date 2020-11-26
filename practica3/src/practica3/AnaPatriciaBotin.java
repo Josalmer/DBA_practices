@@ -9,11 +9,8 @@ import java.util.Arrays;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
 
-    // AGENT CONFIGURATION -------------------------------------------
-    String world = "playground1";
-    // END CONFIGURATION ---------------------------------------------
-
-    CommunicationAssistant _communications;
+    GeneralInfo info = new GeneralInfo();
+    APBCommunicationAssistant _communications;
     Administration adminData = new Administration();
     AgentStatus status;
     AgentKnowledge knowledge = new AgentKnowledge();
@@ -22,7 +19,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void setup() {
         super.setup();
 
-        this._communications = new CommunicationAssistant(this, "Sphinx", _myCardID, world);
+        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID, this.info.getWorld());
 
         if (this._communications.chekingPlatform()) {
             this.status = AgentStatus.SUBSCRIBED_TO_PLATFORM;
@@ -42,10 +39,20 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.createBankAccount();
                     break;
                 case WITH_BANK_ACC:
-                    // Esperar Query Ref subscribedToPlatform de los 4 agentes, contestarles con el
-                    // nº de cuenta,
-                    // cuando se haya contestado a los 4 (comprobar adminData.angentsSubscribed)
-                    // Hacer subscribe al mundo indicando rol de Listener
+                    this.shareBankAccount();
+                    this.checkingWorld();
+                    break;
+                case SUBSCRIBED_TO_WORLD:
+                    this.investigateMarket();
+                    break;
+                case SHOPPING:
+                    this.initialShopping();
+                    break;
+                case FINISHED_SHOPPING:
+
+                    break;
+                case RESCUEING:
+                    
                     break;
                 case FINISHED:
                     this.logout();
@@ -54,12 +61,71 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * @author Jose Saldaña
+     */
     void createBankAccount() {
         this.adminData.bankAccountNumber = this._communications.openBankAccount();
-        if (this.adminData.bankAccountNumber == "error") {
+        if (this.adminData.bankAccountNumber.equals("error")) {
             this.status = AgentStatus.FINISHED;
         } else {
             this.status = AgentStatus.WITH_BANK_ACC;
+        }
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void shareBankAccount() {
+        while (this.adminData.angentsSubscribed < 4) {
+            this._communications.listenAndShareBankAccount();
+            this.adminData.angentsSubscribed++;
+        }
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void checkingWorld() {
+        boolean logedIn = this._communications.checkingWorld(this.adminData.bankAccountNumber, "LISTENER");
+        if (logedIn) {
+            this.status = AgentStatus.SUBSCRIBED_TO_WORLD;
+        } else {
+            this.status = AgentStatus.FINISHED;
+        }
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void investigateMarket() {
+        this._communications.askShoppingCenters();
+        this.status = AgentStatus.SHOPPING;
+    }
+
+    /**
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
+    void initialShopping() {
+        this.adminData.sensor1 = this.buy("THERMALDLX");
+        this.adminData.sensor2 = this.buy("THERMALHQ");
+//        this.adminData.map = this.buy("MAP");
+        for (int i = 0; i < 4; i++) {
+            this.adminData.rechargeTickets.add(this.buy("CHARGE"));
+        }
+
+        if (this.status != AgentStatus.FINISHED) {
+            this.status = AgentStatus.FINISHED_SHOPPING; 
+        }
+    }
+    
+    String buy(String SensorName) {
+        String sensorCode = this._communications.buy(SensorName);
+        if (sensorCode == null) {
+            this.status = AgentStatus.FINISHED;
+            return null;
+        } else {
+            return sensorCode;
         }
     }
 

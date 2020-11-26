@@ -76,7 +76,7 @@ public class Rescuer extends Drone {
 
     @Override
     void loginWorld(int x , int y){
-        String result = this._communications.requestLoginWorldManager("rescuer",x, y, new ArrayList<String>());
+        String result = this._communications.loginWorld("rescuer",x, y, new ArrayList<String>());
         if(result.equals("error")){
             this.status = DroneStatus.FINISHED;
         }
