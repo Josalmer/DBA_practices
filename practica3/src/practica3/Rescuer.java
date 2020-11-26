@@ -26,13 +26,20 @@ public class Rescuer extends Drone {
                     this.checkingWorld("rescuer");
                     break;
                 case SUBSCRIBED_TO_WORLD:
-                    // Wait APB for instrucción and tickets for login
-                    this.login(); //loginAPB
-                    this.login(this.knowledge.currentPositionX,this.knowledge.currentPositionY); //loginMundo
-                    this.recharge();
+                    this.loginAPB();
+                    this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
+                    this.status = DroneStatus.RECHARGING;
                     break;
                 case FREE:
                     this.receivePlan();
+                    break;
+                case NEED_RECHARGE:
+                    this.claimRecharge();
+                    if (this.rechargeTicket == null) {
+                        this.status = DroneStatus.RECHARGING;
+                    } else {
+                        this.status = DroneStatus.BACKING_HOME;
+                    }
                     break;
                 case RECHARGING:
                     this.recharge();
@@ -40,7 +47,6 @@ public class Rescuer extends Drone {
                 case BUSY:
                     this.executePlan();
                     break;
-                    
                 case FINISHED:
                     this.logout();
                     break;
@@ -49,22 +55,30 @@ public class Rescuer extends Drone {
     }
 
    @Override
-    void login() {
-        JsonObject parsedData = this._communications.queryLogin("login");
-        this.knowledge.currentPositionX = parsedData.get("x").asInt();
-        this.knowledge.currentPositionY = parsedData.get("y").asInt();
-        this.rechargeTicket = parsedData.get("rechargeTicket").asString();
+    void loginAPB() {
+        JsonObject content = new JsonObject();
+        content.add("request", "login");
+        JsonObject response  = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content);
+        if(response != null){
+            this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
+            this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
+            this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
         
-        JsonArray array = parsedData.get("map").asArray();
+            JsonArray array = response.get("content").asObject().get("map").asArray();
         
-        this.knowledge.map = this.perception.convertToIntegerMatrix(array);
+            this.knowledge.map = this.perception.convertToIntegerMatrix(array);
+            
+        } else {
+            this.status = DroneStatus.FINISHED;
+        }
+        
     }
 
     @Override
-    void login(int x , int y){
+    void loginWorld(int x , int y){
         String result = this._communications.requestLoginWorldManager("rescuer",x, y, new ArrayList<String>());
         if(result.equals("error")){
-            this.status = RescuerStatus.FINISHED;
+            this.status = DroneStatus.FINISHED;
         }
     }
    
@@ -146,84 +160,63 @@ public class Rescuer extends Drone {
         this.knowledge.currentPositionY = currentYPosition;
         
     }
-    @Override
+
     void receivePlan(){
-        JsonObject response = this._communications.requestAPBPlan("mission");
+        JsonObject content = new JsonObject();
+        content.add("request", "mission");
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content);
         if(response != null){
-            String mission = response.get("mission").asString();
+            String mission = response.get("content").asObject().get("mission").asString();
         
             if(mission.equals("rescue")){
-               this.planInMap = this.perception.convertToIntegerArray(response.get("plan").asArray());
+               this.planInMap = this.perception.convertToIntegerArray(response.get("content").asObject().get("plan").asArray());
                this.elaboratePlan();
-               this.status = RescuerStatus.BUSY;
+               this.status = DroneStatus.BUSY;
             }
-            
+
             if(mission.equals("backHome")){
-                this.planInMap = this.perception.convertToIntegerArray(response.get("plan").asArray());
+                this.planInMap = this.perception.convertToIntegerArray(response.get("content").asObject().get("plan").asArray());
                 this.elaboratePlan();
-                this.status = RescuerStatus.BACKING_HOME;
+                this.status = DroneStatus.BACKING_HOME;
             }
          
-        }else{
-            this.status = RescuerStatus.FINISHED;
+        } else {
+            this.status = DroneStatus.FINISHED;
         }
-      
-        
     }
     
     @Override
     void executePlan(){
-        Boolean canMove = this._communications.queryAPBMove("move");
-        if( canMove == null){
-            this.status = RescuerStatus.FINISHED;
-        }else{
-            if(canMove){
-                if(this.knowledge.needRecharge()){
-                   this.status = RescuerStatus.RECHARGING;
-                }else{
-                    this.doAction(this.plan.get(0));
-                    this.plan.remove(0);
-                    if(this.plan.isEmpty()){
-                        this.status = RescuerStatus.FREE;
-                        this.plan = null;
-                    }
-                }
-            
+        if(this.knowledge.needRecharge()){
+           this.status = DroneStatus.NEED_RECHARGE;
+        } else {
+            // Comprobar si puede moverse (mirar la radio del mundo)
+            this.doAction(this.plan.get(0));
+            this.plan.remove(0);
+            if(this.plan.isEmpty()){
+                this.status = DroneStatus.FREE;
+                this.plan = null;
             }
-        } 
-        
+        }
     }
  
    
     
     @Override         
     public void recharge(){
-        //REVISAR NO SE SI TIENE QUE COMPROBAR QUE ESTE EN EL SUELO O NO
-        if ( this.rechargeTicket == null){
-               this.claimRecharge();
-               
-        }
-        if(this.rechargeTicket != null){
-            
-        }
-        if(this.toLand()){
-           String result = this._communications.requestRecharge(this.rechargeTicket);
+        if (this.toLand()) {
+            String result = this._communications.requestRecharge(this.rechargeTicket);
             if (result.equals("ok")){
-                this.knowledge.energy += 1000;
-                this.doAction(DroneAction.recharge);  
+                this.knowledge.energy = 1000;
                 this.rechargeTicket = null;
                 if(this.plan.isEmpty() || this.plan == null)
-                    this.status = RescuerStatus.FREE;
+                    this.status = DroneStatus.FREE;
                 else
-                   this.status = RescuerStatus.FREE; 
-            }else{
-                this.status = RescuerStatus.FINISHED;
+                   this.status = DroneStatus.BUSY; 
+            } else {
+                this.status = DroneStatus.FINISHED;
             }
+            Info("Changed status to: " + this.status);
         }
-       
     }
-
-//     if(this.toLand()){
-//                        this.doAction(DroneAction.recharge);  
-//                    }
 }

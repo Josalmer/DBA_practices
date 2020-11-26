@@ -6,10 +6,14 @@
 package practica3;
 
 /**
- * Distintos estados en los que puede estar un agente
- * 
- * @author Jose Saldaña
+ *
+ * @author jose
  */
-public enum SeekerStatus {
-    SUBSCRIBED_TO_PLATFORM, SUBSCRIBED_TO_WORLD, FINISHED
+public class GeneralInfo {
+    String world = "Playground1";
+
+    public String getWorld() {
+        return world;
+    }
+    
 }

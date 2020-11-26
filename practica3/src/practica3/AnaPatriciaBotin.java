@@ -10,6 +10,7 @@ import java.util.Arrays;
 public class AnaPatriciaBotin extends IntegratedAgent {
 
     // AGENT CONFIGURATION -------------------------------------------
+    String world = "playground1";
     // END CONFIGURATION ---------------------------------------------
 
     CommunicationAssistant _communications;
@@ -21,13 +22,13 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void setup() {
         super.setup();
 
-        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID);
+        this._communications = new CommunicationAssistant(this, "Sphinx", _myCardID, world);
 
         if (this._communications.chekingPlatform()) {
             this.status = AgentStatus.SUBSCRIBED_TO_PLATFORM;
             _exitRequested = false;
         } else {
-            System.out.println(this.getLocalName() + " failed subscribing to" + _identitymanager + " and DIE");
+            System.out.println(this.getLocalName() + " failed subscribing to" + "Sphinx" + " and DIE");
             _exitRequested = true;
         }
     }

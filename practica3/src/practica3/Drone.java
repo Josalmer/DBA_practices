@@ -17,10 +17,11 @@ import java.util.Arrays;
  * @author migue
  */
 public class Drone extends IntegratedAgent{
-        String APBAccountNumber;
+    String APBAccountNumber;
+    GeneralInfo info = new GeneralInfo();
 
     CommunicationAssistant _communications;
-    RescuerStatus status; // ESTO DEBERIA SER DRONESTATUS
+    DroneStatus status;
     AgentKnowledge knowledge = new AgentKnowledge();
     DronePerception perception = new DronePerception();
     DroneAction lastAction;
@@ -34,10 +35,10 @@ public class Drone extends IntegratedAgent{
     public void setup() {
         super.setup();
             
-        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID);
+        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID, this.info.getWorld());
 
         if (this._communications.chekingPlatform()) {
-            this.status = RescuerStatus.SUBSCRIBED_TO_PLATFORM;
+            this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
             _exitRequested = false;
         } else {
             System.out.println(this.getLocalName() + " failed subscribing to" + _identitymanager + " and DIE");
@@ -55,7 +56,7 @@ public class Drone extends IntegratedAgent{
         switch(role){
             case "rescuer":
                 if(result.equals("ok")){
-                    this.status = RescuerStatus.SUBSCRIBED_TO_WORLD;
+                    this.status = DroneStatus.SUBSCRIBED_TO_WORLD;
                 }else{
                     _exitRequested =  true;
                 }
@@ -70,19 +71,22 @@ public class Drone extends IntegratedAgent{
         }
         
     }
-    
-   
+
     void getAPBAccountNumber() {
-        APBAccountNumber = this._communications.queryAccount("bank");
-        if (APBAccountNumber == "error") {
-            this.status = RescuerStatus.FINISHED;
-        } 
+        JsonObject content = new JsonObject();
+        content.add("request", "bank");
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content);
+        if (response != null) {
+            APBAccountNumber = response.get("content").asObject().get("acc").asString();
+        } else {
+            this.status = DroneStatus.FINISHED;
+        }
     }
     
-    void login() {
+    void loginAPB() {
         //Este metodo tendra que ser sobrecargado en el hijo    
     }
-    void login(int x , int y) {
+    void loginWorld(int x , int y) {
         //Este metodo tendra que ser sobrecargado en el hijo    
     }
     void logout() {
@@ -90,15 +94,19 @@ public class Drone extends IntegratedAgent{
     }
     
      void claimRecharge(){
-        String result = this._communications.requestAPBRecharge("recharge");
-        
-        if(result.equals("error")){
-            this.status = RescuerStatus.FINISHED;
-        }else if ( result.equals("refuse")){
-            //Aqui no se que hace el dron
-            this.rechargeTicket = null;
-        }else{
-            this.rechargeTicket = result;
+        JsonObject content = new JsonObject();
+        content.add("request", "recharge");
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content);
+        if (response != null) {
+            if (response.get("performative").asInt() == ACLMessage.REFUSE) {
+                this.rechargeTicket = null;
+                // Si es el seeker pasa a estado finished
+                // Si es el rescuer pasa a estado backing_home
+            } else {
+                this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
+            }
+        } else {
+            this.status = DroneStatus.FINISHED;
         }
     }
     
@@ -133,7 +141,7 @@ public class Drone extends IntegratedAgent{
             Info("Acción realizada:" + action.toString());
             this.lastAction = action;
         } else {
-            this.status = RescuerStatus.FINISHED;
+            this.status = DroneStatus.FINISHED;
         }
     }
      
