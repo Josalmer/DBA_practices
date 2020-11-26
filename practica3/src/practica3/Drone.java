@@ -89,12 +89,24 @@ public class Drone extends IntegratedAgent{
         _exitRequested = true;
     }
     
-    void claimRecharge(){
+     void claimRecharge(){
+        String result = this._communications.requestAPBRecharge("recharge");
         
+        if(result.equals("error")){
+            this.status = RescuerStatus.FINISHED;
+        }else if ( result.equals("refuse")){
+            //Aqui no se que hace el dron
+            this.rechargeTicket = null;
+        }else{
+            this.rechargeTicket = result;
+        }
     }
     
+    
+           
+          
     public void recharge(){
-        
+     
     }
   
     
@@ -113,38 +125,20 @@ public class Drone extends IntegratedAgent{
     }
      
      void doAction(DroneAction action){
-        JsonObject params = new JsonObject();
-        params.add("command", "execute");
-        params.add("action", action.toString());
-        //params.add("key", this.sessionKey);
+     
+        String answer = this._communications.sendActionWorldManager(action.toString());
 
-        JsonObject answer = this._communications.sendAndReceiveMessage(params);
-
-        if (answer.get("result").asString().equals("ok")) {
+        if (answer.equals("ok")) {
             this.executeAction(action);
             Info("Acción realizada:" + action.toString());
             this.lastAction = action;
         } else {
-            this.logout();
+            this.status = RescuerStatus.FINISHED;
         }
     }
      
-        void executePlan(){
-        if(this._communications.queryMove()){
-            if(this.knowledge.needRecharge()){
-                if(this.toLand()){
-                    this.doAction(DroneAction.recharge);  
-                }
-            }else{
-                this.doAction(this.plan.get(0));
-                this.plan.remove(0);
-                if(this.plan.isEmpty()){
-                    this.status = RescuerStatus.FREE;
-                    this.plan = null;
-                }
-            }
-            
-        }
+      void executePlan(){
+       
     }
         
         
