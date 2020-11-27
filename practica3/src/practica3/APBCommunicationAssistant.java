@@ -111,7 +111,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         while (sensorCode == null && option < 3) {
             product = this.shopsInfo.bestOption(sensorName, option);
             if (product != null) {
-                sensorCode = this.buyCommunication(product.name, product.shop);
+                sensorCode = this.buyCommunication(product.getSensorTicket(), product.getShop());
             }
             option ++;
         }
