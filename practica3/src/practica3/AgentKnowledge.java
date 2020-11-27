@@ -365,4 +365,16 @@ public class AgentKnowledge {
     public void fullRecharge() {
         this.energy = 1000;
     }
+    
+    /**
+     * Comprueba si necesita recargar antes de 
+     * optar por la opción ganadora
+     * 
+     * @author Domingo López
+     */
+    public boolean shouldIRechargueFirst(DroneOption bestOption){
+        boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
+        return shouldIRechargue;
+    }
+    
 }

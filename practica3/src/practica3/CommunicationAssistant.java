@@ -285,8 +285,8 @@ public class CommunicationAssistant {
         content.add("operation", "login");
         if (role.equals("rescuer")) {
             content.add("attach", "[]");
-        } else {
-            //SE AÑADEN SENSORES SEEKER
+        } else if(role.equals("seeker")) {
+            content.add("attach","["+sensors.get(0)+"]");
         }
 
         content.add("posx", x);

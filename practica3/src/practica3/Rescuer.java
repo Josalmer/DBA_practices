@@ -12,9 +12,6 @@ public class Rescuer extends Drone {
     // AGENT CONFIGURATION -------------------------------------------
     // END CONFIGURATION ---------------------------------------------
 
-  
-    
-
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
@@ -205,18 +202,26 @@ public class Rescuer extends Drone {
     @Override         
     public void recharge(){
         if (this.toLand()) {
-            String result = this._communications.requestRecharge(this.rechargeTicket);
-            if (result.equals("ok")){
-                this.knowledge.energy = 1000;
-                this.rechargeTicket = null;
-                if(this.plan.isEmpty() || this.plan == null)
-                    this.status = DroneStatus.FREE;
-                else
-                   this.status = DroneStatus.BUSY; 
-            } else {
-                this.status = DroneStatus.FINISHED;
+            if(this.rechargeTicket != null){ //Si tengo ticket, lo consumo y recargo
+                
+                String result = this._communications.requestRecharge(this.rechargeTicket);
+                if (result.equals("ok")){
+                    this.knowledge.energy = 1000;
+                    this.rechargeTicket = null;
+                    if(this.plan.isEmpty() || this.plan == null)
+                        this.status = DroneStatus.FREE;
+                    else
+                       this.status = DroneStatus.BUSY; 
+                } else {
+                    this.status = DroneStatus.FINISHED;
+                }
+                Info("Changed status to: " + this.status);
+                
+            }else{ //Si no tengo ticket
+                
+                
             }
-            Info("Changed status to: " + this.status);
+            
         }
     }
 }
