@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package APB;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
@@ -31,6 +31,26 @@ public class Administration {
     public Administration() {
         angentsSubscribed = 0;
         collectedMoney = 0;
+    }
+    
+    public ArrayList<String> getMoney(int coins){
+        if(coins > this.bitcoins.size())
+            return null;
+        
+        ArrayList<String> payment = new ArrayList<>();
+        for(int i=0; i<coins; i++){
+            payment.add(this.bitcoins.get(i));
+        }
+        
+        return payment;
+    }
+    
+    
+    //Coins may have been used
+    public void updateWastedMoney(int coins){
+        for(int i=0; i<coins; i++){
+            this.bitcoins.remove(i);
+        }
     }
 
 }

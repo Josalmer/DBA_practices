@@ -5,6 +5,9 @@
  */
 package practica3;
 
+import APB.AnaPatriciaBotin;
+import Drone.Seeker;
+import Drone.Rescuer;
 import AppBoot.ConsoleBoot;
 
 public class Practica3 {

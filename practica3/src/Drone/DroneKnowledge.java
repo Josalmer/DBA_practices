@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package Drone;
 
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 import java.util.ArrayList;
 
-public class AgentKnowledge {
+public class DroneKnowledge {
     Integer currentPositionX;
     Integer currentPositionY;
     Integer ludwigPositionX;
@@ -108,7 +108,7 @@ public class AgentKnowledge {
      * @author Manuel Pancorbo
      * @param perception Percepción actualizada tras la lectura de sensores
      */
-    void update(Perception perception) {
+    void update(DronePerception perception) {
         this.currentPositionX = perception.gps.get(0);
         this.currentPositionY = perception.gps.get(1);
         this.currentHeight = perception.gps.get(2);

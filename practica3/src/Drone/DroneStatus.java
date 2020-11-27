@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package Drone;
 
 /**
  * Distintos estados en los que puede estar un agente

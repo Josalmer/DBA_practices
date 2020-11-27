@@ -1,6 +1,5 @@
-package practica3;
+package Drone;
 
-import IntegratedAgent.IntegratedAgent;
 import com.eclipsesource.json.*;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
@@ -10,6 +9,7 @@ import java.util.Arrays;
 public class Rescuer extends Drone {
 
     // AGENT CONFIGURATION -------------------------------------------
+    
     // END CONFIGURATION ---------------------------------------------
 
     @Override
@@ -163,13 +163,13 @@ public class Rescuer extends Drone {
             String mission = response.get("content").asObject().get("mission").asString();
         
             if(mission.equals("rescue")){
-               this.planInMap = this.perception.convertToIntegerArray(response.get("content").asObject().get("plan").asArray());
+               this.planInMap = this.parser.getPlan(response.get("content").asObject());
                this.elaboratePlan();
                this.status = DroneStatus.BUSY;
             }
 
             if(mission.equals("backHome")){
-                this.planInMap = this.perception.convertToIntegerArray(response.get("content").asObject().get("plan").asArray());
+                this.planInMap = this.parser.getPlan(response.get("content").asObject());
                 this.elaboratePlan();
                 this.status = DroneStatus.BACKING_HOME;
             }

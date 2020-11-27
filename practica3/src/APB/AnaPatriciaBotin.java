@@ -1,19 +1,27 @@
-package practica3;
+package APB;
 
+import Communications.APBCommunicationAssistant;
+import Drone.DroneKnowledge;
 import IntegratedAgent.IntegratedAgent;
+import JSONParser.APBjsonParser;
+
 import com.eclipsesource.json.*;
-import jade.core.AID;
-import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 
 public class AnaPatriciaBotin extends IntegratedAgent {
 
     APBCommunicationAssistant _communications;
     Administration adminData = new Administration();
-    AgentStatus status;
-    AgentKnowledge knowledge = new AgentKnowledge();
-    Perception jsonParser = new Perception();
+    APBStatus status;
+    DroneKnowledge knowledge = new DroneKnowledge();
+    APBjsonParser jsonParser = new APBjsonParser();
+    
+    ProductCatalogue shopsInfo = new ProductCatalogue();
+
+    public AnaPatriciaBotin() {
+     
+    }
 
     @Override
     public void setup() {
@@ -22,7 +30,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID);
 
         if (this._communications.chekingPlatform()) {
-            this.status = AgentStatus.SUBSCRIBED_TO_PLATFORM;
+            this.status = APBStatus.SUBSCRIBED_TO_PLATFORM;
             _exitRequested = false;
         } else {
             System.out.println(this.getLocalName() + " failed subscribing to" + "Sphinx" + " and DIE");
@@ -65,10 +73,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void checkingWorld() {
         JsonObject response = this._communications.checkingWorld();
         if (response == null) {
-            this.status = AgentStatus.FINISHED;
+            this.status = APBStatus.FINISHED;
         } else {
             this.adminData.map = this.jsonParser.convertToIntegerMatrix(response.get("map").asArray()) ;
-            this.status = AgentStatus.SUBSCRIBED_TO_WORLD;
+            this.status = APBStatus.SUBSCRIBED_TO_WORLD;
         }
     }
 
@@ -76,8 +84,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void shareSessionIdAndMap() {
+        JsonArray parsedMap = jsonParser.parseMap(this.adminData.map);
         while (this.adminData.angentsSubscribed < 4) {
-            this._communications.listenAndShareSessionId(this.adminData.map);
+            this._communications.listenAndShareSessionId(parsedMap);
             this.adminData.angentsSubscribed++;
         }
     }
@@ -88,15 +97,16 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void checkingRadio() {
         boolean logedIn = this._communications.checkingRadio("LISTENER");
         if (logedIn) {
-            this.status = AgentStatus.SUBSCRIBED_TO_WORLD;
+            this.status = APBStatus.SUBSCRIBED_TO_WORLD;
         } else {
-            this.status = AgentStatus.FINISHED;
+            this.status = APBStatus.FINISHED;
         }
     }
     
     void collectMoney() {
         while (this.adminData.collectedMoney < 4) {
-            this.adminData.bitcoins.addAll(this._communications.listenAndCollectMoney());
+            JsonObject money = this._communications.listenAndCollectMoney();
+            this.adminData.bitcoins.addAll(jsonParser.getMoney(money));
             this.adminData.collectedMoney++;
         }
     }
@@ -105,9 +115,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void investigateMarket() {
-        this._communications.askShoppingCenters();
-        this.status = AgentStatus.SHOPPING;
+        JsonArray shops = this._communications.askShoppingCenters();
+        this.shopsInfo.setCatalogue(shops);
+        this.status = APBStatus.SHOPPING;
     }
+    
 
     /**
      * @author Jose Saldaña, Manuel Pancorbo
@@ -120,19 +132,39 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             this.adminData.rechargeTickets.add(this.buy("CHARGE"));
         }
 
-        if (this.status != AgentStatus.FINISHED) {
-            this.status = AgentStatus.FINISHED_SHOPPING; 
+        if (this.status != APBStatus.FINISHED) {
+            this.status = APBStatus.FINISHED_SHOPPING; 
         }
     }
     
+    
     String buy(String SensorName) {
-        String sensorCode = this._communications.buy(SensorName);
+        String sensorCode = this.buyAndGetCode(SensorName);
         if (sensorCode == null) {
-            this.status = AgentStatus.FINISHED;
+            this.status = APBStatus.FINISHED;
             return null;
         } else {
             return sensorCode;
         }
+    }
+    
+    
+    public String buyAndGetCode(String sensorName) {
+        int option = 0;
+        String sensorCode = null;
+        Product product = null;
+        while (sensorCode == null && option < 3) {
+            product = this.shopsInfo.bestOption(sensorName, option);
+            ArrayList<String> payment = this.adminData.getMoney(product.getPrice());
+            JsonArray parsedPayment = this.jsonParser.parseMoney(payment);
+            if (product != null) {
+                sensorCode = this._communications.buyCommunication(product.getSensorTicket(), product.getShop(), parsedPayment);
+            }
+            if(sensorCode != null)
+                this.adminData.updateWastedMoney(product.getPrice());
+            option ++;
+        }
+        return sensorCode;
     }
 
     void logout() {
