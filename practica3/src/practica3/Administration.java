@@ -5,6 +5,10 @@
  */
 package practica3;
 
+import java.util.ArrayList;
+import java.util.PriorityQueue;
+import java.util.Queue;
+
 /**
  *
  * @author Jose Saldaña
@@ -13,6 +17,14 @@ public class Administration {
 
     String bankAccountNumber;
     int angentsSubscribed;
+    
+    // Sensores
+    String sensor1;
+    String sensor2;
+    ArrayList<ArrayList<Integer> > map = new ArrayList();
+    
+    // Ticket de recarga
+    Queue<String> rechargeTickets = new PriorityQueue();
 
     public Administration() {
         angentsSubscribed = 0;

@@ -14,6 +14,7 @@ import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import com.eclipsesource.json.JsonObject;
+import jade.lang.acl.MessageTemplate;
 
 /*
     LEER ESTO:
@@ -38,9 +39,8 @@ De Jose para Migue:
 public class CommunicationAssistant {
 
     ACLMessage identityManagerChannel = new ACLMessage(); // Todos
-    ACLMessage bankChannel = new ACLMessage(); // Solo APB
+    ACLMessage worldChannel = new ACLMessage(); // Todos
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
-    ACLMessage worldChannel = new ACLMessage();
     
     ArrayList<Integer> acceptedPerformative = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
 
@@ -99,48 +99,25 @@ public class CommunicationAssistant {
         }
         return false;
     }
-
+    
     /**
-     * Crea una cuenta en el banco para el agente
-     *
-     * @author Jose Saldaña
-     * @return nº de cuenta, formato: ACC#ejemplo, si algo sale mal devuelve
-     * "error"
+     * Queda a la escucha para compartir numero de cuenta con los drones
+     * 
+     * @author Jose Saldaña, Manuel pancorbo
      */
-    public String openBankAccount() {
-        String service = "Bank";
-        ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
-        String serviceAgent = agents.get(0);
-
-        System.out.println(this.agent.getLocalName() + " requesting open bank account to " + serviceAgent);
-        bankChannel.setSender(this.agent.getAID());
-        bankChannel.addReceiver(new AID(serviceAgent, AID.ISLOCALNAME));
-        bankChannel.setPerformative(ACLMessage.REQUEST);
-
-        // Set content
+    public void listenAndShareBankAccount() {
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("bank");
+        ACLMessage in = this.agent.blockingReceive(t);
+        System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
+        ACLMessage agentChannel = in.createReply();
+        agentChannel.setPerformative(ACLMessage.INFORM);
         JsonObject params = new JsonObject();
-        params.add("operation", "open");
-        params.add("reference", "ACC##");
+        params.add("acc", this.bankAccountNumber);
         String parsedParams = params.toString();
-        bankChannel.setContent(parsedParams);
-
-        this.agent.send(bankChannel);
-        ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent REQUEST to " + serviceAgent + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM || in.getPerformative() == ACLMessage.INFORM) {
-            bankChannel = in.createReply();
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            bankAccountNumber = parsedAnswer.asObject().get("details").asString();
-            System.out.println(this.agent.getLocalName() + " created bank account with id: " + bankAccountNumber);
-            return bankAccountNumber;
-        } else {
-            System.out
-                    .println(this.agent.getLocalName() + " get ERROR while creating bank account with " + serviceAgent);
-            return "error";
-        }
+        agentChannel.setContent(parsedParams);
+        this.agent.send(agentChannel);
     }
-
+    
     /**
      * Manda un mensaje a Ana Patricia Botin y no espera respuesta
      *
@@ -171,6 +148,7 @@ public class CommunicationAssistant {
         APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
         APBChannel.setPerformative(performative);
         APBChannel.setContent(parsedContent);
+        APBChannel.setReplyWith(content.get("request").asString());
         this.agent.send(APBChannel);
         ACLMessage in = this.agent.blockingReceive();
         int resPerformative = in.getPerformative();
@@ -262,33 +240,26 @@ public class CommunicationAssistant {
      * @author Miguel García
      * @return resultado de la perticion
      */
-    public String checkingWorld(String account, String role) {
-        System.out.println(this.agent.getLocalName() + " SUBSCRIBE to WorldManager: " + role);
+    public boolean checkingWorld(String account, String role) {
+        System.out.println(this.agent.getLocalName() + " SUBSCRIBE to World as " + role);
         worldChannel.setSender(this.agent.getAID());
         worldChannel.addReceiver(new AID(this.world, AID.ISLOCALNAME));
         worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
         worldChannel.setProtocol("ANALYTICS");
         worldChannel.setEncoding(this._myCardID.getCardID());
-        worldChannel.setConversationId("");
-        worldChannel.setReplyWith("REPLY###");
         JsonObject content = new JsonObject();
         content.add("type", role.toUpperCase());
         content.add("account", account);
-
         worldChannel.setContent(content.asString());
         this.agent.send(worldChannel);
         ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + "WorldManager " + " and get: " + in.getPerformative(in.getPerformative()));
+        System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + this.world + " and get: " + in.getPerformative(in.getPerformative()));
         if (in.getPerformative() == ACLMessage.CONFIRM) {
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            String result = parsedAnswer.asObject().get("result").asString();
-            System.out.println(this.agent.getLocalName() + " was  subscribed to: " + world);
-            return result;
+            worldChannel = in.createReply();
+            return true;
         } else {
-            System.out.println(
-                    this.agent.getLocalName() + " get ERROR while SUBSCRIBE to " + "WorldManager: " + world);
-            return "error";
+            System.out.println(this.agent.getLocalName() + " get ERROR while SUBSCRIBE to " + world);
+            return false;
         }
     }
 
@@ -302,7 +273,7 @@ public class CommunicationAssistant {
      * @param sensors
      * @return
      */
-    public String requestLoginWorldManager(String role, int x, int y, ArrayList<String> sensors) {
+    public String loginWorld(String role, int x, int y, ArrayList<String> sensors) {
         System.out.println(this.agent.getLocalName() + " login to WorldManager: " + role);
         worldChannel.setSender(this.agent.getAID());
         worldChannel.addReceiver(new AID(this.world, AID.ISLOCALNAME));

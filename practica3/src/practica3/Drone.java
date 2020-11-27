@@ -51,25 +51,12 @@ public class Drone extends IntegratedAgent{
     }
     
     public void checkingWorld(String role){
-        String result = this._communications.checkingWorld(this.APBAccountNumber, role);
-        
-        switch(role){
-            case "rescuer":
-                if(result.equals("ok")){
-                    this.status = DroneStatus.SUBSCRIBED_TO_WORLD;
-                }else{
-                    _exitRequested =  true;
-                }
-                break;
-            case "seeker":
-               //estado del seeker
-                 break;
-                 
-            default:
-                System.out.println("Rol erroneo, no es un dron");
-                _exitRequested = true;
+        boolean logedIn = this._communications.checkingWorld(this.APBAccountNumber, role);
+        if (logedIn) {
+            this.status = DroneStatus.SUBSCRIBED_TO_WORLD;
+        } else {
+            this.status = DroneStatus.FINISHED;
         }
-        
     }
 
     void getAPBAccountNumber() {
