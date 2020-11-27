@@ -22,12 +22,12 @@ public class Seeker extends Drone {
             switch (this.status) {
                
                 case SUBSCRIBED_TO_PLATFORM:
-                    this.getAPBAccountNumber();
-                    this.checkingWorld("seeker");
+                    this.requestSessionIdAndMap();
+                    this.checkingRadio("seeker");
                     break;
                 case SUBSCRIBED_TO_WORLD:
-                    // Wait APB for instrucción and tickets for login
-                    this.loginAPB();
+                    this.sendCashToAPB();
+                    this.requestLoginData();
                     this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
                     this.status = DroneStatus.RECHARGING;
                     break;
@@ -61,20 +61,15 @@ public class Seeker extends Drone {
     
     
     @Override
-    void loginAPB() {
+    void requestLoginData() {
         JsonObject content = new JsonObject();
         content.add("request", "login");
-        JsonObject response  = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content);
+        JsonObject response  = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content, "login");
         if(response != null){
             this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
             this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
             this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
             this.sensorTicket = response.get("content").asObject().get("sensorTicket").asString();
-            
-            JsonArray array = response.get("content").asObject().get("map").asArray();
-        
-            this.knowledge.map = this.perception.convertToIntegerMatrix(array);
-            
         } else {
             this.status = DroneStatus.FINISHED;
         }
@@ -88,7 +83,7 @@ public class Seeker extends Drone {
         ArrayList<String> sensors = new ArrayList<>();
         sensors.add(this.sensorTicket);
         
-        String result = this._communications.requestLoginWorldManager("rescuer",x, y,sensors);
+        String result = this._communications.loginWorld("rescuer",x, y,sensors);
         if(result.equals("error")){
             this.status = DroneStatus.FINISHED;
         }
@@ -123,7 +118,7 @@ public class Seeker extends Drone {
         content.add("request", "mission");
         content.add("currentPosition",position); 
         
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content);
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, null);
         if(response != null){
             String mission = response.get("content").asObject().get("mission").asString();
             if(mission.equals("explore")){

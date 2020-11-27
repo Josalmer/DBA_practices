@@ -9,6 +9,7 @@ import IntegratedAgent.IntegratedAgent;
 import PublicKeys.PublicCardID;
 import YellowPages.YellowPages;
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
@@ -45,7 +46,10 @@ public class CommunicationAssistant {
     ArrayList<Integer> acceptedPerformative = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
 
     String bankAccountNumber;
-    String world;
+    String worldManager;
+    String sessionId;
+    
+    JsonArray bitcoins;
 
     IntegratedAgent agent;
     String _identitymanager;
@@ -59,11 +63,10 @@ public class CommunicationAssistant {
      * @param identityManager
      * @param cardId
      */
-    public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, String _world) {
+    public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         this.agent = _agent;
         this._identitymanager = identityManager;
         this._myCardID = cardId;
-        this.world = _world; //ESTO HAY QUE VER COMO LO HACEMOS
     }
 
     /**
@@ -83,7 +86,7 @@ public class CommunicationAssistant {
         this.agent.send(identityManagerChannel);
         ACLMessage in = this.agent.blockingReceive();
         System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + _identitymanager + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM || in.getPerformative() == ACLMessage.INFORM) {
+        if (in.getPerformative() == ACLMessage.INFORM) {
             System.out.println(this.agent.getLocalName() + ": Chekin confirmed in the platform");
             // Get YellowPages
             identityManagerChannel = in.createReply();
@@ -95,27 +98,103 @@ public class CommunicationAssistant {
             if (this.agent.getLocalName() == "Ana Patricia Botin") {
                 System.out.println("\n" + yp.prettyPrint());
             }
+            String service = "Group Banco Santander";
+            ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
+            this.worldManager = agents.get(0);
             return true;
         }
         return false;
     }
+
+    /**
+     * Subscribe a un agente al WorldManager de un mundo
+     *
+     * @author Miguel García
+     * @return resultado de la perticion
+     */
+    public boolean checkingRadio(String role) {
+        System.out.println(this.agent.getLocalName() + " SUBSCRIBE to World as " + role);
+        worldChannel.setSender(this.agent.getAID());
+        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
+        worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
+        worldChannel.setProtocol("REGULAR");
+        worldChannel.setReplyWith("radio");
+        worldChannel.setConversationId(this.sessionId);
+        JsonObject content = new JsonObject();
+        content.add("type", role.toUpperCase());
+        worldChannel.setContent(content.asString());
+        this.agent.send(worldChannel);
+        ACLMessage in = this.agent.blockingReceive();
+        System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + this.worldManager + " and get: " + in.getPerformative(in.getPerformative()));
+        if (in.getPerformative() == ACLMessage.INFORM) {
+            worldChannel = in.createReply();
+            if (!role.equals("LISTENER")) {
+                String response = in.getContent();
+                JsonObject parsedAnswer = Json.parse(response).asObject();
+                this.bitcoins = parsedAnswer.asObject().get("coins").asArray();
+            }
+            return true;
+        } else {
+            System.out.println(this.agent.getLocalName() + " get ERROR while SUBSCRIBE to " + this.worldManager);
+            return false;
+        }
+    }
     
     /**
-     * Queda a la escucha para compartir numero de cuenta con los drones
-     * 
-     * @author Jose Saldaña, Manuel pancorbo
+     * Los drones solicitan la sessionId y el mapa a APB y esperan la respuesta
+     *
+     * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
+     * @param performative, content
+     * @return JsonObject de respuesta
      */
-    public void listenAndShareBankAccount() {
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("bank");
-        ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
-        ACLMessage agentChannel = in.createReply();
-        agentChannel.setPerformative(ACLMessage.INFORM);
-        JsonObject params = new JsonObject();
-        params.add("acc", this.bankAccountNumber);
-        String parsedParams = params.toString();
-        agentChannel.setContent(parsedParams);
-        this.agent.send(agentChannel);
+    public JsonObject requestSessionKeyToAPB() { // debe devolver el ArrayList<ArrayList<int> >
+        System.out.println(this.agent.getLocalName() + " request sessionId to Ana Patricia Botin");
+        APBChannel.setSender(this.agent.getAID());
+        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
+        APBChannel.setPerformative(ACLMessage.QUERY_REF);
+        
+        JsonObject content = new JsonObject();
+        content.add("request", "session");
+        String parsedContent = content.toString();
+        
+        APBChannel.setContent(parsedContent);
+        APBChannel.setReplyWith("session");
+        this.agent.send(APBChannel);
+        ACLMessage in = this.agent.blockingReceive();
+        int resPerformative = in.getPerformative();
+        System.out.println(this.agent.getLocalName() + " sent Query Ref to Ana Patricia Botin and get: " + ACLMessage.getPerformative(resPerformative));
+        if (acceptedPerformative.contains(resPerformative)) {
+            APBChannel = in.createReply();
+            String response = in.getContent();
+            JsonObject parsedAnswer = Json.parse(response).asObject();
+            this.sessionId = parsedAnswer.get("sessiondId").asString();
+            return parsedAnswer; // Modificarlo para devolver mapa parseado
+        } else {
+            System.out.println(this.agent.getLocalName() + " get ERROR while Query Ref to Ana Patricia Botin: " + parsedContent);
+            return null;
+        }
+    }
+    
+    /**
+     * Los drones mandan su dinero a APB
+     *
+     * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
+     * @param performative, content
+     * @return JsonObject de respuesta
+     */
+    public void sendCashToAPB() {
+        System.out.println(this.agent.getLocalName() + " send cash to Ana Patricia Botin");
+        APBChannel.setSender(this.agent.getAID());
+        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
+        APBChannel.setPerformative(ACLMessage.INFORM);
+        
+        JsonObject content = new JsonObject();
+        content.add("cash", bitcoins);
+        String parsedContent = content.toString();
+        
+        APBChannel.setContent(parsedContent);
+        APBChannel.setReplyWith("money");
+        this.agent.send(APBChannel);
     }
     
     /**
@@ -124,11 +203,14 @@ public class CommunicationAssistant {
      * @param content
      * @return ACLMessage de respuesta
      */
-    public void sendMessageToAPB(int performative, JsonObject content) {
+    public void sendMessageToAPB(int performative, JsonObject content, String key) {
         String parsedContent = content.toString();
         System.out.println(this.agent.getLocalName() + " " + ACLMessage.getPerformative(performative) + " to Ana Patricia Botin: " + parsedContent);
         APBChannel.setSender(this.agent.getAID());
         APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
+        if (key != null) {
+            APBChannel.setReplyWith(key);
+        }
         APBChannel.setPerformative(performative);
         APBChannel.setContent(parsedContent);
         this.agent.send(APBChannel);
@@ -141,7 +223,7 @@ public class CommunicationAssistant {
      * @param performative, content
      * @return JsonObject de respuesta
      */
-    public JsonObject sendAndReceiveToAPB(int performative, JsonObject content) {
+    public JsonObject sendAndReceiveToAPB(int performative, JsonObject content, String key) {
         String parsedContent = content.toString();
         System.out.println(this.agent.getLocalName() + " " + ACLMessage.getPerformative(performative) + " to Ana Patricia Botin: " + parsedContent);
         APBChannel.setSender(this.agent.getAID());
@@ -149,6 +231,9 @@ public class CommunicationAssistant {
         APBChannel.setPerformative(performative);
         APBChannel.setContent(parsedContent);
         APBChannel.setReplyWith(content.get("request").asString());
+        if (key != null) {
+            APBChannel.setReplyWith(key);
+        }
         this.agent.send(APBChannel);
         ACLMessage in = this.agent.blockingReceive();
         int resPerformative = in.getPerformative();
@@ -175,7 +260,7 @@ public class CommunicationAssistant {
     public String requestRecharge(String ticket) {
         System.out.println(this.agent.getLocalName() + " REQUEST recharge with ticket: " + ticket);
         worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.world, AID.ISLOCALNAME));
+        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
         worldChannel.setPerformative(ACLMessage.REQUEST);
         JsonObject content = new JsonObject();
         content.add("operation", "recharge");
@@ -193,8 +278,7 @@ public class CommunicationAssistant {
             System.out.println(this.agent.getLocalName() + " was  recharged");
             return result;
         } else {
-            System.out.println(
-                    this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + world);
+            System.out.println(this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + this.worldManager);
             return "error";
         }
     }
@@ -209,7 +293,7 @@ public class CommunicationAssistant {
     String sendActionWorldManager(String content) {
         System.out.println(this.agent.getLocalName() + " send action to WorldManager: " + content);
         worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.world, AID.ISLOCALNAME));
+        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
         worldChannel.setPerformative(ACLMessage.REQUEST);
         worldChannel.setProtocol("ANALYTICS");
         worldChannel.setEncoding(this._myCardID.getCardID());
@@ -228,38 +312,8 @@ public class CommunicationAssistant {
             System.out.println(this.agent.getLocalName() + " do action: " + content);
             return result;
         } else {
-            System.out.println(
-                    this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + world);
+            System.out.println(this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + this.worldManager);
             return "error";
-        }
-    }
-
-    /**
-     * Subscribe a un agente al WorldManager de un mundo
-     *
-     * @author Miguel García
-     * @return resultado de la perticion
-     */
-    public boolean checkingWorld(String account, String role) {
-        System.out.println(this.agent.getLocalName() + " SUBSCRIBE to World as " + role);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.world, AID.ISLOCALNAME));
-        worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
-        worldChannel.setProtocol("ANALYTICS");
-        worldChannel.setEncoding(this._myCardID.getCardID());
-        JsonObject content = new JsonObject();
-        content.add("type", role.toUpperCase());
-        content.add("account", account);
-        worldChannel.setContent(content.asString());
-        this.agent.send(worldChannel);
-        ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + this.world + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM) {
-            worldChannel = in.createReply();
-            return true;
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while SUBSCRIBE to " + world);
-            return false;
         }
     }
 
@@ -276,7 +330,7 @@ public class CommunicationAssistant {
     public String loginWorld(String role, int x, int y, ArrayList<String> sensors) {
         System.out.println(this.agent.getLocalName() + " login to WorldManager: " + role);
         worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.world, AID.ISLOCALNAME));
+        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
         worldChannel.setPerformative(ACLMessage.REQUEST);
         worldChannel.setProtocol("ANALYTICS");
         worldChannel.setEncoding(this._myCardID.getCardID());
@@ -300,11 +354,10 @@ public class CommunicationAssistant {
             String response = in.getContent();
             JsonObject parsedAnswer = Json.parse(response).asObject();
             String result = parsedAnswer.asObject().get("result").asString();
-            System.out.println(this.agent.getLocalName() + " was  Logged to: " + world);
+            System.out.println(this.agent.getLocalName() + " was  Logged to: " + this.worldManager);
             return result;
         } else {
-            System.out.println(
-                    this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + world);
+            System.out.println(this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + this.worldManager);
             return "error";
         }
     }

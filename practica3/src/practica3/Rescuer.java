@@ -19,11 +19,12 @@ public class Rescuer extends Drone {
             switch (this.status) {
                
                 case SUBSCRIBED_TO_PLATFORM:
-                    this.getAPBAccountNumber();
-                    this.checkingWorld("rescuer");
+                    this.requestSessionIdAndMap();
+                    this.checkingRadio("rescuer");
                     break;
                 case SUBSCRIBED_TO_WORLD:
-                    this.loginAPB();
+                    this.sendCashToAPB();
+                    this.requestLoginData();
                     this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
                     this.status = DroneStatus.RECHARGING;
                     break;
@@ -52,18 +53,14 @@ public class Rescuer extends Drone {
     }
 
    @Override
-    void loginAPB() {
+    void requestLoginData() {
         JsonObject content = new JsonObject();
         content.add("request", "login");
-        JsonObject response  = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content);
+        JsonObject response  = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content, "login");
         if(response != null){
             this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
             this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
             this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
-        
-            JsonArray array = response.get("content").asObject().get("map").asArray();
-        
-            this.knowledge.map = this.perception.convertToIntegerMatrix(array);
             
         } else {
             this.status = DroneStatus.FINISHED;
@@ -161,7 +158,7 @@ public class Rescuer extends Drone {
     void receivePlan(){
         JsonObject content = new JsonObject();
         content.add("request", "mission");
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content);
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, null);
         if(response != null){
             String mission = response.get("content").asObject().get("mission").asString();
         

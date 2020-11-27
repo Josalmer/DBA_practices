@@ -9,17 +9,17 @@ import java.util.Arrays;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
 
-    GeneralInfo info = new GeneralInfo();
     APBCommunicationAssistant _communications;
     Administration adminData = new Administration();
     AgentStatus status;
     AgentKnowledge knowledge = new AgentKnowledge();
+    Perception jsonParser = new Perception();
 
     @Override
     public void setup() {
         super.setup();
 
-        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID, this.info.getWorld());
+        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID);
 
         if (this._communications.chekingPlatform()) {
             this.status = AgentStatus.SUBSCRIBED_TO_PLATFORM;
@@ -36,13 +36,14 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             Info("Current Status: " + this.status);
             switch (this.status) {
                 case SUBSCRIBED_TO_PLATFORM:
-                    this.createBankAccount();
-                    break;
-                case WITH_BANK_ACC:
-                    this.shareBankAccount();
                     this.checkingWorld();
                     break;
                 case SUBSCRIBED_TO_WORLD:
+                    this.shareSessionIdAndMap();
+                    this.checkingRadio();
+                    break;
+                case SUBSCRIBED_TO_RADIO:
+                    this.collectMoney();
                     this.investigateMarket();
                     break;
                 case SHOPPING:
@@ -60,25 +61,23 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             }
         }
     }
-
-    /**
-     * @author Jose Saldaña
-     */
-    void createBankAccount() {
-        this.adminData.bankAccountNumber = this._communications.openBankAccount();
-        if (this.adminData.bankAccountNumber.equals("error")) {
+    
+    void checkingWorld() {
+        JsonObject response = this._communications.checkingWorld();
+        if (response == null) {
             this.status = AgentStatus.FINISHED;
         } else {
-            this.status = AgentStatus.WITH_BANK_ACC;
+            this.adminData.map = this.jsonParser.convertToIntegerMatrix(response.get("map").asArray()) ;
+            this.status = AgentStatus.SUBSCRIBED_TO_WORLD;
         }
     }
 
     /**
      * @author Jose Saldaña, Manuel Pancorbo
      */
-    void shareBankAccount() {
+    void shareSessionIdAndMap() {
         while (this.adminData.angentsSubscribed < 4) {
-            this._communications.listenAndShareBankAccount();
+            this._communications.listenAndShareSessionId(this.adminData.map);
             this.adminData.angentsSubscribed++;
         }
     }
@@ -86,12 +85,19 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     /**
      * @author Jose Saldaña, Manuel Pancorbo
      */
-    void checkingWorld() {
-        boolean logedIn = this._communications.checkingWorld(this.adminData.bankAccountNumber, "LISTENER");
+    void checkingRadio() {
+        boolean logedIn = this._communications.checkingRadio("LISTENER");
         if (logedIn) {
             this.status = AgentStatus.SUBSCRIBED_TO_WORLD;
         } else {
             this.status = AgentStatus.FINISHED;
+        }
+    }
+    
+    void collectMoney() {
+        while (this.adminData.collectedMoney < 4) {
+            this.adminData.bitcoins.addAll(this._communications.listenAndCollectMoney());
+            this.adminData.collectedMoney++;
         }
     }
 

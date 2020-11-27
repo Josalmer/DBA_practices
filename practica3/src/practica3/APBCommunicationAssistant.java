@@ -12,6 +12,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 
 /**
@@ -19,13 +20,14 @@ import java.util.ArrayList;
  * @author Jose Saldaña, Manuel Pancorbo
  */
 public class APBCommunicationAssistant extends CommunicationAssistant {
-    ACLMessage bankChannel = new ACLMessage();
     ACLMessage shoppingChanel = new ACLMessage();
     
     ProductCatalogue shopsInfo = new ProductCatalogue();
     
-    public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, String _world) {
-        super(_agent, identityManager, cardId, _world);
+    String problem = "playground1";
+    
+    public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
+        super(_agent, identityManager, cardId);
     }
 
     /**
@@ -35,39 +37,65 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * @return nº de cuenta, formato: ACC#ejemplo, si algo sale mal devuelve
      * "error"
      */
-    public String openBankAccount() {
-        String service = "Bank";
-        ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
-        String serviceAgent = agents.get(0);
-
-        System.out.println(this.agent.getLocalName() + " requesting open bank account to " + serviceAgent);
-        bankChannel.setSender(this.agent.getAID());
-        bankChannel.addReceiver(new AID(serviceAgent, AID.ISLOCALNAME));
-        bankChannel.setPerformative(ACLMessage.REQUEST);
-        bankChannel.setProtocol("REGULAR");
+    public JsonObject checkingWorld() {
+        System.out.println(this.agent.getLocalName() + " requesting sessionId to " + this.worldManager);
+        worldChannel.setSender(this.agent.getAID());
+        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
+        worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
+        worldChannel.setProtocol("ANALYTICS");
 
         // Set content
         JsonObject params = new JsonObject();
-        params.add("operation", "open");
-        params.add("reference", "ACC##");
+        params.add("problem", this.problem);
         String parsedParams = params.toString();
-        bankChannel.setContent(parsedParams);
+        worldChannel.setContent(parsedParams);
 
-        this.agent.send(bankChannel);
+        this.agent.send(worldChannel);
         ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent REQUEST to " + serviceAgent + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM || in.getPerformative() == ACLMessage.INFORM) {
-            bankChannel = in.createReply();
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            bankAccountNumber = parsedAnswer.asObject().get("details").asString();
-            System.out.println(this.agent.getLocalName() + " created bank account with id: " + bankAccountNumber);
-            return bankAccountNumber;
+        System.out.println(this.agent.getLocalName() + " sent SUSCRIBE to " + this.worldManager + " and get: " + in.getPerformative(in.getPerformative()));
+        if (in.getPerformative() == ACLMessage.INFORM) {
+            worldChannel = in.createReply();
+            this.sessionId = in.getConversationId();
+            return Json.parse(in.getContent()).asObject();
         } else {
-            System.out
-                    .println(this.agent.getLocalName() + " get ERROR while creating bank account with " + serviceAgent);
-            return "error";
+            System.out.println(this.agent.getLocalName() + " get ERROR while suscribing to " + this.worldManager);
+            return null;
         }
+    }
+    
+    /**
+     * Queda a la escucha para compartir numero de cuenta con los drones
+     * 
+     * @author Jose Saldaña, Manuel pancorbo
+     */
+    public void listenAndShareSessionId(ArrayList<ArrayList<Integer> > map) {
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("session");
+        ACLMessage in = this.agent.blockingReceive(t);
+        System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
+        ACLMessage agentChannel = in.createReply();
+        agentChannel.setPerformative(ACLMessage.INFORM);
+        JsonObject params = new JsonObject();
+        params.add("sessionId", sessionId);
+        // Parse map
+        params.add("map", "mapaParseado");
+        String parsedParams = params.toString();
+        agentChannel.setContent(parsedParams);
+        this.agent.send(agentChannel);
+    }
+    
+    /**
+     * Queda a la escucha para recibir los bitcoins de los drones
+     * 
+     * @author Jose Saldaña, Domingo Lopez, Manuel pancorbo
+     */
+    public ArrayList<String> listenAndCollectMoney() {
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("money");
+        ACLMessage in = this.agent.blockingReceive(t);
+        System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
+        String response = in.getContent();
+        JsonObject parsedAnswer = Json.parse(response).asObject();
+//        return parsedAnswer.get("cash").asArray();
+        return null;
     }
 
     /**

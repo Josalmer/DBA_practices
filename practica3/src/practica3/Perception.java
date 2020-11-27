@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * @author Manuel Pancorbo
  * @author Jose Saldaña
  */
-public class DronePerception {
+public class Perception {
 
     Boolean alive;
     Boolean ontarget;
@@ -30,7 +30,7 @@ public class DronePerception {
      * 
      * @author Manuel Pancorbo
      */
-    public DronePerception() {
+    public Perception() {
         this.alive = null;
         this.ontarget = null;
         this.gps = null;
@@ -168,7 +168,7 @@ public class DronePerception {
     }
 
     /**
-     * Devuelve todos los valores de los sensores de la clase DronePerception.
+     * Devuelve todos los valores de los sensores de la clase Perception.
      * 
      * @author Manuel Pancorbo
      * @return devuelve en un string las variables de la clase y sus valores,

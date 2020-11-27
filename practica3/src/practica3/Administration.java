@@ -15,8 +15,10 @@ import java.util.Queue;
  */
 public class Administration {
 
-    String bankAccountNumber;
     int angentsSubscribed;
+    int collectedMoney;
+    
+    ArrayList<String> bitcoins = new ArrayList();
     
     // Sensores
     String sensor1;
@@ -28,6 +30,7 @@ public class Administration {
 
     public Administration() {
         angentsSubscribed = 0;
+        collectedMoney = 0;
     }
 
 }

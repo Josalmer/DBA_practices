@@ -108,7 +108,7 @@ public class AgentKnowledge {
      * @author Manuel Pancorbo
      * @param perception Percepción actualizada tras la lectura de sensores
      */
-    void update(DronePerception perception) {
+    void update(Perception perception) {
         this.currentPositionX = perception.gps.get(0);
         this.currentPositionY = perception.gps.get(1);
         this.currentHeight = perception.gps.get(2);

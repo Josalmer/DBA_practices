@@ -18,12 +18,11 @@ import java.util.Arrays;
  */
 public class Drone extends IntegratedAgent{
     String APBAccountNumber;
-    GeneralInfo info = new GeneralInfo();
 
     CommunicationAssistant _communications;
     DroneStatus status;
     AgentKnowledge knowledge = new AgentKnowledge();
-    DronePerception perception = new DronePerception();
+    Perception perception = new Perception();
     DroneAction lastAction;
     Boolean needRecharge = true;
     ArrayList<DroneAction> plan;
@@ -35,7 +34,7 @@ public class Drone extends IntegratedAgent{
     public void setup() {
         super.setup();
             
-        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID, this.info.getWorld());
+        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID);
 
         if (this._communications.chekingPlatform()) {
             this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
@@ -50,27 +49,29 @@ public class Drone extends IntegratedAgent{
       //Se sobrecarga en el hijo
     }
     
-    public void checkingWorld(String role){
-        boolean logedIn = this._communications.checkingWorld(this.APBAccountNumber, role);
+    public void checkingRadio(String role){
+        boolean logedIn = this._communications.checkingRadio(role);
         if (logedIn) {
             this.status = DroneStatus.SUBSCRIBED_TO_WORLD;
         } else {
             this.status = DroneStatus.FINISHED;
         }
     }
+    
+    void sendCashToAPB() {
+        this._communications.sendCashToAPB();
+    }
 
-    void getAPBAccountNumber() {
-        JsonObject content = new JsonObject();
-        content.add("request", "bank");
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content);
+    void requestSessionIdAndMap() {
+        JsonObject response = this._communications.requestSessionKeyToAPB();
         if (response != null) {
-            APBAccountNumber = response.get("content").asObject().get("acc").asString();
+//            this.knowledge.map = this.perception.convertToIntegerMatrix(response);
         } else {
             this.status = DroneStatus.FINISHED;
         }
     }
     
-    void loginAPB() {
+    void requestLoginData() {
         //Este metodo tendra que ser sobrecargado en el hijo    
     }
     void loginWorld(int x , int y) {
@@ -83,7 +84,7 @@ public class Drone extends IntegratedAgent{
      void claimRecharge(){
         JsonObject content = new JsonObject();
         content.add("request", "recharge");
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content);
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, null);
         if (response != null) {
             if (response.get("performative").asInt() == ACLMessage.REFUSE) {
                 this.rechargeTicket = null;
