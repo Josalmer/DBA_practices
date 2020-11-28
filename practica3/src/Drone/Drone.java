@@ -3,14 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package Drone;
 
+import Communications.DroneCommunicationAssistant;
 import IntegratedAgent.IntegratedAgent;
+import JSONParser.AgentJSONParser;
 import com.eclipsesource.json.*;
-import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
-import java.util.Arrays;
+
+
 
 /**
  *
@@ -19,10 +21,10 @@ import java.util.Arrays;
 public class Drone extends IntegratedAgent{
     String APBAccountNumber;
 
-    CommunicationAssistant _communications;
+    DroneCommunicationAssistant _communications;
     DroneStatus status;
-    AgentKnowledge knowledge = new AgentKnowledge();
-    Perception perception = new Perception();
+    DroneKnowledge knowledge = new DroneKnowledge();
+    DronePerception perception = new DronePerception();
     DroneAction lastAction;
     Boolean needRecharge = true;
     ArrayList<DroneAction> plan;
@@ -30,11 +32,13 @@ public class Drone extends IntegratedAgent{
     ArrayList<String> authorizedSensors = new ArrayList();
     String rechargeTicket = "";
     
+    AgentJSONParser parser = new AgentJSONParser();
+    
     @Override
     public void setup() {
         super.setup();
             
-        this._communications = new CommunicationAssistant(this, _identitymanager, _myCardID);
+        this._communications = new DroneCommunicationAssistant(this, _identitymanager, _myCardID);
 
         if (this._communications.chekingPlatform()) {
             this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
@@ -65,7 +69,7 @@ public class Drone extends IntegratedAgent{
     void requestSessionIdAndMap() {
         JsonObject response = this._communications.requestSessionKeyToAPB();
         if (response != null) {
-//            this.knowledge.map = this.perception.convertToIntegerMatrix(response);
+            this.knowledge.map = parser.getMap(response.get("map").asObject());
         } else {
             this.status = DroneStatus.FINISHED;
         }

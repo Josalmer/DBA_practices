@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package APB;
 
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
@@ -63,13 +63,20 @@ public class ProductCatalogue {
         this.thermalHQ = new PriorityQueue(comparator);
         this.recharge = new PriorityQueue(comparator);   
     }
+    
+    public void setCatalogue(JsonArray catalogue){
+        for(int i=0; i<catalogue.size(); i++){
+            JsonObject shop = catalogue.get(i).asObject();
+            this.update(shop.get("shop").asString(), shop.get("products").asArray());
+        }
+    }
 
     /**
      * @author Manuel Pancorbo Castro, Jose Saldaña
      * @param shoppingCenter tienda a la que corresponde el catalogo
      * @param catalogue array de productos disponibles en la tienda
      */
-    public void update(String shoppingCenter, JsonArray catalogue) {
+    private void update(String shoppingCenter, JsonArray catalogue) {
         for(int i = 0 ; i<catalogue.size(); i++){
             JsonObject product = catalogue.get(i).asObject();
         

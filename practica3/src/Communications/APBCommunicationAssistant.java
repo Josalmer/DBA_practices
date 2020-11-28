@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package Communications;
 
 import IntegratedAgent.IntegratedAgent;
 import PublicKeys.PublicCardID;
-import YellowPages.YellowPages;
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
@@ -21,9 +21,6 @@ import java.util.ArrayList;
  */
 public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage shoppingChanel = new ACLMessage();
-    
-    ProductCatalogue shopsInfo = new ProductCatalogue();
-    
     String problem = "playground1";
     
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
@@ -68,16 +65,15 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * 
      * @author Jose Saldaña, Manuel pancorbo
      */
-    public void listenAndShareSessionId(ArrayList<ArrayList<Integer> > map) {
+    public void listenAndShareSessionId(JsonArray map) {
         MessageTemplate t = MessageTemplate.MatchInReplyTo("session");
         ACLMessage in = this.agent.blockingReceive(t);
         System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
         ACLMessage agentChannel = in.createReply();
         agentChannel.setPerformative(ACLMessage.INFORM);
         JsonObject params = new JsonObject();
-        params.add("sessionId", sessionId);
-        // Parse map
-        params.add("map", "mapaParseado");
+        params.add("sessionId", sessionId);   
+        params.add("map", map);
         String parsedParams = params.toString();
         agentChannel.setContent(parsedParams);
         this.agent.send(agentChannel);
@@ -88,33 +84,38 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * 
      * @author Jose Saldaña, Domingo Lopez, Manuel pancorbo
      */
-    public ArrayList<String> listenAndCollectMoney() {
+    public JsonObject listenAndCollectMoney() {
         MessageTemplate t = MessageTemplate.MatchInReplyTo("money");
         ACLMessage in = this.agent.blockingReceive(t);
         System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
         String response = in.getContent();
         JsonObject parsedAnswer = Json.parse(response).asObject();
-//        return parsedAnswer.get("cash").asArray();
-        return null;
+        return parsedAnswer;
+        
     }
 
     /**
      * Construye el catalogo de productos necesarios
      *
      * @author Jose Saldaña, Manuel Pancorbo
-     * @return nº de cuenta, formato: ACC#ejemplo, si algo sale mal devuelve
+     * @return array con los catalogos
      * "error"
      */
-    public void askShoppingCenters() {
+    public JsonArray askShoppingCenters() {
         String service = "Shopping Center";
         ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
+        JsonArray array = new JsonArray();
+        JsonObject catalogue = new JsonObject();
         for (String shoppingCenter : agents) {
-            this.askSingleShoppingCenter(shoppingCenter);
+            catalogue.add("shop", shoppingCenter);
+            catalogue.add("products",this.askSingleShoppingCenter(shoppingCenter));
+            array.add(catalogue);
         }
+        return array;
     }
     
     
-    public void askSingleShoppingCenter(String receiver) {
+    public JsonArray askSingleShoppingCenter(String receiver) {
         System.out.println(this.agent.getLocalName() + " requesting shopping catalogue to " + receiver);
         shoppingChanel.setSender(this.agent.getAID());
         shoppingChanel.addReceiver(new AID(receiver, AID.ISLOCALNAME));
@@ -128,25 +129,13 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
             shoppingChanel = in.createReply();
             String response = in.getContent();
             JsonObject parsedAnswer = Json.parse(response).asObject();
-            this.shopsInfo.update(receiver, parsedAnswer.get("details").asArray());
+            return parsedAnswer.get("details").asArray();
         }
+        return null;
     }
     
-    public String buy(String sensorName) {
-        int option = 0;
-        String sensorCode = null;
-        Product product = null;
-        while (sensorCode == null && option < 3) {
-            product = this.shopsInfo.bestOption(sensorName, option);
-            if (product != null) {
-                sensorCode = this.buyCommunication(product.getSensorTicket(), product.getShop());
-            }
-            option ++;
-        }
-        return sensorCode;
-    }
     
-    public String buyCommunication(String sensorName, String seller) {
+    public String buyCommunication(String sensorName, String seller, JsonArray payment) {
         System.out.println(this.agent.getLocalName() + "buying " + sensorName + " to: " + seller);
         shoppingChanel.setSender(this.agent.getAID());
         shoppingChanel.addReceiver(new AID(seller, AID.ISLOCALNAME));
@@ -157,8 +146,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         JsonObject params = new JsonObject();
         params.add("operation", "buy");
         params.add("reference", sensorName);
-        // Hace falta hacer antes withdraw del banco
-//        params.add("payment", this.money);
+        params.add("payment", payment);
         String parsedParams = params.toString();
         shoppingChanel.setContent(parsedParams);
         

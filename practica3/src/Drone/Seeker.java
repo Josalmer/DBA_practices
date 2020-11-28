@@ -1,11 +1,8 @@
-package practica3;
+package Drone;
 
-import IntegratedAgent.IntegratedAgent;
 import com.eclipsesource.json.*;
-import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Seeker extends Drone {
     
