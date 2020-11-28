@@ -37,14 +37,14 @@ public class Drone extends IntegratedAgent{
     @Override
     public void setup() {
         super.setup();
-            
-        this._communications = new DroneCommunicationAssistant(this, _identitymanager, _myCardID);
+
+        this._communications = new DroneCommunicationAssistant(this, "Sphinx", _myCardID);
 
         if (this._communications.chekingPlatform()) {
             this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
             _exitRequested = false;
         } else {
-            System.out.println(this.getLocalName() + " failed subscribing to" + _identitymanager + " and DIE");
+            System.out.println(this.getLocalName() + " failed subscribing to Sphinx and DIE");
             _exitRequested = true;
         }
     }
@@ -82,6 +82,8 @@ public class Drone extends IntegratedAgent{
         //Este metodo tendra que ser sobrecargado en el hijo    
     }
     void logout() {
+        this._communications.checkoutPlatform();
+        this._communications.checkoutWorld();
         _exitRequested = true;
     }
     

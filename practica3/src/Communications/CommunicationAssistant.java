@@ -95,13 +95,18 @@ public class CommunicationAssistant {
             in = this.agent.blockingReceive();
             yp = new YellowPages();
             yp.updateYellowPages(in);
-            if (this.agent.getLocalName() == "Ana Patricia Botin") {
+            if (this.agent.getLocalName().equals("Ana Patricia Botin")) {
                 System.out.println("\n" + yp.prettyPrint());
             }
             String service = "Group Banco Santander";
             ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
-            this.worldManager = agents.get(0);
-            return true;
+            if (agents.isEmpty()) {
+                System.out.println("The service " + service + " is not provided by any running agent currently");
+                return false;
+            } else {
+                this.worldManager = agents.get(0);
+                return true;
+            }
         }
         return false;
     }
@@ -139,6 +144,36 @@ public class CommunicationAssistant {
             return false;
         }
     }
-   
 
+    /**
+     * Cancela suscripción con el identity manager
+     *
+     * @author Jose Saldaña
+     * @return boolean que indica si el registro ha sido exitoso
+     */
+    public void checkoutPlatform() {
+        System.out.println(this.agent.getLocalName() + " cancelling subscription with " + _identitymanager);
+        identityManagerChannel.setSender(this.agent.getAID());
+        identityManagerChannel.addReceiver(new AID(_identitymanager, AID.ISLOCALNAME));
+        identityManagerChannel.setProtocol("ANALYTICS");
+        identityManagerChannel.setContent("");
+        identityManagerChannel.setPerformative(ACLMessage.CANCEL);
+        this.agent.send(identityManagerChannel);
+    }
+
+    /**
+     * Cancela suscripción con el identity manager
+     *
+     * @author Jose Saldaña
+     * @return boolean que indica si el registro ha sido exitoso
+     */
+    public void checkoutWorld() {
+        System.out.println(this.agent.getLocalName() + " cancelling subscription with " + this.worldManager);
+        worldChannel.setSender(this.agent.getAID());
+        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
+        worldChannel.setContent("");
+        worldChannel.setPerformative(ACLMessage.CANCEL);
+        this.agent.send(worldChannel);
+    }
+   
 }
