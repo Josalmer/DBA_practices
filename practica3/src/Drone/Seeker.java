@@ -20,12 +20,18 @@ public class Seeker extends Drone {
                
                 case SUBSCRIBED_TO_PLATFORM:
                     this.requestSessionIdAndMap();
-                    this.checkingRadio("seeker");
+                    if (this.status == DroneStatus.SUBSCRIBED_TO_PLATFORM) {
+                        this.checkingRadio("seeker");
+                    }
                     break;
                 case SUBSCRIBED_TO_WORLD:
                     this.sendCashToAPB();
-                    this.requestLoginData();
-                    this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
+                    if (this.status == DroneStatus.SUBSCRIBED_TO_WORLD) {
+                        this.requestLoginData();
+                    }
+                    if (this.status == DroneStatus.SUBSCRIBED_TO_WORLD) {
+                        this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
+                    }
                     this.status = DroneStatus.RECHARGING;
                     break;
                 case FREE:

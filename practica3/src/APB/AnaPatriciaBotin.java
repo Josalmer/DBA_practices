@@ -165,9 +165,17 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     void logout() {
-        this._communications.checkoutPlatform();
+        this.checkMessagesAndOrderToLogout();
         this._communications.checkoutWorld();
+        this._communications.checkoutPlatform();
         _exitRequested = true;
+    }
+    
+    void checkMessagesAndOrderToLogout() {
+        boolean pendingRequest = true; 
+        while (pendingRequest) {
+            pendingRequest = this._communications.checkMessagesAndOrderToLogout();
+        }
     }
 
     @Override
