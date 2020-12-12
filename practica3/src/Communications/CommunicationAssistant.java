@@ -98,7 +98,7 @@ public class CommunicationAssistant {
             if (this.agent.getLocalName().equals("Ana Patricia Botin")) {
                 System.out.println("\n" + yp.prettyPrint());
             }
-            String service = "Group Banco Santander";
+            String service = "Analytics group Banco Santander";
             ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
             if (agents.isEmpty()) {
                 System.out.println("The service " + service + " is not provided by any running agent currently");

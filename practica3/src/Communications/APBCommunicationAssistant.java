@@ -91,7 +91,6 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         String response = in.getContent();
         JsonObject parsedAnswer = Json.parse(response).asObject();
         return parsedAnswer;
-        
     }
 
     /**
@@ -160,6 +159,19 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
             return parsedAnswer.get("details").asString();
         } else {
             return null;
+        }
+    }
+    
+    public boolean checkMessagesAndOrderToLogout() {
+        ACLMessage in = this.agent.blockingReceive(3000);
+        if (in != null) {
+            System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender() + " and respond with NOT_UNDERSTOOD");
+            ACLMessage agentChannel = in.createReply();
+            agentChannel.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+            this.agent.send(agentChannel);
+            return true;
+        } else {
+            return false;
         }
     }
 }
