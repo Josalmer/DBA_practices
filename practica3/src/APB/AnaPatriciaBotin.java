@@ -74,7 +74,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         if (response == null) {
             this.status = APBStatus.FINISHED;
         } else {
-            this.adminData.map = this.jsonParser.convertToIntegerMatrix(response.get("map").asArray());
+            this.adminData.map = this.jsonParser.getMap(response.get("map").asObject());
             this.status = APBStatus.SUBSCRIBED_TO_WORLD;
         }
     }

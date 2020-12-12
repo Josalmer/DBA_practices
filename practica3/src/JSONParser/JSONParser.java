@@ -5,6 +5,7 @@
  */
 package JSONParser;
 
+import Map2D.Map2DGrayscale;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import java.util.ArrayList;
@@ -16,14 +17,24 @@ import java.util.ArrayList;
 public class JSONParser {
     
     public ArrayList<ArrayList<Integer>> getMap(JsonObject map){
-        return convertToIntegerMatrix(map.asArray());
+        Map2DGrayscale myMap = new Map2DGrayscale();
+        ArrayList<ArrayList<Integer>> arrayMap = new ArrayList<>();
+        if(myMap.fromJson(map)){    
+            for(int i=0; i<myMap.getWidth();i++){           
+                ArrayList<Integer> row = new ArrayList<>();
+                for(int j=0; j<myMap.getHeight(); j++){
+                    row.add(myMap.getLevel(i, j));
+                }
+                arrayMap.add(row);            
+            }        
+        }
+        return arrayMap;
     }
     
     public JsonArray parseMap (ArrayList<ArrayList<Integer>> map){
         return convertIntegerMatrixtoJSONArray(map);
     }
-    
-    
+
     
     /**
      * Parsea los datos recibidos en un JSONArray a un ArrayList de enteros. El
