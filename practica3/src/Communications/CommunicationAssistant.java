@@ -80,21 +80,26 @@ public class CommunicationAssistant {
         identityManagerChannel.setSender(this.agent.getAID());
         identityManagerChannel.addReceiver(new AID(_identitymanager, AID.ISLOCALNAME));
         identityManagerChannel.setProtocol("ANALYTICS");
+        identityManagerChannel.setReplyWith("subscribe" + this.agent.getLocalName());
         identityManagerChannel.setContent("");
         identityManagerChannel.setEncoding(_myCardID.getCardID());
         identityManagerChannel.setPerformative(ACLMessage.SUBSCRIBE);
         this.agent.send(identityManagerChannel);
-        ACLMessage in = this.agent.blockingReceive();
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("subscribe" + this.agent.getLocalName());
+        ACLMessage in = this.agent.blockingReceive(t);
         System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + _identitymanager + " and get: " + in.getPerformative(in.getPerformative()));
         if (in.getPerformative() == ACLMessage.INFORM) {
             System.out.println(this.agent.getLocalName() + ": Chekin confirmed in the platform");
             // Get YellowPages
             identityManagerChannel = in.createReply();
             identityManagerChannel.setPerformative(ACLMessage.QUERY_REF);
+            identityManagerChannel.setReplyWith("yp" + this.agent.getLocalName());
             this.agent.send(identityManagerChannel);
-            in = this.agent.blockingReceive();
+            t = MessageTemplate.MatchInReplyTo("yp" + this.agent.getLocalName());
+            in = this.agent.blockingReceive(t);
             yp = new YellowPages();
             yp.updateYellowPages(in);
+            System.out.println(this.agent.getLocalName() + " request Yellow Pages to " + _identitymanager + " and get: " + in.getPerformative(in.getPerformative()));
             if (this.agent.getLocalName().equals("Ana Patricia Botin")) {
                 System.out.println("\n" + yp.prettyPrint());
             }
@@ -162,7 +167,7 @@ public class CommunicationAssistant {
     }
 
     /**
-     * Cancela suscripción con el identity manager
+     * Cancela suscripción con el world manager
      *
      * @author Jose Saldaña
      * @return boolean que indica si el registro ha sido exitoso

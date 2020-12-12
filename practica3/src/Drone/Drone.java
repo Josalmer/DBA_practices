@@ -82,8 +82,8 @@ public class Drone extends IntegratedAgent{
         //Este metodo tendra que ser sobrecargado en el hijo    
     }
     void logout() {
-        this._communications.checkoutPlatform();
         this._communications.checkoutWorld();
+        this._communications.checkoutPlatform();
         _exitRequested = true;
     }
     

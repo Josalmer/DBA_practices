@@ -21,7 +21,7 @@ import java.util.ArrayList;
  */
 public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage shoppingChanel = new ACLMessage();
-    String problem = "playground1";
+    String problem = "4";
     
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
@@ -40,6 +40,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
         worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
         worldChannel.setProtocol("ANALYTICS");
+        worldChannel.setReplyWith("subscribeworld");
 
         // Set content
         JsonObject params = new JsonObject();
@@ -48,7 +49,10 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         worldChannel.setContent(parsedParams);
 
         this.agent.send(worldChannel);
-        ACLMessage in = this.agent.blockingReceive();
+        System.out.println(worldChannel);
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("subscribeworld");
+        ACLMessage in = this.agent.blockingReceive(t);
+        System.out.println(in);
         System.out.println(this.agent.getLocalName() + " sent SUSCRIBE to " + this.worldManager + " and get: " + in.getPerformative(in.getPerformative()));
         if (in.getPerformative() == ACLMessage.INFORM) {
             worldChannel = in.createReply();
@@ -119,10 +123,12 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         shoppingChanel.setSender(this.agent.getAID());
         shoppingChanel.addReceiver(new AID(receiver, AID.ISLOCALNAME));
         shoppingChanel.setPerformative(ACLMessage.QUERY_REF);
+        shoppingChanel.setReplyWith("shoping" + receiver);
         shoppingChanel.setProtocol("REGULAR");
         shoppingChanel.setContent("");
         this.agent.send(shoppingChanel);
-        ACLMessage in = this.agent.blockingReceive();
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("shoping" + receiver);
+        ACLMessage in = this.agent.blockingReceive(t);
         System.out.println(this.agent.getLocalName() + " sent QUERY_REF to " + receiver + " and get: " + in.getPerformative(in.getPerformative()));
         if (in.getPerformative() == ACLMessage.INFORM) {
             shoppingChanel = in.createReply();
@@ -140,6 +146,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         shoppingChanel.addReceiver(new AID(seller, AID.ISLOCALNAME));
         shoppingChanel.setPerformative(ACLMessage.REQUEST);
         shoppingChanel.setProtocol("REGULAR");
+        shoppingChanel.setReplyWith("shoping" + sensorName);
         
         // Set content
         JsonObject params = new JsonObject();
@@ -150,7 +157,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         shoppingChanel.setContent(parsedParams);
         
         this.agent.send(shoppingChanel);
-        ACLMessage in = this.agent.blockingReceive();
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("shoping" + sensorName);
+        ACLMessage in = this.agent.blockingReceive(t);
         System.out.println(this.agent.getLocalName() + " sent REQUEST to " + seller + " and get: " + in.getPerformative(in.getPerformative()));
         if (in.getPerformative() == ACLMessage.INFORM) {
             shoppingChanel = in.createReply();
