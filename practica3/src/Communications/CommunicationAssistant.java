@@ -35,10 +35,14 @@ De Jose para Migue:
  */
 /**
  *
- * @author Jose Saldaña, Miguel García Tenorio
+ * @author Jose Saldaña, Miguel García Tenorio, Manuel Pancorbo
  */
 public class CommunicationAssistant {
 
+    boolean printMessages=true;
+    
+    String serviceAgent = "Analytics group Banco Santander";
+    
     ACLMessage identityManagerChannel = new ACLMessage(); // Todos
     ACLMessage worldChannel = new ACLMessage(); // Todos
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
@@ -55,6 +59,8 @@ public class CommunicationAssistant {
     String _identitymanager;
     PublicCardID _myCardID;
     YellowPages yp;
+    
+    AID agentName;
 
     /**
      * Constructor del canal de comunicaciones de los agentes
@@ -65,10 +71,23 @@ public class CommunicationAssistant {
      */
     public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         this.agent = _agent;
+        this.agentName = this.agent.getAID();
         this._identitymanager = identityManager;
         this._myCardID = cardId;
     }
 
+       
+    
+    public ACLMessage message(AID sender, String receiver, int performative, String protocol){
+        ACLMessage message = new ACLMessage();
+        message.setSender(sender);
+        message.addReceiver(new AID(receiver, AID.ISLOCALNAME));
+        message.setPerformative(performative);
+        message.setProtocol(protocol);
+       
+        return message;
+    }
+    
     /**
      * Registra al agente en la plataforma de agentes
      *
@@ -76,44 +95,54 @@ public class CommunicationAssistant {
      * @return boolean que indica si el registro ha sido exitoso
      */
     public boolean chekingPlatform() {
-        System.out.println(this.agent.getLocalName() + " requesting checkin to " + _identitymanager);
-        identityManagerChannel.setSender(this.agent.getAID());
-        identityManagerChannel.addReceiver(new AID(_identitymanager, AID.ISLOCALNAME));
-        identityManagerChannel.setProtocol("ANALYTICS");
+        identityManagerChannel = message(agentName, _identitymanager, ACLMessage.SUBSCRIBE, "ANALYTICS");
         identityManagerChannel.setReplyWith("subscribe" + this.agent.getLocalName());
         identityManagerChannel.setContent("");
         identityManagerChannel.setEncoding(_myCardID.getCardID());
-        identityManagerChannel.setPerformative(ACLMessage.SUBSCRIBE);
+        
+        this.printSendMessage(identityManagerChannel);
         this.agent.send(identityManagerChannel);
+        
+        
         MessageTemplate t = MessageTemplate.MatchInReplyTo("subscribe" + this.agent.getLocalName());
         ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + _identitymanager + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.INFORM) {
-            System.out.println(this.agent.getLocalName() + ": Chekin confirmed in the platform");
-            // Get YellowPages
-            identityManagerChannel = in.createReply();
-            identityManagerChannel.setPerformative(ACLMessage.QUERY_REF);
-            identityManagerChannel.setReplyWith("yp" + this.agent.getLocalName());
-            this.agent.send(identityManagerChannel);
-            t = MessageTemplate.MatchInReplyTo("yp" + this.agent.getLocalName());
-            in = this.agent.blockingReceive(t);
-            yp = new YellowPages();
-            yp.updateYellowPages(in);
-            System.out.println(this.agent.getLocalName() + " request Yellow Pages to " + _identitymanager + " and get: " + in.getPerformative(in.getPerformative()));
-            if (this.agent.getLocalName().equals("Ana Patricia Botin")) {
-                System.out.println("\n" + yp.prettyPrint());
-            }
-            String service = "Analytics group Banco Santander";
-            ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
-            if (agents.isEmpty()) {
-                System.out.println("The service " + service + " is not provided by any running agent currently");
-                return false;
-            } else {
-                this.worldManager = agents.get(0);
-                return true;
-            }
+
+        this.printReceiveMessage(in);
+        if (checkError(ACLMessage.INFORM, in)) {
+            return false;
         }
-        return false;
+                  
+       // identityManagerChannel = in.createReply(); 
+        boolean validYP = this.getYellowPages();  
+        return validYP;
+    }
+    
+    
+    
+    public boolean getYellowPages(){
+        identityManagerChannel = message(agentName, _identitymanager, ACLMessage.QUERY_REF, "ANALYTICS");
+        identityManagerChannel.setReplyWith("yp" + this.agent.getLocalName());   
+       
+        this.printSendMessage(identityManagerChannel);
+        this.agent.send(identityManagerChannel);
+       
+            
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("yp" + this.agent.getLocalName());
+        ACLMessage in = this.agent.blockingReceive(t);
+        this.printReceiveMessage(in);
+        
+        yp = new YellowPages();
+        yp.updateYellowPages(in);
+       
+        if (this.agent.getLocalName().equals("Ana Patricia Botin")) { System.out.println("\n" + yp.prettyPrint());}
+        
+        ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(serviceAgent));
+        if (agents.isEmpty()) {
+            System.out.println("The service " + serviceAgent + " is not provided by any running agent currently");
+        } else {
+            this.worldManager = agents.get(0); 
+        }
+        return !agents.isEmpty();
     }
 
     /**
@@ -123,33 +152,26 @@ public class CommunicationAssistant {
      * @return resultado de la perticion
      */
     public boolean checkingRadio(String role) {
-        System.out.println(this.agent.getLocalName() + " Trying to subscribe as " + role);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
-        worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
-        worldChannel.setProtocol("REGULAR");
+        worldChannel = message(agentName, worldManager,ACLMessage.SUBSCRIBE, "REGULAR");
         worldChannel.setReplyWith("radio");
         worldChannel.setConversationId(this.sessionId);
+        
         JsonObject content = new JsonObject();
         content.add("type", role.toUpperCase());
         worldChannel.setContent(content.toString());
+        
+        this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("radio");
-        ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + this.worldManager + " and get: " + in.getPerformative(in.getPerformative()));
-        System.out.println("\n"+in.getContent()+"\n");
-        if (in.getPerformative() == ACLMessage.INFORM) {
-            worldChannel = in.createReply();
-            if (!role.equals("LISTENER")) {
-                String response = in.getContent();
-                JsonObject parsedAnswer = Json.parse(response).asObject();
-                this.bitcoins = parsedAnswer.asObject().get("coins").asArray();
-            }
-            return true;
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while SUBSCRIBE to " + this.worldManager);
+        
+        ACLMessage in = this.agent.blockingReceive();
+       
+        if (checkError(ACLMessage.INFORM,in)) {
             return false;
         }
+        
+        this.printReceiveMessage(in);
+        this.saveMoney(in, role);     
+        return true;
     }
 
     /**
@@ -159,13 +181,12 @@ public class CommunicationAssistant {
      * @return boolean que indica si el registro ha sido exitoso
      */
     public void checkoutPlatform() {
-        System.out.println(this.agent.getLocalName() + " cancelling subscription with " + _identitymanager);
-        identityManagerChannel.setSender(this.agent.getAID());
-        identityManagerChannel.addReceiver(new AID(_identitymanager, AID.ISLOCALNAME));
-        identityManagerChannel.setProtocol("ANALYTICS");
+        identityManagerChannel = message(agentName, _identitymanager, ACLMessage.CANCEL,"ANALYTICS");
         identityManagerChannel.setContent("");
-        identityManagerChannel.setPerformative(ACLMessage.CANCEL);
+        identityManagerChannel.setConversationId(this.sessionId);
+         
         this.agent.send(identityManagerChannel);
+        this.printSendMessage(identityManagerChannel);
     }
 
     /**
@@ -175,12 +196,56 @@ public class CommunicationAssistant {
      * @return boolean que indica si el registro ha sido exitoso
      */
     public void checkoutWorld() {
-        System.out.println(this.agent.getLocalName() + " cancelling subscription with " + this.worldManager);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
+        worldChannel = message(this.agent.getAID(), _identitymanager, ACLMessage.CANCEL,"ANALYTICS");
         worldChannel.setContent("");
-        worldChannel.setPerformative(ACLMessage.CANCEL);
+        worldChannel.setConversationId(this.sessionId);
+        this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
     }
    
+ 
+    
+    public boolean checkError(int wantedPerformative, ACLMessage in){
+        if(in.getPerformative() == wantedPerformative)
+            return false;
+        
+        this.printErrorMessage(in);
+        return true;
+    }
+    
+    public void printSendMessage(ACLMessage in){
+        if(this.printMessages){
+            System.out.println("\033[32m \nMessage Im Sending \033[0m " + this.agent.getLocalName() + stringMessage(in));
+        }
+    }
+    
+    public void printReceiveMessage(ACLMessage in){
+        if(this.printMessages){
+            System.out.println("\033[35m \nMessage I Got\033[0m " + this.agent.getLocalName() + stringMessage(in)); 
+        }
+    }
+    
+     
+    public void printErrorMessage(ACLMessage in){
+        if(this.printMessages){
+            System.out.println("\033[31m \nError Message \033[0m " + this.agent.getLocalName() + stringMessage(in));
+        }  
+    }
+    
+    private String stringMessage(ACLMessage in ){
+        String _agentName = in.getSender().toString();
+        String _otherName=""; 
+        if(in.getAllReceiver().hasNext()) 
+            _otherName = in.getAllReceiver().next().toString();
+        String _performative = ACLMessage.getPerformative(in.getPerformative());
+        return "\n-Sender: " + _agentName + "\n-Receiver: " + _otherName + "\n-Performative: " + _performative + "\n-Reply with: " + in.getReplyWith() + "\n-Content: " + in.getContent();
+    }
+
+    private void saveMoney(ACLMessage in, String role){
+        if (!role.equals("LISTENER")) {
+               String response = in.getContent();
+               JsonObject parsedAnswer = Json.parse(response).asObject();
+               this.bitcoins = parsedAnswer.asObject().get("coins").asArray(); 
+        }
+    }
 }

@@ -20,7 +20,7 @@ import java.util.ArrayList;
  * @author Jose Saldaña, Manuel Pancorbo
  */
 public class APBCommunicationAssistant extends CommunicationAssistant {
-    ACLMessage shoppingChanel = new ACLMessage();
+    ACLMessage shoppingChannel = new ACLMessage();
     String problem = "Playground1";
     
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
@@ -35,11 +35,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * "error"
      */
     public JsonObject checkingWorld() {
-        System.out.println(this.agent.getLocalName() + " requesting sessionId to " + this.worldManager);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
-        worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
-        worldChannel.setProtocol("ANALYTICS");
+        worldChannel = message(agentName, worldManager, ACLMessage.SUBSCRIBE, "ANALYTICS");
         worldChannel.setReplyWith("subscribeworld");
 
         // Set content
@@ -49,19 +45,19 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         worldChannel.setContent(parsedParams);
 
         this.agent.send(worldChannel);
-        System.out.println(worldChannel);
+        this.printSendMessage(worldChannel);
+        
         MessageTemplate t = MessageTemplate.MatchInReplyTo("subscribeworld");
         ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println(in);
-        System.out.println(this.agent.getLocalName() + " sent SUSCRIBE to " + this.worldManager + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.INFORM) {
-            worldChannel = in.createReply();
-            this.sessionId = in.getConversationId();
-            return Json.parse(in.getContent()).asObject();
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while suscribing to " + this.worldManager);
+        
+        if(this.checkError(ACLMessage.INFORM, in)){
             return null;
         }
+        
+        this.printReceiveMessage(in);
+        worldChannel = in.createReply();
+        this.sessionId = in.getConversationId();
+        return Json.parse(in.getContent()).asObject();
     }
     
     /**
@@ -72,15 +68,19 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     public void listenAndShareSessionId(JsonArray map) {
         //MessageTemplate t = MessageTemplate.MatchInReplyTo("session");
         ACLMessage in = this.agent.blockingReceive();
-        System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
+        this.printReceiveMessage(in);
+        
         ACLMessage agentChannel = in.createReply();
         agentChannel.setPerformative(ACLMessage.INFORM);
+        
         JsonObject params = new JsonObject();
         params.add("sessionId", sessionId);   
         params.add("map", map);
         String parsedParams = params.toString();
         agentChannel.setContent(parsedParams);
+        
         this.agent.send(agentChannel);
+        this.printSendMessage(in);
     }
     
     /**
@@ -91,7 +91,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     public JsonObject listenAndCollectMoney() {
         MessageTemplate t = MessageTemplate.MatchInReplyTo("money");
         ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
+        this.printReceiveMessage(in);
+        
         String response = in.getContent();
         JsonObject parsedAnswer = Json.parse(response).asObject();
         return parsedAnswer.get("cash").asObject();
@@ -107,6 +108,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     public JsonArray askShoppingCenters() {
         String service = "Shopping Center";
         ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
+        
         JsonArray array = new JsonArray();
         JsonObject catalogue = new JsonObject();
         for (String shoppingCenter : agents) {
@@ -119,34 +121,29 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     
     
     public JsonArray askSingleShoppingCenter(String receiver) {
-        System.out.println(this.agent.getLocalName() + " requesting shopping catalogue to " + receiver);
-        shoppingChanel.setSender(this.agent.getAID());
-        shoppingChanel.addReceiver(new AID(receiver, AID.ISLOCALNAME));
-        shoppingChanel.setPerformative(ACLMessage.QUERY_REF);
-        shoppingChanel.setReplyWith("shoping" + receiver);
-        shoppingChanel.setProtocol("REGULAR");
-        shoppingChanel.setContent("");
-        this.agent.send(shoppingChanel);
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("shoping" + receiver);
+        shoppingChannel = message(agentName, receiver, ACLMessage.QUERY_REF, "REGULAR");
+        shoppingChannel.setReplyWith("shopping" + receiver);
+        shoppingChannel.setContent("");
+        
+        this.agent.send(shoppingChannel);
+        this.printSendMessage(shoppingChannel);
+        
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + receiver);
         ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println(this.agent.getLocalName() + " sent QUERY_REF to " + receiver + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.INFORM) {
-            shoppingChanel = in.createReply();
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            return parsedAnswer.get("details").asArray();
+        
+        if(this.checkError(ACLMessage.INFORM, in)){
+            return null;     
         }
-        return null;
+         
+        this.printReceiveMessage(in);
+        JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
+        return parsedAnswer.get("details").asArray();        
     }
     
     
     public String buyCommunication(String sensorName, String seller, JsonArray payment) {
-        System.out.println(this.agent.getLocalName() + "buying " + sensorName + " to: " + seller);
-        shoppingChanel.setSender(this.agent.getAID());
-        shoppingChanel.addReceiver(new AID(seller, AID.ISLOCALNAME));
-        shoppingChanel.setPerformative(ACLMessage.REQUEST);
-        shoppingChanel.setProtocol("REGULAR");
-        shoppingChanel.setReplyWith("shoping" + sensorName);
+        shoppingChannel = message(agentName, seller, ACLMessage.REQUEST, "REGULAR");
+        shoppingChannel.setReplyWith("shopping" + sensorName);
         
         // Set content
         JsonObject params = new JsonObject();
@@ -154,21 +151,27 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         params.add("reference", sensorName);
         params.add("payment", payment);
         String parsedParams = params.toString();
-        shoppingChanel.setContent(parsedParams);
+        shoppingChannel.setContent(parsedParams);
         
-        this.agent.send(shoppingChanel);
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("shoping" + sensorName);
+        this.agent.send(shoppingChannel);
+        this.printSendMessage(shoppingChannel);
+        
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + sensorName);
         ACLMessage in = this.agent.blockingReceive(t);
-        System.out.println(this.agent.getLocalName() + " sent REQUEST to " + seller + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.INFORM) {
-            shoppingChanel = in.createReply();
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            return parsedAnswer.get("details").asString();
-        } else {
+
+        if (this.checkError(ACLMessage.INFORM,in)) {
             return null;
         }
+        
+        this.printReceiveMessage(in);
+        JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
+        return parsedAnswer.get("details").asString();
     }
+    
+    
+    
+    
+    
     
     public boolean checkMessagesAndOrderToLogout() {
         ACLMessage in = this.agent.blockingReceive(3000);
