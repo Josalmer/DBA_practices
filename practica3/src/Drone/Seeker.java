@@ -22,6 +22,8 @@ public class Seeker extends Drone {
                     this.requestSessionIdAndMap();
                     if (this.status == DroneStatus.SUBSCRIBED_TO_PLATFORM) {
                         this.checkingRadio("seeker");
+                        //QUITAR
+                        this.status = DroneStatus.FINISHED;
                     }
                     break;
                 case SUBSCRIBED_TO_WORLD:

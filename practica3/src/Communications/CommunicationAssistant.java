@@ -123,7 +123,7 @@ public class CommunicationAssistant {
      * @return resultado de la perticion
      */
     public boolean checkingRadio(String role) {
-        System.out.println(this.agent.getLocalName() + " SUBSCRIBE to World as " + role);
+        System.out.println(this.agent.getLocalName() + " Trying to subscribe as " + role);
         worldChannel.setSender(this.agent.getAID());
         worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
         worldChannel.setPerformative(ACLMessage.SUBSCRIBE);
@@ -132,10 +132,12 @@ public class CommunicationAssistant {
         worldChannel.setConversationId(this.sessionId);
         JsonObject content = new JsonObject();
         content.add("type", role.toUpperCase());
-        worldChannel.setContent(content.asString());
+        worldChannel.setContent(content.toString());
         this.agent.send(worldChannel);
-        ACLMessage in = this.agent.blockingReceive();
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("radio");
+        ACLMessage in = this.agent.blockingReceive(t);
         System.out.println(this.agent.getLocalName() + " sent SUBSCRIBE to " + this.worldManager + " and get: " + in.getPerformative(in.getPerformative()));
+        System.out.println("\n"+in.getContent()+"\n");
         if (in.getPerformative() == ACLMessage.INFORM) {
             worldChannel = in.createReply();
             if (!role.equals("LISTENER")) {

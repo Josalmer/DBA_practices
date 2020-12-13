@@ -21,7 +21,7 @@ import java.util.ArrayList;
  */
 public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage shoppingChanel = new ACLMessage();
-    String problem = "4";
+    String problem = "Playground1";
     
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
@@ -70,8 +70,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * @author Jose Saldaña, Manuel pancorbo
      */
     public void listenAndShareSessionId(JsonArray map) {
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("session");
-        ACLMessage in = this.agent.blockingReceive(t);
+        //MessageTemplate t = MessageTemplate.MatchInReplyTo("session");
+        ACLMessage in = this.agent.blockingReceive();
         System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
         ACLMessage agentChannel = in.createReply();
         agentChannel.setPerformative(ACLMessage.INFORM);
@@ -94,7 +94,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender());
         String response = in.getContent();
         JsonObject parsedAnswer = Json.parse(response).asObject();
-        return parsedAnswer;
+        return parsedAnswer.get("cash").asObject();
     }
 
     /**

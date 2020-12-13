@@ -22,6 +22,8 @@ public class Rescuer extends Drone {
                     this.requestSessionIdAndMap();
                     if (this.status == DroneStatus.SUBSCRIBED_TO_PLATFORM) {
                         this.checkingRadio("rescuer");
+                        //QUITAR
+                        this.status = DroneStatus.FINISHED;
                     }
                     break;
                 case SUBSCRIBED_TO_WORLD:

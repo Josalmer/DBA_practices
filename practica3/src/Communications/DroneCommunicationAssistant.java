@@ -13,6 +13,7 @@ import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -36,8 +37,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
      * @return JsonObject de respuesta
      */
     public JsonObject requestSessionKeyToAPB() { 
-        System.out.println(this.agent.getLocalName() + " request sessionId to Ana Patricia Botin");
-        APBChannel.setSender(this.agent.getAID());
+        System.out.println(this.agent.getLocalName() + " waiting for APB to send id and Map");
+        /*APBChannel.setSender(this.agent.getAID());
         APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
         APBChannel.setPerformative(ACLMessage.QUERY_REF);
         
@@ -47,18 +48,50 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         
         APBChannel.setContent(parsedContent);
         APBChannel.setReplyWith("session");
-        this.agent.send(APBChannel);
-        ACLMessage in = this.agent.blockingReceive();
+
+        this.agent.send(APBChannel);*/
+        
+        //Carga de mensaje para reintentos de conexión con APB.
+        APBChannel.setSender(this.agent.getAID());
+        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
+        APBChannel.setPerformative(ACLMessage.QUERY_REF);
+        
+        JsonObject content = new JsonObject();
+        content.add("request", "session");
+        String parsedContent = content.toString();
+        
+        APBChannel.setContent(parsedContent);
+        //APBChannel.setReplyWith("session");
+        
+        ACLMessage in = null;
+        int tryouts = 0;
+        boolean done = false;
+        while(tryouts < 3 && !done){
+            this.agent.send(APBChannel);
+            in = this.agent.blockingReceive(5000);
+            tryouts++;
+            System.out.print("\nIntento "+tryouts + " para" + this.agent.getLocalName()+"\n" );
+            if(in != null)
+                done = true;   
+        }
+        
+        if(!done){
+            System.out.println(this.agent.getLocalName() + "got error while waiting for APB id and map");
+            return null;
+        }
+        
+       
         int resPerformative = in.getPerformative();
-        System.out.println(this.agent.getLocalName() + " sent Query Ref to Ana Patricia Botin and get: " + ACLMessage.getPerformative(resPerformative));
-        if (acceptedPerformative.contains(resPerformative)) {
+        System.out.println(this.agent.getLocalName() + " received " + ACLMessage.getPerformative(resPerformative)+" from  Ana Patricia Botin");
+        
+        if (acceptedPerformative.contains(resPerformative)){
             APBChannel = in.createReply();
             String response = in.getContent();
             JsonObject parsedAnswer = Json.parse(response).asObject();
-            this.sessionId = parsedAnswer.get("sessiondId").asString();
+            this.sessionId = parsedAnswer.get("sessionId").asString();
             return parsedAnswer; 
         } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while Query Ref to Ana Patricia Botin: " + parsedContent);
+            System.out.println(this.agent.getLocalName() + "got error while waiting for APB id and map");
             return null;
         }
     }

@@ -76,6 +76,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         } else {
             this.adminData.map = this.jsonParser.getMap(response.get("map").asObject());
             this.status = APBStatus.SUBSCRIBED_TO_WORLD;
+            
         }
     }
 
@@ -85,6 +86,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void shareSessionIdAndMap() {
         JsonArray parsedMap = jsonParser.parseMap(this.adminData.map);
         while (this.adminData.angentsSubscribed < 4) {
+            System.out.print("\nNumero agentes:"+this.adminData.angentsSubscribed);
             this._communications.listenAndShareSessionId(parsedMap);
             this.adminData.angentsSubscribed++;
         }
@@ -96,7 +98,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void checkingRadio() {
         boolean logedIn = this._communications.checkingRadio("LISTENER");
         if (logedIn) {
-            this.status = APBStatus.SUBSCRIBED_TO_WORLD;
+            this.status = APBStatus.SUBSCRIBED_TO_RADIO;
         } else {
             this.status = APBStatus.FINISHED;
         }
