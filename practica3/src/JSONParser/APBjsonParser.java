@@ -12,8 +12,8 @@ import java.util.ArrayList;
  */
 public class APBjsonParser extends JSONParser{
     
-    public ArrayList<String> getMoney(JsonObject object){
-       return convertToStringArray(object.asArray());
+    public ArrayList<String> getMoney(JsonArray object){
+       return convertToStringArray(object);
     }
     
     public JsonArray parseMoney(ArrayList<String> money){

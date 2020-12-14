@@ -15,15 +15,14 @@ public class Seeker extends Drone {
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("Current Status: " + this.status);
+            Info("\033[36m\n " + this.getLocalName() + " - Current Status: " + this.status);
             switch (this.status) {
                
                 case SUBSCRIBED_TO_PLATFORM:
                     this.requestSessionIdAndMap();
                     if (this.status == DroneStatus.SUBSCRIBED_TO_PLATFORM) {
                         this.checkingRadio("seeker");
-                        //QUITAR
-                        this.status = DroneStatus.FINISHED;
+                     
                     }
                     break;
                 case SUBSCRIBED_TO_WORLD:

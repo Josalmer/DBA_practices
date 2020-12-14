@@ -196,7 +196,7 @@ public class CommunicationAssistant {
      * @return boolean que indica si el registro ha sido exitoso
      */
     public void checkoutWorld() {
-        worldChannel = message(this.agent.getAID(), _identitymanager, ACLMessage.CANCEL,"ANALYTICS");
+        worldChannel = message(this.agent.getAID(), worldManager, ACLMessage.CANCEL,"ANALYTICS");
         worldChannel.setContent("");
         worldChannel.setConversationId(this.sessionId);
         this.printSendMessage(worldChannel);
@@ -238,7 +238,10 @@ public class CommunicationAssistant {
         if(in.getAllReceiver().hasNext()) 
             _otherName = in.getAllReceiver().next().toString();
         String _performative = ACLMessage.getPerformative(in.getPerformative());
-        return "\n-Sender: " + _agentName + "\n-Receiver: " + _otherName + "\n-Performative: " + _performative + "\n-Reply with: " + in.getReplyWith() + "\n-Content: " + in.getContent();
+        String _inReplyTo ="";
+        if(in.getInReplyTo() != null)
+            _inReplyTo = in.getInReplyTo();
+        return "\n-Sender: " + _agentName + "\n-Receiver: " + _otherName + "\n-Performative: " + _performative + "\n-Reply with: " + in.getReplyWith() + "\n-In Reply To: " + _inReplyTo + "\n-Content: " + in.getContent();
     }
 
     private void saveMoney(ACLMessage in, String role){

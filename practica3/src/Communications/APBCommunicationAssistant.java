@@ -66,8 +66,9 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * @author Jose Saldaña, Manuel pancorbo
      */
     public void listenAndShareSessionId(JsonArray map) {
-        //MessageTemplate t = MessageTemplate.MatchInReplyTo("session");
-        ACLMessage in = this.agent.blockingReceive();
+
+        MessageTemplate t = MessageTemplate.MatchReplyWith("session");
+        ACLMessage in = this.agent.blockingReceive(t);
         this.printReceiveMessage(in);
         
         ACLMessage agentChannel = in.createReply();
@@ -80,7 +81,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         agentChannel.setContent(parsedParams);
         
         this.agent.send(agentChannel);
-        this.printSendMessage(in);
+        this.printSendMessage(agentChannel);
     }
     
     /**
@@ -88,14 +89,14 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * 
      * @author Jose Saldaña, Domingo Lopez, Manuel pancorbo
      */
-    public JsonObject listenAndCollectMoney() {
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("money");
+    public JsonArray listenAndCollectMoney() {
+        MessageTemplate t = MessageTemplate.MatchReplyWith("money");
         ACLMessage in = this.agent.blockingReceive(t);
         this.printReceiveMessage(in);
         
         String response = in.getContent();
         JsonObject parsedAnswer = Json.parse(response).asObject();
-        return parsedAnswer.get("cash").asObject();
+        return parsedAnswer.get("cash").asArray();
     }
 
     /**
@@ -106,14 +107,15 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * "error"
      */
     public JsonArray askShoppingCenters() {
-        String service = "Shopping Center";
+        String service = "shop";
         ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
         
         JsonArray array = new JsonArray();
         JsonObject catalogue = new JsonObject();
         for (String shoppingCenter : agents) {
+            JsonArray products = this.askSingleShoppingCenter(shoppingCenter);
             catalogue.add("shop", shoppingCenter);
-            catalogue.add("products",this.askSingleShoppingCenter(shoppingCenter));
+            catalogue.add("products", products);
             array.add(catalogue);
         }
         return array;
@@ -156,7 +158,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.agent.send(shoppingChannel);
         this.printSendMessage(shoppingChannel);
         
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + sensorName);
+        MessageTemplate t = MessageTemplate.MatchReplyWith("shopping" + sensorName);
         ACLMessage in = this.agent.blockingReceive(t);
 
         if (this.checkError(ACLMessage.INFORM,in)) {
@@ -168,11 +170,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         return parsedAnswer.get("details").asString();
     }
     
-    
-    
-    
-    
-    
+   
     public boolean checkMessagesAndOrderToLogout() {
         ACLMessage in = this.agent.blockingReceive(3000);
         if (in != null) {
