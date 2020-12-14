@@ -26,8 +26,8 @@ public class AgentJSONParser extends JSONParser {
         return getData(object).asString();
     }
     
-    public ArrayList<ArrayList<Integer>> getMap(JsonObject map){
-        return convertToIntegerMatrix(map.asArray());
+    public ArrayList<ArrayList<Integer>> getMap(JsonArray map){
+        return convertToIntegerMatrix(map);
     }
     
     public JsonArray parseMap (ArrayList<ArrayList<Integer>> map){

@@ -40,7 +40,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("Current Status: " + this.status);
+            Info("\033[33m\n APB - Current Status: " + this.status);
             switch (this.status) {
                 case SUBSCRIBED_TO_PLATFORM:
                     this.checkingWorld();
@@ -76,6 +76,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         } else {
             this.adminData.map = this.jsonParser.getMap(response.get("map").asObject());
             this.status = APBStatus.SUBSCRIBED_TO_WORLD;
+            
         }
     }
 
@@ -85,6 +86,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void shareSessionIdAndMap() {
         JsonArray parsedMap = jsonParser.parseMap(this.adminData.map);
         while (this.adminData.angentsSubscribed < 4) {
+            System.out.print("\nNumero agentes:"+this.adminData.angentsSubscribed);
             this._communications.listenAndShareSessionId(parsedMap);
             this.adminData.angentsSubscribed++;
         }
@@ -96,15 +98,15 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void checkingRadio() {
         boolean logedIn = this._communications.checkingRadio("LISTENER");
         if (logedIn) {
-            this.status = APBStatus.SUBSCRIBED_TO_WORLD;
+            this.status = APBStatus.SUBSCRIBED_TO_RADIO;
         } else {
             this.status = APBStatus.FINISHED;
         }
     }
 
     void collectMoney() {
-        while (this.adminData.collectedMoney < 4) {
-            JsonObject money = this._communications.listenAndCollectMoney();
+        while (this.adminData.collectedMoney < 3) {
+            JsonArray money = this._communications.listenAndCollectMoney();
             this.adminData.bitcoins.addAll(jsonParser.getMoney(money));
             this.adminData.collectedMoney++;
         }
@@ -125,7 +127,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void initialShopping() {
         this.adminData.sensor1 = this.buy("THERMALDLX");
         this.adminData.sensor2 = this.buy("THERMALHQ");
-//        this.adminData.map = this.buy("MAP");
+//      this.adminData.map = this.buy("MAP");
         for (int i = 0; i < 4; i++) {
             this.adminData.rechargeTickets.add(this.buy("CHARGE"));
         }

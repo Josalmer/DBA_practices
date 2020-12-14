@@ -69,7 +69,8 @@ public class Drone extends IntegratedAgent{
     void requestSessionIdAndMap() {
         JsonObject response = this._communications.requestSessionKeyToAPB();
         if (response != null) {
-            this.knowledge.map = parser.getMap(response.get("map").asObject());
+            this.knowledge.map = parser.getMap(response.get("map").asArray());
+            this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
         } else {
             this.status = DroneStatus.FINISHED;
         }
