@@ -125,7 +125,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void initialShopping() {
-        this.adminData.sensor1 = this.buy("THERMALDLX");
+        //this.adminData.sensor1 = this.buy("THERMALDLX");
         this.adminData.sensor2 = this.buy("THERMALHQ");
 //      this.adminData.map = this.buy("MAP");
         for (int i = 0; i < 4; i++) {

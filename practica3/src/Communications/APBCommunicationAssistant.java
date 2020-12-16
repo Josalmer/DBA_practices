@@ -107,13 +107,20 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * "error"
      */
     public JsonArray askShoppingCenters() {
-        String service = "shop";
+        String [] id = this.sessionId.split("#");
+        String service = "shop@SESSION#" + id[1];
+        System.out.println("\n-------SESSION: " + this.sessionId);
+        this.getYellowPages();
+        System.out.println("\n-------SERVICES: " +yp.queryProvidersofService(service) );
         ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
         
         JsonArray array = new JsonArray();
         JsonObject catalogue = new JsonObject();
         for (String shoppingCenter : agents) {
-            JsonArray products = this.askSingleShoppingCenter(shoppingCenter);
+            System.out.println("\n-------MARKET: " + shoppingCenter);
+            String[] session = shoppingCenter.split("#");
+            System.out.println("\n----NUEVA SESSION:  "+ session[1]);
+            JsonArray products = this.askSingleShoppingCenter(shoppingCenter,session[1]);
             catalogue.add("shop", shoppingCenter);
             catalogue.add("products", products);
             array.add(catalogue);
@@ -122,24 +129,28 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     }
     
     
-    public JsonArray askSingleShoppingCenter(String receiver) {
+    public JsonArray askSingleShoppingCenter(String receiver, String session) {
         shoppingChannel = message(agentName, receiver, ACLMessage.QUERY_REF, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + receiver);
-        shoppingChannel.setContent("");
-        
+        shoppingChannel.setContent("{}");
+        //shoppingChannel.setConversationId("SESSION#" + session);
+        shoppingChannel.setConversationId(this.sessionId);
+      
         this.agent.send(shoppingChannel);
         this.printSendMessage(shoppingChannel);
         
         MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + receiver);
         ACLMessage in = this.agent.blockingReceive(t);
-        
+          System.out.println("\n\n ------------------HOLA ESTOY AQUI------------------");
+         System.out.println("\nPERFORMATIVA: " + in.getPerformative() + "\nCONTENIDO: "+ in.getContent());
         if(this.checkError(ACLMessage.INFORM, in)){
             return null;     
         }
+      
          
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
-        return parsedAnswer.get("details").asArray();        
+        return parsedAnswer.get("products").asArray();        
     }
     
     

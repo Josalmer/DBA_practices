@@ -97,7 +97,7 @@ public class ProductCatalogue {
      */
     public Product bestOption(String productName, Integer order) {
         PriorityQueue<Product> queue = this.getQueue(productName);
-
+        System.out.println("\n\n------CATALOGO----\n: "+ this.toString());
 	if(queue == null || order < 0 || order > queue.size())
 	 return null;
        
@@ -162,6 +162,11 @@ public class ProductCatalogue {
 	Product product = queue != null ? queue.poll() : null;
        	
 	return product;
+    }
+
+    @Override
+    public String toString() {
+        return "ProductCatalogue{" + "thermalDLX=" + thermalDLX + ", thermalHQ=" + thermalHQ + ", recharge=" + recharge + '}';
     }
     
 

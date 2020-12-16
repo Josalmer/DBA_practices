@@ -131,6 +131,7 @@ public class CommunicationAssistant {
         ACLMessage in = this.agent.blockingReceive(t);
         this.printReceiveMessage(in);
         
+       
         yp = new YellowPages();
         yp.updateYellowPages(in);
        
