@@ -15,7 +15,7 @@ public class Rescuer extends Drone {
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("\033[36m\n " + this.getLocalName() + " - Current Status: " + this.status);
+            Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
             switch (this.status) {
                
                 case SUBSCRIBED_TO_PLATFORM:

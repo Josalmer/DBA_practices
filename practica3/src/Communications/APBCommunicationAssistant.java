@@ -109,18 +109,15 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     public JsonArray askShoppingCenters() {
         String [] id = this.sessionId.split("#");
         String service = "shop@SESSION#" + id[1];
-        System.out.println("\n-------SESSION: " + this.sessionId);
         this.getYellowPages();
-        System.out.println("\n-------SERVICES: " +yp.queryProvidersofService(service) );
+        System.out.println("\nShopping centers: " +yp.queryProvidersofService(service) );
         ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
         
         JsonArray array = new JsonArray();
-        JsonObject catalogue = new JsonObject();
         for (String shoppingCenter : agents) {
-            System.out.println("\n-------MARKET: " + shoppingCenter);
-            String[] session = shoppingCenter.split("#");
-            System.out.println("\n----NUEVA SESSION:  "+ session[1]);
-            JsonArray products = this.askSingleShoppingCenter(shoppingCenter,session[1]);
+            JsonObject catalogue = new JsonObject();
+            System.out.println("\nMARKET: " + shoppingCenter);
+            JsonArray products = this.askSingleShoppingCenter(shoppingCenter);
             catalogue.add("shop", shoppingCenter);
             catalogue.add("products", products);
             array.add(catalogue);
@@ -129,11 +126,10 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     }
     
     
-    public JsonArray askSingleShoppingCenter(String receiver, String session) {
+    public JsonArray askSingleShoppingCenter(String receiver) {
         shoppingChannel = message(agentName, receiver, ACLMessage.QUERY_REF, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + receiver);
         shoppingChannel.setContent("{}");
-        //shoppingChannel.setConversationId("SESSION#" + session);
         shoppingChannel.setConversationId(this.sessionId);
       
         this.agent.send(shoppingChannel);
@@ -141,13 +137,11 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         
         MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + receiver);
         ACLMessage in = this.agent.blockingReceive(t);
-          System.out.println("\n\n ------------------HOLA ESTOY AQUI------------------");
-         System.out.println("\nPERFORMATIVA: " + in.getPerformative() + "\nCONTENIDO: "+ in.getContent());
+
         if(this.checkError(ACLMessage.INFORM, in)){
             return null;     
         }
       
-         
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
         return parsedAnswer.get("products").asArray();        
@@ -157,6 +151,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     public String buyCommunication(String sensorName, String seller, JsonArray payment) {
         shoppingChannel = message(agentName, seller, ACLMessage.REQUEST, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + sensorName);
+        shoppingChannel.setConversationId(this.sessionId);
         
         // Set content
         JsonObject params = new JsonObject();
@@ -169,7 +164,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.agent.send(shoppingChannel);
         this.printSendMessage(shoppingChannel);
         
-        MessageTemplate t = MessageTemplate.MatchReplyWith("shopping" + sensorName);
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + sensorName);
         ACLMessage in = this.agent.blockingReceive(t);
 
         if (this.checkError(ACLMessage.INFORM,in)) {
@@ -178,7 +173,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
-        return parsedAnswer.get("details").asString();
+        return parsedAnswer.get("reference").asString();
     }
     
    

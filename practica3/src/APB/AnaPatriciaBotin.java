@@ -40,7 +40,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("\033[33m\n APB - Current Status: " + this.status);
+            Info("\n\n\033[33m APB - Current Status: " + this.status);
             switch (this.status) {
                 case SUBSCRIBED_TO_PLATFORM:
                     this.checkingWorld();
@@ -57,7 +57,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.initialShopping();
                     break;
                 case FINISHED_SHOPPING:
-
+                    this.status = APBStatus.FINISHED;
                     break;
                 case RESCUEING:
 
@@ -118,6 +118,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void investigateMarket() {
         JsonArray shops = this._communications.askShoppingCenters();
         this.shopsInfo.setCatalogue(shops);
+        System.out.println("\n\nCATALOGO\n: "+ this.shopsInfo.toString());
         this.status = APBStatus.SHOPPING;
     }
 
@@ -125,9 +126,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void initialShopping() {
-        //this.adminData.sensor1 = this.buy("THERMALDLX");
-        this.adminData.sensor2 = this.buy("THERMALHQ");
-//      this.adminData.map = this.buy("MAP");
+        this.adminData.sensor1 = this.buy("THERMALDELUX");
+        this.adminData.sensor2 = this.buy("THERMALDELUX");
+
         for (int i = 0; i < 4; i++) {
             this.adminData.rechargeTickets.add(this.buy("CHARGE"));
         }
@@ -152,7 +153,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         String sensorCode = null;
         Product product = null;
         while (sensorCode == null && option < 3) {
-            product = this.shopsInfo.bestOption(sensorName, option);
+            product = this.shopsInfo.getAndDiscardBestOption(sensorName);
             ArrayList<String> payment = this.adminData.getMoney(product.getPrice());
             JsonArray parsedPayment = this.jsonParser.parseMoney(payment);
             if (product != null) {

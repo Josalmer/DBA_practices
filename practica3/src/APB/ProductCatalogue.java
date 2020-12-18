@@ -34,12 +34,17 @@ class Product {
     String getName(){ return this.name; }
     
     int getPrice(){ return this.price; }
+
+    @Override
+    public String toString() {
+        return "\nProduct{" + "name=" + name + ", shop=" + shop + ", sensorTicket=" + sensorTicket + ", price=" + price + '}';
+    }
 }
 
 
 public class ProductCatalogue {
     
-    private static final String S_THERMALDLX = "THERMALDLX";
+    private static final String S_THERMALDELUX = "THERMALDELUX";
     private static final String S_THERMALHQ = "THERMALHQ";
     private static final String S_RECHARGE = "CHARGE";
     
@@ -65,7 +70,7 @@ public class ProductCatalogue {
     }
     
     public void setCatalogue(JsonArray catalogue){
-        for(int i=0; i<catalogue.size(); i++){
+        for(int i=0; i < catalogue.size(); i++){
             JsonObject shop = catalogue.get(i).asObject();
             this.update(shop.get("shop").asString(), shop.get("products").asArray());
         }
@@ -97,7 +102,6 @@ public class ProductCatalogue {
      */
     public Product bestOption(String productName, Integer order) {
         PriorityQueue<Product> queue = this.getQueue(productName);
-        System.out.println("\n\n------CATALOGO----\n: "+ this.toString());
 	if(queue == null || order < 0 || order > queue.size())
 	 return null;
        
@@ -112,7 +116,7 @@ public class ProductCatalogue {
     private void addProduct(String sensorName, Product product){
         sensorName = sensorName.toUpperCase();
         switch(sensorName){
-            case ProductCatalogue.S_THERMALDLX:
+            case ProductCatalogue.S_THERMALDELUX:
                 this.thermalDLX.add(product);
                 break;
                 
@@ -135,7 +139,7 @@ public class ProductCatalogue {
         sensorName = sensorName.toUpperCase();
         PriorityQueue<Product> queue = null;
         switch(sensorName){
-            case ProductCatalogue.S_THERMALDLX:
+            case ProductCatalogue.S_THERMALDELUX:
                 queue = this.thermalDLX;
                 break;
                 

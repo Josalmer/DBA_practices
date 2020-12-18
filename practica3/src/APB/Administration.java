@@ -49,7 +49,7 @@ public class Administration {
     //Coins may have been used
     public void updateWastedMoney(int coins){
         for(int i=0; i<coins; i++){
-            this.bitcoins.remove(i);
+            this.bitcoins.remove(0);
         }
     }
 
