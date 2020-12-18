@@ -44,6 +44,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             switch (this.status) {
                 case SUBSCRIBED_TO_PLATFORM:
                     this.checkingWorld();
+                    this.shareSessionIdWithAwacs();
                     break;
                 case SUBSCRIBED_TO_WORLD:
                     this.shareSessionIdAndMap();
@@ -92,6 +93,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    
+    public void shareSessionIdWithAwacs(){
+        this._communications.shareSessionIdWithAwacs();
+    }
+    
+    
     /**
      * @author Jose Saldaña, Manuel Pancorbo
      */

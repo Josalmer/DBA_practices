@@ -84,6 +84,14 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(agentChannel);
     }
     
+    
+    public void shareSessionIdWithAwacs(){
+        System.out.println("\n------SHARING SESSION WITH AWACS------\n");
+        ACLMessage out = this.message(this.agentName, "AWACSBancoSantander", 0, "REGULAR");
+        out.setConversationId(this.sessionId);
+        this.agent.send(out);
+    }
+    
     /**
      * Queda a la escucha para recibir los bitcoins de los drones
      * 
