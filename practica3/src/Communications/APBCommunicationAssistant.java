@@ -184,7 +184,28 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         return parsedAnswer.get("reference").asString();
     }
     
-   
+    public void sendInitialInstructions(String DroneName, Integer initialPos, String rechargeTicket, String sensor) {
+        ACLMessage drone = new ACLMessage();
+        drone.setPerformative(ACLMessage.INFORM);
+        drone.setSender(this.agentName);
+        drone.addReceiver(new AID(DroneName, AID.ISLOCALNAME));
+        drone.setReplyWith("login");
+        
+        // Set content
+        JsonObject params = new JsonObject();
+        params.add("x", initialPos);
+        params.add("y", initialPos);
+        params.add("rechargeTicket", rechargeTicket);
+        if (sensor != null) {
+            params.add("sensorTicket", sensor);    
+        }
+        String parsedParams = params.toString();
+        drone.setContent(parsedParams);
+        
+        this.agent.send(drone);
+        this.printSendMessage(drone);
+    }
+    
     public boolean checkMessagesAndOrderToLogout() {
         ACLMessage in = this.agent.blockingReceive(3000);
         if (in != null) {
@@ -196,5 +217,13 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         } else {
             return false;
         }
+    }
+    
+    public void switchOffAwacs() {
+        ACLMessage awacs = new ACLMessage();
+        awacs.setPerformative(ACLMessage.CANCEL);
+        awacs.setSender(this.agentName);
+        awacs.addReceiver(new AID("AWACSBancoSantander", AID.ISLOCALNAME));
+        this.agent.send(awacs);
     }
 }

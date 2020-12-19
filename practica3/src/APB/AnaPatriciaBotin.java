@@ -58,9 +58,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.initialShopping();
                     break;
                 case FINISHED_SHOPPING:
-                    this.status = APBStatus.FINISHED;
+                    this.sendInitialInstructionsToDrones();
                     break;
                 case RESCUEING:
+                    this.status = APBStatus.FINISHED;
 
                     break;
                 case FINISHED:
@@ -134,9 +135,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      */
     void initialShopping() {
         this.adminData.sensor1 = this.buy("THERMALDELUX");
-        this.adminData.sensor2 = this.buy("THERMALDELUX");
+        if (this._communications.getDronesNumber().equals(4)) {
+            this.adminData.sensor2 = this.buy("THERMALDELUX");
+        }
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < this._communications.getDronesNumber(); i++) {
             this.adminData.rechargeTickets.add(this.buy("CHARGE"));
         }
 
@@ -173,9 +176,59 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
         return sensorCode;
     }
+    
+    public void sendInitialInstructionsToDrones() {
+        this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
+        this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
+    }
+    
+    public void sendInitialInstructionsToSeeker(String DroneName, Integer order) {
+        Integer initialPos = this.calculateDroneInitialPosition(order);
+        String sensor = order == 1 ? this.adminData.sensor1 : this.adminData.sensor2;
+        this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), sensor);
+    }
+    
+    public void sendInitialInstructionsToRescuer(String DroneName, Integer order) {
+        Integer initialPos = this.calculateDroneInitialPosition(order);
+        this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), null);
+    }
+    
+    public Integer calculateDroneInitialPosition(Integer order) {
+        Integer initialPos = 0;
+        int xSize = this.adminData.map.size();
+        int ySize = this.adminData.map.get(0).size();
+        switch (order) {
+            case 1:
+                initialPos = 14;
+                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
+                    initialPos++;
+                }
+                break;
+            case 2:
+                initialPos = this.adminData.initialPosition1 + 1;
+                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
+                    initialPos++;
+                }
+                break;
+            case 3:
+                initialPos = xSize - 14;
+                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
+                    initialPos--;
+                }
+                break;
+            case 4:
+                initialPos = this.adminData.initialPosition3 - 1;
+                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
+                    initialPos--;
+                }
+                break;
+        }
+        return initialPos;
+    }
 
     void logout() {
         this.checkMessagesAndOrderToLogout();
+        this._communications.switchOffAwacs();
         this._communications.checkoutWorld();
         this._communications.checkoutPlatform();
         _exitRequested = true;

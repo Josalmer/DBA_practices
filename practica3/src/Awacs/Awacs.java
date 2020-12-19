@@ -129,10 +129,7 @@ public class Awacs extends IntegratedAgent {
 
     protected boolean ReceiveAndShowTerminal() {
         boolean res = false;
-//        in = blockingReceive();
-        // Filter out
-//        in = this.blockingReceive(MessageTemplate.MatchProtocol("BROADCAST"));
-    in = blockingReceive();
+        in = blockingReceive();
         if (in.getPerformative() == ACLMessage.CANCEL){
             return false;
         }

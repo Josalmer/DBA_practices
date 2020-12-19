@@ -11,6 +11,7 @@ import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -126,6 +127,37 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         this.printSendMessage(APBChannel);
         
         ACLMessage in = this.agent.blockingReceive();
+        
+        if(this.checkAPBError(in)){
+            return null;
+        }
+        
+        this.printReceiveMessage(in);
+        int resPerformative = in.getPerformative();
+       
+        APBChannel = in.createReply();
+        JsonObject response = new JsonObject();
+        response.add("performative", resPerformative);
+        response.add("content", Json.parse(in.getContent()).asObject());
+        return response;
+    }
+
+        /**
+     * Manda un mensaje a Ana Patricia Botin y espera respuesta
+     *
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param performative, content
+     * @return JsonObject de respuesta
+     */
+    public JsonObject receiveFromAPB(String key) {
+        ACLMessage in = new ACLMessage();
+
+        if (key != null) {
+            MessageTemplate t = MessageTemplate.MatchReplyWith(key);
+            in = this.agent.blockingReceive(t); 
+        } else {
+            in = this.agent.blockingReceive(); 
+        }
         
         if(this.checkAPBError(in)){
             return null;

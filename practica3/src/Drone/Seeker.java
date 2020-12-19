@@ -22,15 +22,17 @@ public class Seeker extends Drone {
                     this.requestSessionIdAndMap();
                     if (this.status == DroneStatus.SUBSCRIBED_TO_PLATFORM) {
                         this.checkingRadio("seeker");
-                     
                     }
                     break;
                 case SUBSCRIBED_TO_WORLD:
                     this.sendCashToAPB();
-                    if (this.status == DroneStatus.SUBSCRIBED_TO_WORLD) {
-                        this.requestLoginData();
+                    if (this._communications.getDronesNumber().equals(2) && this.getLocalName().equals("Buscador Domingo")) {
+                        this.status = DroneStatus.FINISHED;
                     }
-                    if (this.status == DroneStatus.SUBSCRIBED_TO_WORLD) {
+                    break;
+                case WAITING_INIT_DATA:
+                    this.receiveLoginData();
+                    if (this.status == DroneStatus.WAITING_INIT_DATA) {
                         this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
                     }
                     this.status = DroneStatus.RECHARGING;
@@ -72,12 +74,27 @@ public class Seeker extends Drone {
         if(response != null){
             this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
             this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
+            this.knowledge.currentHeight = this.knowledge.map.get(this.knowledge.currentPositionX).get(this.knowledge.currentPositionY);
             this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
             this.sensorTicket = response.get("content").asObject().get("sensorTicket").asString();
         } else {
             this.status = DroneStatus.FINISHED;
         }
         
+    }
+    
+    @Override
+    void receiveLoginData() {
+        JsonObject response  = this._communications.receiveFromAPB("login");
+        if(response != null){
+            this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
+            this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
+            this.knowledge.currentHeight = this.knowledge.map.get(this.knowledge.currentPositionX).get(this.knowledge.currentPositionY);
+            this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
+            this.sensorTicket = response.get("content").asObject().get("sensorTicket").asString();
+        } else {
+            this.status = DroneStatus.FINISHED;
+        }
     }
     
     

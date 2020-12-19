@@ -42,6 +42,7 @@ public class CommunicationAssistant {
     boolean printMessages=true;
     
     String serviceAgent = "Analytics group Banco Santander";
+    Integer nDrones = 2;
     
     ACLMessage identityManagerChannel = new ACLMessage(); // Todos
     ACLMessage worldChannel = new ACLMessage(); // Todos
@@ -76,7 +77,9 @@ public class CommunicationAssistant {
         this._myCardID = cardId;
     }
 
-       
+    public Integer getDronesNumber() {
+        return this.nDrones;
+    }
     
     public ACLMessage message(AID sender, String receiver, int performative, String protocol){
         ACLMessage message = new ACLMessage();

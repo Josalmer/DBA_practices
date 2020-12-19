@@ -23,7 +23,15 @@ public class Administration {
     // Sensores
     String sensor1;
     String sensor2;
+    
+    
+    // Info del mundo
     ArrayList<ArrayList<Integer> > map = new ArrayList();
+    Integer maxFlight = 256;
+    Integer initialPosition1;
+    Integer initialPosition2;
+    Integer initialPosition3;
+    Integer initialPosition4;
     
     // Ticket de recarga
     Queue<String> rechargeTickets = new PriorityQueue();
@@ -53,4 +61,7 @@ public class Administration {
         }
     }
 
+    public String popRechargeTicket() {
+        return this.rechargeTickets.poll();
+    }
 }

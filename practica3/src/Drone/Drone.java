@@ -79,6 +79,11 @@ public class Drone extends IntegratedAgent{
     void requestLoginData() {
         //Este metodo tendra que ser sobrecargado en el hijo    
     }
+    
+    void receiveLoginData() {
+        //Este metodo tendra que ser sobrecargado en el hijo    
+    }
+    
     void loginWorld(int x , int y) {
         //Este metodo tendra que ser sobrecargado en el hijo    
     }

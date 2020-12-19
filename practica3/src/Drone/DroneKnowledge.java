@@ -19,7 +19,7 @@ public class DroneKnowledge {
     Integer orientation;
     Integer mapWidth;
     Integer mapHeight;
-    Integer maxFlight;
+    Integer maxFlight = 256;
     Double angular;
     Double distanceToLudwig;
     Integer nActionsExecuted;
@@ -42,7 +42,6 @@ public class DroneKnowledge {
         this.nActionsExecuted = 0;
         this.mapWidth = answer.get("width").asInt();
         this.mapHeight = answer.get("height").asInt();
-        this.maxFlight = answer.get("maxflight").asInt();
         this.initializeMap();
         this.initializeVisitedAtMap();
         this.initializePossibleOrientations();
