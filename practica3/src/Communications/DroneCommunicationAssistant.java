@@ -8,6 +8,7 @@ package Communications;
 import IntegratedAgent.IntegratedAgent;
 import PublicKeys.PublicCardID;
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
@@ -42,7 +43,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
      * @return JsonObject de respuesta
      */
     public JsonObject requestSessionKeyToAPB() { 
-        //Carga de mensaje para reintentos de conexión con APB.
+        
         APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
         
         JsonObject content = new JsonObject();
@@ -62,6 +63,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
         this.sessionId = parsedAnswer.get("sessionId").asString();
+        
         return parsedAnswer; 
     }
     
@@ -166,7 +168,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         this.printReceiveMessage(in);
         int resPerformative = in.getPerformative();
        
-        APBChannel = in.createReply();
+        APBChannel = in.createReply(); //Esto para que??
         JsonObject response = new JsonObject();
         response.add("performative", resPerformative);
         response.add("content", Json.parse(in.getContent()).asObject());
@@ -240,26 +242,46 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
      * @param sensors
      * @return
      */
+    
+    /**
+     * Nueva modifiación 19/12/2020
+     *
+     * @author Domingo
+     * @param role
+     * @param x
+     * @param y
+     * @param sensors
+     * @return
+     */
     public String loginWorld(String role, int x, int y, ArrayList<String> sensors) {
-        worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "ANALYTICS");
+        worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "REGULAR");
         worldChannel.setConversationId(sessionId);
-        worldChannel.setReplyWith("REPLY###");
+        
+        /*ACLARAR LO DEL SETREPLYWITH*/
+        worldChannel.setReplyWith("login"+role);
         
         JsonObject content = new JsonObject();
+        //Hacemos un JsonArray con el sensor
+        JsonArray sensorArray = new JsonArray();
+        
+        
         content.add("operation", "login");
         if (role.equals("rescuer")) {
-            content.add("attach", "[]");
+            content.add("attach", sensorArray); //JsonArray vacío
         } else if(role.equals("seeker")) {
-            content.add("attach","["+sensors.get(0)+"]");
+            sensorArray.add(sensors.get(0));
+            content.add("attach", sensorArray); //JsonArray con el sensor  
         }
         content.add("posx", x);
         content.add("posy", y);
-        worldChannel.setContent(content.asString());
+        worldChannel.setContent(content.toString());
         
         this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
         
-        ACLMessage in = this.agent.blockingReceive();
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("login"+role);
+        ACLMessage in = this.agent.blockingReceive(t);
+
         if (checkError(ACLMessage.CONFIRM, in)) {
             return "error";
         }
@@ -270,7 +292,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
     
     
     public String ok(ACLMessage in){
-        return  Json.parse(in.getContent()).asObject().get("result").asString();
+        return Json.parse(in.getContent()).asObject().get("result").asString();
     }
     
     
@@ -287,4 +309,54 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         }
         return true;*/
     }
+    
+    /**
+     * author: Domingo
+     * @return 
+     */
+    public String getSessionID(){
+        return this.sessionId;
+    }
+    
+    /**
+     * author: Domingo
+     * @return 
+     */
+    public JsonObject readSensor(){
+        //Creamos mensaje para leer sensores
+        this.worldChannel = message(this.agentName, this.worldManager, ACLMessage.QUERY_REF, "REGULAR");
+        
+        JsonObject content = new JsonObject();
+        content.add("operation", "read");
+        this.worldChannel.setContent(content.toString());
+        
+        //Enviamos mensaje para leer sensores
+        this.agent.send(this.worldChannel);
+        ACLMessage in = this.agent.blockingReceive();
+        String response = in.getContent();
+        JsonObject parsedResponse = Json.parse(response).asObject();
+        
+        return parsedResponse;
+        
+    }
+    
+    
+    /**
+     * author: Domingo
+     * @return 
+     */
+    public void sendGermanLocationsToAPB(ArrayList<Integer> indicesAlemanes, ArrayList<JsonObject> alemanes){
+        
+        for (int i = 0; i < indicesAlemanes.size(); i++) {
+            APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
+            
+            JsonObject aleman = new JsonObject();
+            aleman.set("aleman", alemanes.get(indicesAlemanes.get(i)));
+            
+            APBChannel.setContent(aleman.toString());
+            this.agent.send(APBChannel);
+        }
+        
+    }
+    
 }
