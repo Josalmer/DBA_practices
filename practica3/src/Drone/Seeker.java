@@ -436,10 +436,18 @@ public class Seeker extends Drone {
         corner4.add("y",height - 15);
         corner4.add("visited",false);
         
-        this.targetPositions.add(corner1);
-        this.targetPositions.add(corner2);
+        JsonObject centro = new JsonObject();
+        centro.add("x", width/2);
+        centro.add("y", height/2);
+        centro.add("visited",false);
+        
+        
         this.targetPositions.add(corner3);
+        this.targetPositions.add(centro);
         this.targetPositions.add(corner4);
+        this.targetPositions.add(corner2);
+        this.targetPositions.add(centro);
+        this.targetPositions.add(corner1);
      
         
     }
