@@ -39,7 +39,7 @@ De Jose para Migue:
  */
 public class CommunicationAssistant {
 
-    boolean printMessages=true;
+    boolean printMessages;
     
     String serviceAgent = "Analytics group Banco Santander";
     Integer nDrones = 2;
@@ -70,11 +70,12 @@ public class CommunicationAssistant {
      * @param identityManager
      * @param cardId
      */
-    public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
+    public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, boolean printMessages) {
         this.agent = _agent;
         this.agentName = this.agent.getAID();
         this._identitymanager = identityManager;
         this._myCardID = cardId;
+        this.printMessages = printMessages;
     }
 
     public Integer getDronesNumber() {

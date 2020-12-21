@@ -9,6 +9,7 @@ import com.eclipsesource.json.*;
 import java.util.ArrayList;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
+    boolean printMessages = false;
 
     APBCommunicationAssistant _communications;
     Administration adminData = new Administration();
@@ -25,7 +26,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void setup() {
         super.setup();
 
-        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID);
+        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID, printMessages);
 
         if (this._communications.chekingPlatform()) {
             this.status = APBStatus.SUBSCRIBED_TO_PLATFORM;
@@ -39,7 +40,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("\n\n\033[33m APB - Current Status: " + this.status);
+            if (this.printMessages) {
+                Info("\n\n\033[33m APB - Current Status: " + this.status);
+            }
             switch (this.status) {
                 case SUBSCRIBED_TO_PLATFORM:
                     this.checkingWorld();

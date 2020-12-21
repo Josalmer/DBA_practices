@@ -5,7 +5,6 @@ import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 
 public class Seeker extends Drone {
-
     String sensorTicket;
     int targetPositionX;
     int targetPositionY;
@@ -17,7 +16,9 @@ public class Seeker extends Drone {
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
+            if (this.printMessages) {
+                Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
+            }
             switch (this.status) {
 
                 case SUBSCRIBED_TO_PLATFORM:
@@ -131,7 +132,7 @@ public class Seeker extends Drone {
             } else {
                 this.status = DroneStatus.FINISHED;
             }
-            Info("Changed status to: " + this.status);
+            Info("\n\033[36m " + "Changed status to: " + this.status);
         }
     }
 
@@ -145,11 +146,11 @@ public class Seeker extends Drone {
     void reactiveBehaviour() {
 
         if (this.targetPositions.get(0) == null) {
-            Info("\nHe explorado todas las esquinas....Saliendo del mundo\n");
+            Info("\n\033[36m " + "He explorado todas las esquinas....Saliendo del mundo\n");
             this.status = DroneStatus.FINISHED;
-            Info("Changed status to: " + this.status);
+            Info("\n\033[36m " + "Changed status to: " + this.status);
         } else if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
-            Info("\nHe llego a la esquina " + this.targetPositions.get(0).asObject() + "\n");
+            Info("\n\033[36m " + "He llegado a la esquina " + this.targetPositions.get(0).asObject() + "\n");
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
@@ -157,12 +158,12 @@ public class Seeker extends Drone {
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
         } else if (this.knowledge.maxLimitActionPermited()) {
-            Info("\nHe llegado al máximo de acciones permitidas....Saliendo del mundo\n");
+            Info("\n\033[36m " + "He llegado al máximo de acciones permitidas....Saliendo del mundo\n");
             this.status = DroneStatus.FINISHED;
-            Info("Changed status to: " + this.status);
+            Info("\n\033[36m " + "Changed status to: " + this.status);
 
         } else if (this.knowledge.cantReachTarget()) {
-            Info("\nHe llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina\n");
+            Info("\n\033[36m " + "He llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina\n");
 
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
@@ -172,13 +173,13 @@ public class Seeker extends Drone {
             this.plan = null;
 
         } else if(this.knowledge.alemanes == 10) {
-            Info("\nHe encontrado todos los alemanes\n");
+            Info("\n\033[36m " + "He encontrado todos los alemanes\n");
             this.status = DroneStatus.FINISHED;
-            Info("Changed status to: " + this.status);
+            Info("\n\033[36m " + "Changed status to: " + this.status);
         } else {
             if (this.knowledge.needRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
-                Info("Changed status to: " + this.status);
+                Info("\n\033[36m " + "Changed status to: " + this.status);
             } else {
                 if (this.plan != null) {
                     this.executePlan();
@@ -227,7 +228,7 @@ public class Seeker extends Drone {
                     double thermalValue = this.getThermalValue(xPosition, yPosition);
                     if (thermalValue == -1.0) {
                         this.status = DroneStatus.NEED_SENSOR;
-                        Info("Changed status to: " + this.status);
+                        Info("\n\033[36m " + "Changed status to: " + this.status);
                         return null;
                     }
                     if (targetHeight < this.knowledge.maxFlight) {
@@ -342,17 +343,17 @@ public class Seeker extends Drone {
 
         //Parecido a la P2. Leemos y si es OK, actualizamos valores de los sensores.
         if (response.get("result").asString().equals("ok")) {
-            System.out.print("Valores de los sensores leídos...");
+            Info("\n\033[36m " + "Valores de los sensores leídos...");
             this.useEnergy(DroneAction.LECTURA_SENSORES);
             this.perception.update(response.get("details").asObject().get("perceptions").asArray());
-            Info(this.perception.toString());
+            Info("\n\033[36m " + this.perception.toString());
             this.knowledge.updateThermalMap(this.perception.thermal);
-            System.out.print("\nMapa termal actualizado");
+            Info("\n\033[36m " + "Mapa termal actualizado");
 
             this.status = DroneStatus.EXPLORING;
-            Info("Changed status to: " + this.status + "after reading sensors");
+            Info("\n\033[36m " + "Changed status to: " + this.status + "after reading sensors");
         } else {
-            System.out.print("\nERROR EN LA LECTURA DE SENSORES\n");
+            Info("\n\033[36m " + "ERROR EN LA LECTURA DE SENSORES\n");
             this.status = DroneStatus.FINISHED;
         }
 

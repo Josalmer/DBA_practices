@@ -7,13 +7,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Rescuer extends Drone {
-
     // AGENT CONFIGURATION -------------------------------------------
     // END CONFIGURATION ---------------------------------------------
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
-            Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
+            if (this.printMessages) {
+                Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
+            }
             switch (this.status) {
 
                 case SUBSCRIBED_TO_PLATFORM:

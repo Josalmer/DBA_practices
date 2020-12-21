@@ -30,8 +30,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
     ArrayList<Integer> acceptedPerformatives = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
 
-    public DroneCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
-        super(_agent, identityManager, cardId);
+    public DroneCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, boolean printMessages) {
+        super(_agent, identityManager, cardId, printMessages);
     }
 
     /**

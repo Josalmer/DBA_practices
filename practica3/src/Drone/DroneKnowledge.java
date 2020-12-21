@@ -132,6 +132,9 @@ public class DroneKnowledge {
                     if (thermalValue == 0 && this.thermalMap.get(xPosition).get(yPosition) == -1.0) {
                         this.agent._communications.informGermanFound(xPosition, yPosition);
                         this.alemanes++;
+                        if (this.agent.printMessages) {
+                            System.out.println("\n\n\033[36m " + "Encontrados " + this.alemanes + " alemanes");
+                        }
                     }
                     this.thermalMap.get(xPosition).set(yPosition, thermalValue);
                 }
@@ -188,7 +191,7 @@ public class DroneKnowledge {
      * @return booleano que indica si el agente debe recargar
      */
     public boolean needRecharge() {
-        return this.energy < 875; //((1 * (this.currentHeight - this.getFloorHeight())) + 30);
+        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
     }
 
     /**

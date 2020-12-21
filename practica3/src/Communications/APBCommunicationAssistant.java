@@ -25,8 +25,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage currentDroneConversation = new ACLMessage();
     String problem = "Playground1";
 
-    public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
-        super(_agent, identityManager, cardId);
+    public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId,  boolean printMessages) {
+        super(_agent, identityManager, cardId, printMessages);
     }
 
     /**
@@ -89,6 +89,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     public void shareSessionIdWithAwacs() {
         System.out.println("\n------SHARING SESSION WITH AWACS------\n");
         ACLMessage out = this.message(this.agentName, "AWACSBancoSantander", 0, "REGULAR");
+//        ACLMessage out = this.message(this.agentName, "AWACS", 0, "REGULAR");
         out.setConversationId(this.sessionId);
         this.agent.send(out);
     }

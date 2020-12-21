@@ -19,6 +19,7 @@ import java.util.ArrayList;
  * @author migue
  */
 public class Drone extends IntegratedAgent{
+    boolean printMessages = true;
     String APBAccountNumber;
 
     DroneCommunicationAssistant _communications;
@@ -37,7 +38,7 @@ public class Drone extends IntegratedAgent{
     public void setup() {
         super.setup();
 
-        this._communications = new DroneCommunicationAssistant(this, "Sphinx", _myCardID);
+        this._communications = new DroneCommunicationAssistant(this, "Sphinx", _myCardID, printMessages);
         this.knowledge = new DroneKnowledge(this);
 
         if (this._communications.chekingPlatform()) {
@@ -120,9 +121,8 @@ public class Drone extends IntegratedAgent{
   
     
      void useEnergy(DroneAction action) {
-        Info("\n" + this.knowledge.energy);
         this.knowledge.energy -= this.knowledge.energyCost(action);
-        Info("\nExecuted action: " + action + " energy left: " + this.knowledge.energy);
+        Info("\n\nExecuted action: " + action + " energy left: " + this.knowledge.energy);
         
     }
      
@@ -142,7 +142,6 @@ public class Drone extends IntegratedAgent{
 
         if (answer.equals("ok")) {
             this.executeAction(action);
-            Info("Acción realizada:" + action.toString());
             this.lastAction = action;
         } else {
             this.status = DroneStatus.FINISHED;
