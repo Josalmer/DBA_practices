@@ -27,13 +27,14 @@ public class Administration {
     // Info del mundo
     ArrayList<ArrayList<Integer>> map = new ArrayList();
     Integer maxFlight = 256;
-    Integer initialPosition1;
-    Integer initialPosition2;
-    Integer initialPosition3;
-    Integer initialPosition4;
+    Coordinates initialPosition1;
+    Coordinates initialPosition2;
+    Coordinates initialPosition3;
+    Coordinates initialPosition4;
     
     ArrayList<Coordinates> alemanes = new ArrayList();
     int rescued;
+    boolean rescuerIddle;
     Coordinates rescuer1Position;
     Coordinates rescuer2Position;
 
@@ -44,6 +45,7 @@ public class Administration {
         agentsSubscribed = 0;
         collectedMoney = 0;
         rescued = 0;
+        rescuerIddle = false;
     }
 
     public ArrayList<String> getMoney(int coins) {
@@ -70,9 +72,11 @@ public class Administration {
         return this.rechargeTickets.poll();
     }
     
-    public void rescue(Coordinates aleman){
-        this.alemanes.add(aleman);
+    public Coordinates rescueAleman(){
+        Coordinates aleman = this.alemanes.get(0);
+        this.alemanes.remove(0);
         this.rescued++;
+        return aleman;
     }
     
 }

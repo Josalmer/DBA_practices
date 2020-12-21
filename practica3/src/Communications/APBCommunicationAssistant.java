@@ -5,6 +5,7 @@
  */
 package Communications;
 
+import APB.Coordinates;
 import IntegratedAgent.IntegratedAgent;
 import PublicKeys.PublicCardID;
 import com.eclipsesource.json.Json;
@@ -210,7 +211,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         if (in != null) {
             System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender() + " and respond with NOT_UNDERSTOOD");
             ACLMessage agentChannel = in.createReply();
-            agentChannel.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+            agentChannel.setPerformative(ACLMessage.CANCEL);
             this.agent.send(agentChannel);
             return true;
         } else {
@@ -234,12 +235,43 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
         if(in != null){
             this.printReceiveMessage(in);
-            this.currentDroneConversation = in.createReply();
+            if (key.equals("mission")) {
+                this.currentDroneConversation = in.createReply();
+            }
             response.add("content", Json.parse(in.getContent()).asObject());
+            response.add("key", key);
             return response;
         }
 
         return null;
+    }
+    
+    public void sendRescueMission(Coordinates aleman) {
+        currentDroneConversation.setPerformative(ACLMessage.INFORM);
+
+        JsonObject params = new JsonObject();
+        params.add("mission", "rescue");
+        params.add("x", aleman.getX());
+        params.add("y", aleman.getY());
+        String parsedParams = params.toString();
+        currentDroneConversation.setContent(parsedParams);
+        
+        this.agent.send(currentDroneConversation);
+        this.printSendMessage(currentDroneConversation);
+    }
+    
+    public void sendBackHomeMission(Coordinates initialPos) {
+        currentDroneConversation.setPerformative(ACLMessage.INFORM);
+
+        JsonObject params = new JsonObject();
+        params.add("mission", "backHome");
+        params.add("x", initialPos.getX());
+        params.add("y", initialPos.getY());
+        String parsedParams = params.toString();
+        currentDroneConversation.setContent(parsedParams);
+        
+        this.agent.send(currentDroneConversation);
+        this.printSendMessage(currentDroneConversation);
     }
 
     public void sendRecharge(String ticket) {
@@ -253,5 +285,10 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(currentDroneConversation);
         this.agent.send(this.currentDroneConversation);
 
+    }
+    
+    public void waitForFinish() {
+        MessageTemplate t = MessageTemplate.MatchReplyWith("finish");
+        ACLMessage in = this.agent.blockingReceive(t);
     }
 }

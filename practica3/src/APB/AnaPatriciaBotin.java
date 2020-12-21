@@ -9,7 +9,7 @@ import com.eclipsesource.json.*;
 import java.util.ArrayList;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
-    boolean printMessages = false;
+    boolean printMessages = true;
 
     APBCommunicationAssistant _communications;
     Administration adminData = new Administration();
@@ -63,9 +63,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.sendInitialInstructionsToDrones();
                     break;
                 case RESCUEING:
-                    this._communications.waitIddle();
+                    this.coordinateTeam();
+                    break;
+                case WAITING_FOR_FINISH:
+                    this._communications.waitForFinish();
                     this.status = APBStatus.FINISHED;
-
                     break;
                 case FINISHED:
                     this.logout();
@@ -214,28 +216,28 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos++;
                 }
-                this.adminData.initialPosition1 = initialPos;
+                this.adminData.initialPosition1 = new Coordinates(initialPos, initialPos);
                 break;
             case 2:
-                initialPos = this.adminData.initialPosition1 + 1;
+                initialPos = this.adminData.initialPosition1.getX() + 1;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos--;
                 }
-                this.adminData.initialPosition2 = initialPos;
+                this.adminData.initialPosition2 = new Coordinates(initialPos, initialPos);
                 break;
             case 3:
                 initialPos = xSize - 15;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos--;
                 }
-                this.adminData.initialPosition3 = initialPos;
+                this.adminData.initialPosition3 = new Coordinates(initialPos, initialPos);
                 break;
             case 4:
-                initialPos = this.adminData.initialPosition3 - 1;
+                initialPos = this.adminData.initialPosition3.getX() - 1;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos++;
                 }
-                this.adminData.initialPosition4 = initialPos;
+                this.adminData.initialPosition4 = new Coordinates(initialPos, initialPos);
                 break;
         }
         return initialPos;
@@ -250,39 +252,24 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         } 
         JsonObject request = this.checkRequests();
         if (request != null) {
-//            switch (request.key) {
-//                case "aleman":
-//                    this.manageAleman();
-//                    break;
-//                case "recharge":
-//                    this.manageRecharge();
-//                    break;
-//            }
+            switch (request.get("key").asString()) {
+                case "aleman":
+                    this.saveAleman(request);
+                    break;
+                case "recharge":
+                    this.manageRecharge(request);
+                    break;
+                case "mission":
+                    this.adminData.rescuerIddle = true;
+                    break;
+            }
         }
-    }
-
-    private void checkRescuers() {
-       JsonObject response = this._communications.coordinateTeam("aleman"); 
-
-       if(response == null){ return;}
-
-       Coordinates aleman = this.jsonParser.getAleman(response);
-       this.adminData.rescue(aleman);
-    }
-
-    private void checkRechargeRequests(){
-       JsonObject response = this._communications.coordinateTeam("recharge"); 
-
-       if(response == null){ return;}
-
-       String ticket = this.adminData.popRechargeTicket();
-
-       if(ticket == null){
-           this.buyRecharge();
-           ticket = this.adminData.popRechargeTicket(); //Habria que comprobar si no se pueden comprar mas
-       }
-
-       this._communications.sendRecharge(ticket);
+        if (this.adminData.rescuerIddle && this.adminData.alemanes.size() > 0) {
+            this.sendRescueMission();
+        } else if (this.adminData.rescuerIddle && this.adminData.rescued == 10) {
+            this.sendBackHomeMission();
+            this.status = APBStatus.WAITING_FOR_FINISH;
+        }
     }
     
     private JsonObject checkRequests() {
@@ -300,8 +287,33 @@ public class AnaPatriciaBotin extends IntegratedAgent {
        return null;
     }
     
+    private void saveAleman(JsonObject request) {
+        Coordinates aleman = this.jsonParser.getAleman(request);
+        this.adminData.alemanes.add(aleman);
+    }
+    
+    private void sendRescueMission() {
+        Coordinates aleman = this.adminData.rescueAleman();
+        this._communications.sendRescueMission(aleman);
+    }
+    
+    private void sendBackHomeMission() {
+        this._communications.sendBackHomeMission(this.adminData.initialPosition2);
+    }
+
+    private void manageRecharge(JsonObject request){
+       String ticket = this.adminData.popRechargeTicket();
+
+       if(ticket == null){
+           this.buyRecharge();
+           ticket = this.adminData.popRechargeTicket(); //Habria que comprobar si no se pueden comprar mas
+       }
+
+       this._communications.sendRecharge(ticket); // Hay que comprobar quien lo pidio para mandarselo a ese, create reply de recarga
+    }
+    
     void logout() {
-//        this.checkMessagesAndOrderToLogout();
+        this.checkMessagesAndOrderToLogout();
         this._communications.switchOffAwacs();
         this._communications.checkoutWorld();
         this._communications.checkoutPlatform();

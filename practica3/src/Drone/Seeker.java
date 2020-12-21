@@ -373,33 +373,32 @@ public class Seeker extends Drone {
         JsonObject corner1 = new JsonObject();
         corner1.add("x", 15);
         corner1.add("y", 15);
-        corner1.add("visited", false);
 
         JsonObject corner2 = new JsonObject();
         corner2.add("x", width - 15);
         corner2.add("y", 15);
-        corner2.add("visited", false);
 
         JsonObject corner3 = new JsonObject();
         corner3.add("x", 15);
         corner3.add("y", height - 15);
-        corner3.add("visited", false);
 
         JsonObject corner4 = new JsonObject();
         corner4.add("x", width - 15);
         corner4.add("y", height - 15);
-        corner4.add("visited", false);
 
-        JsonObject centro = new JsonObject();
-        centro.add("x", width / 2);
-        centro.add("y", height / 2);
-        centro.add("visited", false);
+        JsonObject centro1 = new JsonObject();
+        centro1.add("x", width / 2);
+        centro1.add("y", height / 2);
+
+        JsonObject centro2 = new JsonObject();
+        centro2.add("x", width / 2);
+        centro2.add("y", height / 2);
 
         this.targetPositions.add(corner3);
-        this.targetPositions.add(centro);
+        this.targetPositions.add(centro1);
         this.targetPositions.add(corner4);
         this.targetPositions.add(corner2);
-        this.targetPositions.add(centro);
+        this.targetPositions.add(centro2);
         this.targetPositions.add(corner1);
 
     }
