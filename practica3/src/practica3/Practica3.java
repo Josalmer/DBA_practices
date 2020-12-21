@@ -17,7 +17,7 @@ public class Practica3 {
         app.selectConnection();
 
         //Lanzamos Awacs primero
-        app.launchAgent("AWACSBancoSantander", Awacs.Awacs.class);
+//        app.launchAgent("AWACSBancoSantander", Awacs.Awacs.class);
         
         app.launchAgent("Ana Patricia Botin", AnaPatriciaBotin.class);
         app.launchAgent("Buscador Saldaña", Seeker.class);

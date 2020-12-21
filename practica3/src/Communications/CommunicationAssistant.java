@@ -167,7 +167,8 @@ public class CommunicationAssistant {
         this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
         
-        ACLMessage in = this.agent.blockingReceive();
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("radio");
+        ACLMessage in = this.agent.blockingReceive(t);
        
         if (checkError(ACLMessage.INFORM,in)) {
             return false;

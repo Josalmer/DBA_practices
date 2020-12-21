@@ -203,24 +203,28 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos++;
                 }
+                this.adminData.initialPosition1 = initialPos;
                 break;
             case 2:
                 initialPos = this.adminData.initialPosition1 + 1;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos++;
                 }
+                this.adminData.initialPosition2 = initialPos;
                 break;
             case 3:
                 initialPos = xSize - 14;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos--;
                 }
+                this.adminData.initialPosition3 = initialPos;
                 break;
             case 4:
                 initialPos = this.adminData.initialPosition3 - 1;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos--;
                 }
+                this.adminData.initialPosition4 = initialPos;
                 break;
         }
         return initialPos;

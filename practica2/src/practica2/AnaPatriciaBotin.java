@@ -206,11 +206,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             }
             if (noVisitedOptions.size() > 0) {
                 options = noVisitedOptions;
-            } else {
-                AgentOption bestOption;
-                bestOption = chooseFromAlreadyVisitedOptions(options);
-                noVisitedOptions.add(bestOption);
-                options = noVisitedOptions;
             }
             AgentOption winner;
             winner = chooseFromNoVisitedOptions(options);

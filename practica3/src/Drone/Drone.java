@@ -64,6 +64,7 @@ public class Drone extends IntegratedAgent{
     
     void sendCashToAPB() {
         this._communications.sendCashToAPB();
+        this.status = DroneStatus.WAITING_INIT_DATA;
     }
 
     void requestSessionIdAndMap() {
