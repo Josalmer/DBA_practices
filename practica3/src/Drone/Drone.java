@@ -29,7 +29,6 @@ public class Drone extends IntegratedAgent{
     Boolean needRecharge = true;
     ArrayList<DroneAction> plan;
     ArrayList<Integer> planInMap;
-    ArrayList<String> authorizedSensors = new ArrayList();
     String rechargeTicket = "";
     
     AgentJSONParser parser = new AgentJSONParser();
@@ -121,7 +120,10 @@ public class Drone extends IntegratedAgent{
   
     
      void useEnergy(DroneAction action) {
-        this.knowledge.energy -= this.knowledge.energyCost(action, this.authorizedSensors.size());
+        Info("\n" + this.knowledge.energy);
+        this.knowledge.energy -= this.knowledge.energyCost(action);
+        Info("\nExecuted action: " + action + " energy left: " + this.knowledge.energy);
+        
     }
      
      boolean toLand() {
@@ -155,7 +157,8 @@ public class Drone extends IntegratedAgent{
     void executeAction(DroneAction action){
         switch(action){
             case recharge:
-                //FALTA
+                this.plan = null;
+                this.knowledge.fullRecharge();
                 break;
             default:
                 this.knowledge.manageMovement(action);

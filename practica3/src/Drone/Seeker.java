@@ -10,8 +10,6 @@ public class Seeker extends Drone {
     int targetPositionX;
     int targetPositionY;
     boolean targetPositionVisited;
-    ArrayList<JsonObject> alemanes = new ArrayList<>();
-    ; //Array de Alemanes rescatados (sus posiciones para no repetirlas).
     
     //JsonObjects de las posiciones en el mapa que va a tener que visitar el seeker
    ArrayList<JsonObject> targetPositions = new ArrayList<>();
@@ -173,6 +171,10 @@ public class Seeker extends Drone {
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
 
+        } else if(this.knowledge.alemanes == 10) {
+            Info("\nHe encontrado todos los alemanes\n");
+            this.status = DroneStatus.FINISHED;
+            Info("Changed status to: " + this.status);
         } else {
             if (this.knowledge.needRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
@@ -223,7 +225,7 @@ public class Seeker extends Drone {
                 if (this.knowledge.insideMap(xPosition, yPosition)) {
                     int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
                     double thermalValue = this.getThermalValue(xPosition, yPosition);
-                    if (thermalValue == -1) {
+                    if (thermalValue == -1.0) {
                         this.status = DroneStatus.NEED_SENSOR;
                         Info("Changed status to: " + this.status);
                         return null;
@@ -266,7 +268,7 @@ public class Seeker extends Drone {
                 onWantedBox = true;
             }
             plan.add(nextAction);
-            cost += this.knowledge.energyCost(nextAction, 0);
+            cost += this.knowledge.energyCost(nextAction);
         }
         option.plan = plan;
         option.cost = cost;

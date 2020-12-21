@@ -221,13 +221,13 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(worldChannel);
 
         ACLMessage in = this.agent.blockingReceive();
-        if (checkError(ACLMessage.CONFIRM, in)) {
+        if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
 
         worldChannel = in.createReply();
         this.printReceiveMessage(in);
-        return ok(in);
+        return "ok";
     }
 
     /**
@@ -266,7 +266,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
             content.add("attach", sensorArray); //JsonArray vacío
         } else if (role.equals("seeker")) {
             sensorArray.add(sensors.get(0));
-            content.add("attach", sensorArray); //JsonArray con el sensor  
+            content.add("attach", sensorArray); //JsonArray con el sensor
         }
         content.add("posx", x);
         content.add("posy", y);

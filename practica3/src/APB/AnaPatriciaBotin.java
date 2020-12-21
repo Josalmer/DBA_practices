@@ -207,7 +207,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         int ySize = this.adminData.map.get(0).size();
         switch (order) {
             case 1:
-                initialPos = 14;
+                initialPos = 15;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos++;
                 }
@@ -216,12 +216,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             case 2:
                 initialPos = this.adminData.initialPosition1 + 1;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos++;
+                    initialPos--;
                 }
                 this.adminData.initialPosition2 = initialPos;
                 break;
             case 3:
-                initialPos = xSize - 14;
+                initialPos = xSize - 15;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos--;
                 }
@@ -230,7 +230,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             case 4:
                 initialPos = this.adminData.initialPosition3 - 1;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos--;
+                    initialPos++;
                 }
                 this.adminData.initialPosition4 = initialPos;
                 break;
@@ -245,9 +245,17 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             Info("\n\n\033[33m APB - MISSION COMPLETED: Se ha rescatado a los 10 alemanes");
             return;
         } 
-
-        this.checkRescuers();
-        this.checkRechargeRequests();
+        JsonObject request = this.checkRequests();
+        if (request != null) {
+//            switch (request.key) {
+//                case "aleman":
+//                    this.manageAleman();
+//                    break;
+//                case "recharge":
+//                    this.manageRecharge();
+//                    break;
+//            }
+        }
     }
 
     private void checkRescuers() {
@@ -272,6 +280,21 @@ public class AnaPatriciaBotin extends IntegratedAgent {
        }
 
        this._communications.sendRecharge(ticket);
+    }
+    
+    private JsonObject checkRequests() {
+       JsonObject response;
+
+       response = this._communications.coordinateTeam("aleman"); 
+       if(response != null){ return response;}
+
+       response = this._communications.coordinateTeam("recharge"); 
+       if(response != null){ return response;}
+
+       response = this._communications.coordinateTeam("mission"); 
+       if(response != null){ return response;}
+        
+       return null;
     }
     
     void logout() {

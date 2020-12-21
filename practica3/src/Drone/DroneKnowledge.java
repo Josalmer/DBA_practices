@@ -22,6 +22,7 @@ public class DroneKnowledge {
     Integer mapWidth;
     Integer mapHeight;
     Integer maxFlight = 256;
+    Integer alemanes;
     Integer nActionsExecuted;
     Integer nActionsExecutedToGetCorner;
     ArrayList<Integer> orientations;
@@ -49,6 +50,8 @@ public class DroneKnowledge {
      * @param answer JsonObject recibido al hacer login
      */
     public void initializeKnowledge(JsonObject answer) {
+        this.orientation = 90;
+        this.alemanes = 0;
         this.currentPositionX = answer.get("content").asObject().get("x").asInt();
         this.currentPositionY = answer.get("content").asObject().get("y").asInt();
         this.currentHeight = this.map.get(this.currentPositionX).get(this.currentPositionY);
@@ -128,6 +131,7 @@ public class DroneKnowledge {
                     thermalValue = thermal.get(i).get(j);
                     if (thermalValue == 0 && this.thermalMap.get(xPosition).get(yPosition) == -1.0) {
                         this.agent._communications.informGermanFound(xPosition, yPosition);
+                        this.alemanes++;
                     }
                     this.thermalMap.get(xPosition).set(yPosition, thermalValue);
                 }
@@ -184,7 +188,7 @@ public class DroneKnowledge {
      * @return booleano que indica si el agente debe recargar
      */
     public boolean needRecharge() {
-        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
+        return this.energy < 875; //((1 * (this.currentHeight - this.getFloorHeight())) + 30);
     }
 
     /**
@@ -303,7 +307,7 @@ public class DroneKnowledge {
      * @param nSensors nº de sensores cargados en dron
      * @return cantidad de energía para la acción action
      */
-    public int energyCost(DroneAction action, int nSensors) {
+    public int energyCost(DroneAction action) {
         int energy = 0;
         switch (action) {
             case moveF:
@@ -325,7 +329,7 @@ public class DroneKnowledge {
                 energy = this.getFloorHeight();
                 break;
             case LECTURA_SENSORES:
-                energy = nSensors;
+                energy = 8;
                 break;
         }
         return energy;

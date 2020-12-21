@@ -44,6 +44,7 @@ public class DronePerception {
         this.lidar = null;
         this.thermal = null;
         this.energy = null;
+        this.parser = new AgentJSONParser();
     }
 
     /**
