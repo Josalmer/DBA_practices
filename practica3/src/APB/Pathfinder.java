@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package practica3;
+package APB;
 
 import com.eclipsesource.json.*;
 import java.util.ArrayList;
@@ -155,26 +155,6 @@ public class Pathfinder {
         
         return option;
     }   
-}
-
-/**
-* @author manuel
-*/
-class Coordinates{
-    private int x;
-    private int y;
-    
-    Coordinates(int x,int y){
-        this.x = x;
-        this.y = y;
-    }
-    
-    int getX(){ return this.x; }
-    int getY(){ return this.y; }
-    
-    Boolean checkCoordinates(Coordinates target){
-        return this.x == target.x && this.y == target.y;
-    }
 }
 
 /**

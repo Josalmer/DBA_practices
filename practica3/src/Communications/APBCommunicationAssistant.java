@@ -20,9 +20,11 @@ import java.util.ArrayList;
  * @author Jose Saldaña, Manuel Pancorbo
  */
 public class APBCommunicationAssistant extends CommunicationAssistant {
+
     ACLMessage shoppingChannel = new ACLMessage();
+    ACLMessage currentDroneConversation = new ACLMessage();
     String problem = "Playground1";
-    
+
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
     }
@@ -46,23 +48,23 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
         this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
-        
+
         MessageTemplate t = MessageTemplate.MatchInReplyTo("subscribeworld");
         ACLMessage in = this.agent.blockingReceive(t);
-        
-        if(this.checkError(ACLMessage.INFORM, in)){
+
+        if (this.checkError(ACLMessage.INFORM, in)) {
             return null;
         }
-        
+
         this.printReceiveMessage(in);
         worldChannel = in.createReply();
         this.sessionId = in.getConversationId();
         return Json.parse(in.getContent()).asObject();
     }
-    
+
     /**
      * Queda a la escucha para compartir numero de cuenta con los drones
-     * 
+     *
      * @author Jose Saldaña, Manuel pancorbo
      */
     public void listenAndShareSessionId(JsonArray map) {
@@ -70,38 +72,37 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         MessageTemplate t = MessageTemplate.MatchReplyWith("session");
         ACLMessage in = this.agent.blockingReceive(t);
         this.printReceiveMessage(in);
-        
+
         ACLMessage agentChannel = in.createReply();
         agentChannel.setPerformative(ACLMessage.INFORM);
-        
+
         JsonObject params = new JsonObject();
-        params.add("sessionId", sessionId);   
+        params.add("sessionId", sessionId);
         params.add("map", map);
         String parsedParams = params.toString();
         agentChannel.setContent(parsedParams);
-        
+
         this.agent.send(agentChannel);
         this.printSendMessage(agentChannel);
     }
-    
-    
-    public void shareSessionIdWithAwacs(){
+
+    public void shareSessionIdWithAwacs() {
         System.out.println("\n------SHARING SESSION WITH AWACS------\n");
         ACLMessage out = this.message(this.agentName, "AWACSBancoSantander", 0, "REGULAR");
         out.setConversationId(this.sessionId);
         this.agent.send(out);
     }
-    
+
     /**
      * Queda a la escucha para recibir los bitcoins de los drones
-     * 
+     *
      * @author Jose Saldaña, Domingo Lopez, Manuel pancorbo
      */
     public JsonArray listenAndCollectMoney() {
         MessageTemplate t = MessageTemplate.MatchReplyWith("money");
         ACLMessage in = this.agent.blockingReceive(t);
         this.printReceiveMessage(in);
-        
+
         String response = in.getContent();
         JsonObject parsedAnswer = Json.parse(response).asObject();
         return parsedAnswer.get("cash").asArray();
@@ -111,16 +112,15 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * Construye el catalogo de productos necesarios
      *
      * @author Jose Saldaña, Manuel Pancorbo
-     * @return array con los catalogos
-     * "error"
+     * @return array con los catalogos "error"
      */
     public JsonArray askShoppingCenters() {
-        String [] id = this.sessionId.split("#");
+        String[] id = this.sessionId.split("#");
         String service = "shop@SESSION#" + id[1];
         this.getYellowPages();
-        System.out.println("\nShopping centers: " +yp.queryProvidersofService(service) );
+        System.out.println("\nShopping centers: " + yp.queryProvidersofService(service));
         ArrayList<String> agents = new ArrayList(yp.queryProvidersofService(service));
-        
+
         JsonArray array = new JsonArray();
         for (String shoppingCenter : agents) {
             JsonObject catalogue = new JsonObject();
@@ -132,35 +132,33 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         }
         return array;
     }
-    
-    
+
     public JsonArray askSingleShoppingCenter(String receiver) {
         shoppingChannel = message(agentName, receiver, ACLMessage.QUERY_REF, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + receiver);
         shoppingChannel.setContent("{}");
         shoppingChannel.setConversationId(this.sessionId);
-      
+
         this.agent.send(shoppingChannel);
         this.printSendMessage(shoppingChannel);
-        
+
         MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + receiver);
         ACLMessage in = this.agent.blockingReceive(t);
 
-        if(this.checkError(ACLMessage.INFORM, in)){
-            return null;     
+        if (this.checkError(ACLMessage.INFORM, in)) {
+            return null;
         }
-      
+
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
-        return parsedAnswer.get("products").asArray();        
+        return parsedAnswer.get("products").asArray();
     }
-    
-    
+
     public String buyCommunication(String sensorName, String seller, JsonArray payment) {
         shoppingChannel = message(agentName, seller, ACLMessage.REQUEST, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + sensorName);
         shoppingChannel.setConversationId(this.sessionId);
-        
+
         // Set content
         JsonObject params = new JsonObject();
         params.add("operation", "buy");
@@ -168,44 +166,44 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         params.add("payment", payment);
         String parsedParams = params.toString();
         shoppingChannel.setContent(parsedParams);
-        
+
         this.agent.send(shoppingChannel);
         this.printSendMessage(shoppingChannel);
-        
+
         MessageTemplate t = MessageTemplate.MatchInReplyTo("shopping" + sensorName);
         ACLMessage in = this.agent.blockingReceive(t);
 
-        if (this.checkError(ACLMessage.INFORM,in)) {
+        if (this.checkError(ACLMessage.INFORM, in)) {
             return null;
         }
-        
+
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
         return parsedAnswer.get("reference").asString();
     }
-    
+
     public void sendInitialInstructions(String DroneName, Integer initialPos, String rechargeTicket, String sensor) {
         ACLMessage drone = new ACLMessage();
         drone.setPerformative(ACLMessage.INFORM);
         drone.setSender(this.agentName);
         drone.addReceiver(new AID(DroneName, AID.ISLOCALNAME));
         drone.setReplyWith("login");
-        
+
         // Set content
         JsonObject params = new JsonObject();
         params.add("x", initialPos);
         params.add("y", initialPos);
         params.add("rechargeTicket", rechargeTicket);
         if (sensor != null) {
-            params.add("sensorTicket", sensor);    
+            params.add("sensorTicket", sensor);
         }
         String parsedParams = params.toString();
         drone.setContent(parsedParams);
-        
+
         this.agent.send(drone);
         this.printSendMessage(drone);
     }
-    
+
     public boolean checkMessagesAndOrderToLogout() {
         ACLMessage in = this.agent.blockingReceive(3000);
         if (in != null) {
@@ -218,12 +216,41 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
             return false;
         }
     }
-    
+
     public void switchOffAwacs() {
         ACLMessage awacs = new ACLMessage();
         awacs.setPerformative(ACLMessage.CANCEL);
         awacs.setSender(this.agentName);
         awacs.addReceiver(new AID("AWACSBancoSantander", AID.ISLOCALNAME));
         this.agent.send(awacs);
+    }
+    
+    public JsonObject coordinateTeam(String key) {
+        JsonObject response = new JsonObject();
+
+        MessageTemplate t = MessageTemplate.MatchReplyWith(key);
+        ACLMessage in = this.agent.blockingReceive(t, 1000);
+
+        if(in != null){
+            this.printReceiveMessage(in);
+            this.currentDroneConversation = in.createReply();
+            response.add("content", Json.parse(in.getContent()).asObject());
+            return response;
+        }
+
+        return null;
+    }
+
+    public void sendRecharge(String ticket) {
+        JsonObject params = new JsonObject();
+        // NO HE COMPROBADO ESTO SI SE MANDA ASI; LO DEJO POR AQUI
+        params.add("ticket", ticket);
+
+        String parsedParams = params.toString();
+        this.currentDroneConversation.setContent(parsedParams);
+
+        this.printSendMessage(currentDroneConversation);
+        this.agent.send(this.currentDroneConversation);
+
     }
 }

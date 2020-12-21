@@ -23,7 +23,7 @@ public class Drone extends IntegratedAgent{
 
     DroneCommunicationAssistant _communications;
     DroneStatus status;
-    DroneKnowledge knowledge = new DroneKnowledge();
+    DroneKnowledge knowledge;
     DronePerception perception = new DronePerception();
     DroneAction lastAction;
     Boolean needRecharge = true;
@@ -39,6 +39,7 @@ public class Drone extends IntegratedAgent{
         super.setup();
 
         this._communications = new DroneCommunicationAssistant(this, "Sphinx", _myCardID);
+        this.knowledge = new DroneKnowledge(this);
 
         if (this._communications.chekingPlatform()) {
             this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
@@ -100,7 +101,7 @@ public class Drone extends IntegratedAgent{
      void claimRecharge(){
         JsonObject content = new JsonObject();
         content.add("request", "recharge");
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, null);
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, "recharge");
         if (response != null) {
             if (response.get("performative").asInt() == ACLMessage.REFUSE) {
                 this.rechargeTicket = null;
@@ -112,10 +113,7 @@ public class Drone extends IntegratedAgent{
         } else {
             this.status = DroneStatus.FINISHED;
         }
-    }
-    
-    
-           
+    } 
           
     public void recharge(){
      
@@ -170,18 +168,19 @@ public class Drone extends IntegratedAgent{
         //Se sobrecarga en el hijo
     }
     
-    void receivePlan(){
-       //Se sobrecarga en el hijo
-        
-    }
-    
     @Override
     public void takeDown() {
         super.takeDown();
     }
-    
    
-
-    
+    public void initialRecharge(){
+        String result = this._communications.requestRecharge(this.rechargeTicket);
+        if (result.equals("ok")){
+            this.knowledge.energy = 1000;
+            this.rechargeTicket = null;
+        } else {
+            this.status = DroneStatus.FINISHED;
+        }
+    }
 
 }

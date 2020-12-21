@@ -21,12 +21,12 @@ import java.util.concurrent.TimeUnit;
  *
  * @author manuel
  */
-public class DroneCommunicationAssistant extends CommunicationAssistant{
-    
+public class DroneCommunicationAssistant extends CommunicationAssistant {
+
     boolean printMessages;
-    
+
     String APBName = "Ana Patricia Botin";
-    
+
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
     ArrayList<Integer> acceptedPerformatives = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
 
@@ -34,7 +34,6 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         super(_agent, identityManager, cardId);
     }
 
-     
     /**
      * Los drones solicitan la sessionId y el mapa a APB y esperan la respuesta
      *
@@ -42,31 +41,31 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
      * @param performative, content
      * @return JsonObject de respuesta
      */
-    public JsonObject requestSessionKeyToAPB() { 
-        
+    public JsonObject requestSessionKeyToAPB() {
+
         APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
-        
+
         JsonObject content = new JsonObject();
         content.add("request", "session");
         String parsedContent = content.toString();
-        
+
         APBChannel.setContent(parsedContent);
         APBChannel.setReplyWith("session");
 
         this.agent.send(APBChannel);
         ACLMessage in = this.agent.blockingReceive();
-        
-        if(checkAPBError(in)){
+
+        if (checkAPBError(in)) {
             return null;
         }
 
         this.printReceiveMessage(in);
         JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
         this.sessionId = parsedAnswer.get("sessionId").asString();
-        
-        return parsedAnswer; 
+
+        return parsedAnswer;
     }
-    
+
     /**
      * Los drones mandan su dinero a APB
      *
@@ -77,18 +76,17 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
     public void sendCashToAPB() {
         APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
         APBChannel.setReplyWith("money");
-        
+
         JsonObject content = new JsonObject();
         content.add("cash", bitcoins);
         String parsedContent = content.toString();
-        
+
         APBChannel.setContent(parsedContent);
 
         this.agent.send(APBChannel);
         this.printSendMessage(APBChannel);
     }
-    
-    
+
     /**
      * Manda un mensaje a Ana Patricia Botin y no espera respuesta
      *
@@ -98,17 +96,17 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
     public void sendMessageToAPB(int performative, JsonObject content, String key) {
         String parsedContent = content.toString();
         APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
-      
+
         if (key != null) {
             APBChannel.setReplyWith(key);
         }
-        
+
         APBChannel.setContent(parsedContent);
-        
+
         this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
     }
-    
+
     /**
      * Manda un mensaje a Ana Patricia Botin y espera respuesta
      *
@@ -120,23 +118,23 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         String parsedContent = content.toString();
         APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
         APBChannel.setContent(parsedContent);
-        
+
         if (key != null) {
             APBChannel.setReplyWith(key);
         }
-        
+
         this.agent.send(APBChannel);
         this.printSendMessage(APBChannel);
-        
+
         ACLMessage in = this.agent.blockingReceive();
-        
-        if(this.checkAPBError(in)){
+
+        if (this.checkAPBError(in)) {
             return null;
         }
-        
+
         this.printReceiveMessage(in);
         int resPerformative = in.getPerformative();
-       
+
         APBChannel = in.createReply();
         JsonObject response = new JsonObject();
         response.add("performative", resPerformative);
@@ -144,7 +142,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         return response;
     }
 
-        /**
+    /**
      * Manda un mensaje a Ana Patricia Botin y espera respuesta
      *
      * @author Jose Saldaña, Manuel Pancorbo
@@ -156,25 +154,25 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
 
         if (key != null) {
             MessageTemplate t = MessageTemplate.MatchReplyWith(key);
-            in = this.agent.blockingReceive(t); 
+            in = this.agent.blockingReceive(t);
         } else {
-            in = this.agent.blockingReceive(); 
+            in = this.agent.blockingReceive();
         }
-        
-        if(this.checkAPBError(in)){
+
+        if (this.checkAPBError(in)) {
             return null;
         }
-        
+
         this.printReceiveMessage(in);
         int resPerformative = in.getPerformative();
-       
+
         APBChannel = in.createReply(); //Esto para que??
         JsonObject response = new JsonObject();
         response.add("performative", resPerformative);
         response.add("content", Json.parse(in.getContent()).asObject());
         return response;
     }
-    
+
     /**
      * Un dron pide recargar al WorldManager de un mundo
      *
@@ -184,25 +182,25 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
     public String requestRecharge(String ticket) {
         worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "REGULAR");
         worldChannel.setConversationId(this.sessionId);
-        
+
         JsonObject content = new JsonObject();
         content.add("operation", "recharge");
         content.add("recharge", ticket);
         worldChannel.setContent(content.toString());
-        
+
         this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
-        
+
         ACLMessage in = this.agent.blockingReceive();
-        if (checkError(ACLMessage.CONFIRM,in)){
+        if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
-        
+
+        worldChannel = in.createReply();
         this.printReceiveMessage(in);
         System.out.println(this.agent.getLocalName() + " was  recharged");
-        return ok(in);
+        return "ok";
     }
-    
 
     /**
      * Un drone manda un movimiento al worldManager
@@ -210,24 +208,24 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
      * @author Miguel García
      * @return resultado de la perticion
      */
-
     public String sendActionWorldManager(String content) {
-        worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "ANALYTICS");
-        worldChannel.setConversationId(this.sessionId);
+        worldChannel.setPerformative(ACLMessage.REQUEST);
+        worldChannel.setProtocol("REGULAR");
         worldChannel.setReplyWith("REPLY###");
-        
+
         JsonObject request = new JsonObject();
         request.add("operation", content);
         worldChannel.setContent(request.toString());
-        
+
         this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
-        
+
         ACLMessage in = this.agent.blockingReceive();
-        if (checkError(ACLMessage.CONFIRM,in)) {
+        if (checkError(ACLMessage.CONFIRM, in)) {
             return "error";
         }
-        
+
+        worldChannel = in.createReply();
         this.printReceiveMessage(in);
         return ok(in);
     }
@@ -242,7 +240,6 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
      * @param sensors
      * @return
      */
-    
     /**
      * Nueva modifiación 19/12/2020
      *
@@ -256,51 +253,50 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
     public String loginWorld(String role, int x, int y, ArrayList<String> sensors) {
         worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "REGULAR");
         worldChannel.setConversationId(sessionId);
-        
+
         /*ACLARAR LO DEL SETREPLYWITH*/
-        worldChannel.setReplyWith("login"+role);
-        
+        worldChannel.setReplyWith("login" + role);
+
         JsonObject content = new JsonObject();
         //Hacemos un JsonArray con el sensor
         JsonArray sensorArray = new JsonArray();
-        
-        
+
         content.add("operation", "login");
         if (role.equals("rescuer")) {
             content.add("attach", sensorArray); //JsonArray vacío
-        } else if(role.equals("seeker")) {
+        } else if (role.equals("seeker")) {
             sensorArray.add(sensors.get(0));
             content.add("attach", sensorArray); //JsonArray con el sensor  
         }
         content.add("posx", x);
         content.add("posy", y);
         worldChannel.setContent(content.toString());
-        
+
         this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
-        
-        MessageTemplate t = MessageTemplate.MatchInReplyTo("login"+role);
+
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("login" + role);
         ACLMessage in = this.agent.blockingReceive(t);
 
         if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
-            
+
+        worldChannel = in.createReply();
         this.printReceiveMessage(in);
-        return ok(in);       
+        return ok(in);
     }
-    
-    
-    public String ok(ACLMessage in){
+
+    public String ok(ACLMessage in) {
         return Json.parse(in.getContent()).asObject().get("result").asString();
     }
-    
-    
-    public boolean checkAPBError(ACLMessage in){
-        if(in.getPerformative() == ACLMessage.AGREE || in.getPerformative() == ACLMessage.INFORM || in.getPerformative() == ACLMessage.REFUSE)
+
+    public boolean checkAPBError(ACLMessage in) {
+        if (in.getPerformative() == ACLMessage.AGREE || in.getPerformative() == ACLMessage.INFORM || in.getPerformative() == ACLMessage.REFUSE) {
             return false;
-        else
+        } else {
             return true;
+        }
         /*
         for(int performative : this.acceptedPerformatives){
             if(!checkError(performative, in)){
@@ -309,54 +305,83 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         }
         return true;*/
     }
-    
+
     /**
      * author: Domingo
-     * @return 
+     *
+     * @return
      */
-    public String getSessionID(){
+    public String getSessionID() {
         return this.sessionId;
     }
-    
+
     /**
      * author: Domingo
-     * @return 
+     *
+     * @return
      */
-    public JsonObject readSensor(){
+    public JsonObject readSensor() {
         //Creamos mensaje para leer sensores
-        this.worldChannel = message(this.agentName, this.worldManager, ACLMessage.QUERY_REF, "REGULAR");
-        
+        worldChannel.setPerformative(ACLMessage.QUERY_REF);
+        worldChannel.setProtocol("REGULAR");
+
         JsonObject content = new JsonObject();
         content.add("operation", "read");
         this.worldChannel.setContent(content.toString());
-        
+
         //Enviamos mensaje para leer sensores
         this.agent.send(this.worldChannel);
+        this.printSendMessage(worldChannel);
+
         ACLMessage in = this.agent.blockingReceive();
+
+        if (this.checkError(ACLMessage.INFORM, in)) {
+            return null;
+        }
+
+        this.printReceiveMessage(in);
+
         String response = in.getContent();
         JsonObject parsedResponse = Json.parse(response).asObject();
-        
+
         return parsedResponse;
-        
+
     }
-    
-    
+
     /**
      * author: Domingo
-     * @return 
+     *
+     * @return
      */
-    public void sendGermanLocationsToAPB(ArrayList<Integer> indicesAlemanes, ArrayList<JsonObject> alemanes){
-        
+    public void sendGermanLocationToAPB(ArrayList<Integer> indicesAlemanes, ArrayList<JsonObject> alemanes) {
+
         for (int i = 0; i < indicesAlemanes.size(); i++) {
             APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
-            
+            APBChannel.setReplyWith("aleman");
+
             JsonObject aleman = new JsonObject();
             aleman.set("aleman", alemanes.get(indicesAlemanes.get(i)));
-            
+
             APBChannel.setContent(aleman.toString());
             this.agent.send(APBChannel);
         }
-        
+
     }
-    
+
+    /**
+     * @author Jose Saldaña
+     */
+    public void informGermanFound(int x, int y) {
+        APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
+        APBChannel.setReplyWith("aleman");
+
+        JsonObject aleman = new JsonObject();
+        aleman.set("x", x);
+        aleman.set("y", y);
+
+        APBChannel.setContent(aleman.toString());
+        this.agent.send(APBChannel);
+        this.printSendMessage(APBChannel);
+
+    }
 }

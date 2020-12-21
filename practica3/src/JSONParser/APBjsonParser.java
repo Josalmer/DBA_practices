@@ -1,6 +1,7 @@
 
 package JSONParser;
 
+import APB.Coordinates;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
@@ -20,6 +21,10 @@ public class APBjsonParser extends JSONParser{
         return convertStringArrayToJSONArray(money);
     }
 
-
+    public Coordinates getAleman(JsonObject object){
+        int posX = object.get("aleman").asObject().get("x").asInt();
+        int posY = object.get("aleman").asObject().get("y").asInt();
+        return new Coordinates(posX, posY);
+    }
 
 }

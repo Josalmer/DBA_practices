@@ -257,5 +257,9 @@ public class CommunicationAssistant {
         }
     }
     
+    public void waitIddle() {
+        MessageTemplate t = MessageTemplate.MatchReplyWith("end");
+        ACLMessage in = this.agent.blockingReceive(t);
+    }
 
 }

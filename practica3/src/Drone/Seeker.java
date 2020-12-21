@@ -5,24 +5,23 @@ import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 
 public class Seeker extends Drone {
-    
-    
+
     String sensorTicket;
     int targetPositionX;
     int targetPositionY;
     boolean targetPositionVisited;
-    ArrayList<JsonObject> alemanes = new ArrayList<>();; //Array de Alemanes rescatados (sus posiciones para no repetirlas).
+    ArrayList<JsonObject> alemanes = new ArrayList<>();
+    ; //Array de Alemanes rescatados (sus posiciones para no repetirlas).
     
     //JsonObjects de las posiciones en el mapa que va a tener que visitar el seeker
    ArrayList<JsonObject> targetPositions = new ArrayList<>();
-    
-    
+
     @Override
     public void plainExecute() {
         while (!_exitRequested) {
             Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
             switch (this.status) {
-               
+
                 case SUBSCRIBED_TO_PLATFORM:
                     this.requestSessionIdAndMap();
                     if (this.status == DroneStatus.SUBSCRIBED_TO_PLATFORM) {
@@ -32,20 +31,19 @@ public class Seeker extends Drone {
                 case SUBSCRIBED_TO_WORLD:
                     this.sendCashToAPB();
                     if (this._communications.getDronesNumber().equals(2) && this.getLocalName().equals("Buscador Domingo")) {
+                        this._communications.waitIddle();
                         this.status = DroneStatus.FINISHED;
-                    }else{
+                    } else {
                         this.status = DroneStatus.WAITING_INIT_DATA;
                     }
                     break;
                 case WAITING_INIT_DATA:
                     this.receiveLoginData();
                     if (this.status == DroneStatus.WAITING_INIT_DATA) {
-                        this.loginWorld(this.knowledge.currentPositionX,this.knowledge.currentPositionY);
+                        this.loginWorld(this.knowledge.currentPositionX, this.knowledge.currentPositionY);
                     }
-                    this.status = DroneStatus.RECHARGING;
-                    break;
-                case FREE:
-                    this.receivePlan();
+                    this.initialRecharge();
+                    this.status = DroneStatus.EXPLORING;
                     break;
                 case EXPLORING:
                     this.reactiveBehaviour();
@@ -63,25 +61,19 @@ public class Seeker extends Drone {
                     break;
                 case RECHARGING:
                     this.recharge();
-                    break;
-                case BUSY:
-                    this.executePlan();
-                    break;
-                    
                 case FINISHED:
                     this.logout();
                     break;
             }
         }
     }
-    
-    
+
     @Override
     void requestLoginData() {
         JsonObject content = new JsonObject();
         content.add("request", "login");
-        JsonObject response  = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content, "login");
-        if(response != null){
+        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content, "login");
+        if (response != null) {
             this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
             this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
             this.knowledge.currentHeight = this.knowledge.map.get(this.knowledge.currentPositionX).get(this.knowledge.currentPositionY);
@@ -90,16 +82,14 @@ public class Seeker extends Drone {
         } else {
             this.status = DroneStatus.FINISHED;
         }
-        
+
     }
-    
+
     @Override
     void receiveLoginData() {
-        JsonObject response  = this._communications.receiveFromAPB("login");
-        if(response != null){
-            this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
-            this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
-            this.knowledge.currentHeight = this.knowledge.map.get(this.knowledge.currentPositionX).get(this.knowledge.currentPositionY);
+        JsonObject response = this._communications.receiveFromAPB("login");
+        if (response != null) {
+            this.knowledge.initializeKnowledge(response);
             this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
             this.sensorTicket = response.get("content").asObject().get("sensorTicket").asString();
             //Calculamos las 4 esquinas del mapa por las que pasará el seeker
@@ -112,127 +102,91 @@ public class Seeker extends Drone {
             this.status = DroneStatus.FINISHED;
         }
     }
-    
-    
+
     @Override
-    void loginWorld(int x , int y){
-        
+    void loginWorld(int x, int y) {
+
         ArrayList<String> sensors = new ArrayList<>();
         sensors.add(this.sensorTicket);
-        
-        String result = this._communications.loginWorld("seeker",x, y,sensors);
-        if(result.equals("error")){
+
+        String result = this._communications.loginWorld("seeker", x, y, sensors);
+        if (result.equals("error")) {
             System.out.print("\nError en el login del Seeker");
             this.status = DroneStatus.FINISHED;
-        }else{
+        } else {
             System.out.print("\nSeeker logueado correctamente en el mundo. Enviado el ticket del sensor al server y visto bueno\n");
         }
     }
-    
-    
-    @Override         
-    public void recharge(){ 
+
+    @Override
+    public void recharge() {
         if (this.toLand()) {
             String result = this._communications.requestRecharge(this.rechargeTicket);
-            if (result.equals("ok")){
+            if (result.equals("ok")) {
                 this.knowledge.energy = 1000;
                 this.rechargeTicket = null;
-                if(this.plan.isEmpty() || this.plan == null)
+                if (this.plan.isEmpty() || this.plan == null) {
                     this.status = DroneStatus.FINISHED;
-                else
-                   this.status = DroneStatus.EXPLORING; 
+                } else {
+                    this.status = DroneStatus.EXPLORING;
+                }
             } else {
                 this.status = DroneStatus.FINISHED;
             }
             Info("Changed status to: " + this.status);
         }
     }
-//    
-//    void receivePlan(){
-//        
-//        JsonObject position = new JsonObject();
-//        position.add("x",this.knowledge.currentPositionX);
-//        position.add("y",this.knowledge.currentPositionY);
-//        
-//        JsonObject content = new JsonObject();
-//        content.add("request", "mission");
-//        content.add("currentPosition",position); 
-//        
-//        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, null);
-//        if(response != null){
-//            String mission = response.get("content").asObject().get("mission").asString();
-//            if(mission.equals("explore")){
-//               this.targetPositionX = response.get("content").asObject().get("target").asObject().get("x").asInt();
-//               this.targetPositionY = response.get("content").asObject().get("target").asObject().get("y").asInt();
-//               this.status = DroneStatus.EXPLORING;
-//            }else{
-//               this.status = DroneStatus.FINISHED;                
-//            }
-//            
-//        } else {
-//            this.status = DroneStatus.FINISHED;
-//        }
-//    }
-//    
-    
+
     /**
      * Comportamiento Reactivo para la P3
      *
-     * @author Domingo López
-     * @return 
-     * 
+     * @author Domingo López, Jose Saldaña
+     * @return
+     *
      */
     void reactiveBehaviour() {
-        
-        if(this.targetPositions.get(0) == null){
+
+        if (this.targetPositions.get(0) == null) {
             Info("\nHe explorado todas las esquinas....Saliendo del mundo\n");
             this.status = DroneStatus.FINISHED;
-            Info("Changed status to: " + this.status);    
-        }else if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
-            Info("\nHe llego a la esquina " + this.targetPositions.get(0).asObject()+"\n");
+            Info("Changed status to: " + this.status);
+        } else if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
+            Info("\nHe llego a la esquina " + this.targetPositions.get(0).asObject() + "\n");
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.targetPositionVisited = this.targetPositions.get(0).asObject().get("visited").asBoolean();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
-        }else if(this.knowledge.maxLimitActionPermited()) {
+        } else if (this.knowledge.maxLimitActionPermited()) {
             Info("\nHe llegado al máximo de acciones permitidas....Saliendo del mundo\n");
             this.status = DroneStatus.FINISHED;
-            Info("Changed status to: " + this.status);    
-            
-        }else if(this.knowledge.cantReachTarget()){
-             Info("\nHe llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina\n");
-            
+            Info("Changed status to: " + this.status);
+
+        } else if (this.knowledge.cantReachTarget()) {
+            Info("\nHe llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina\n");
+
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.targetPositionVisited = this.targetPositions.get(0).asObject().get("visited").asBoolean();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
-            
-        }else {
+
+        } else {
             if (this.knowledge.needRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
                 Info("Changed status to: " + this.status);
             } else {
                 if (this.plan != null) {
                     this.executePlan();
-                }else {
-                    //Primero leemos el thermal, para actualizarlo y que los cálculos posteriores sean teniendo en cuenta nuestra posición actual.
-                    //TODO. Quitar el readSensor de aquí, y dejarlo como en la P2 que lee cada vez que llega a la esquina en la que la siguiente es -1
-                    this.readSensor();
-                    //Después de cada lectura, comprobamos si hay alemanes en el thermal.
-                    ArrayList<Integer> indiceAlemanesEncontrados = this.knowledge.checkIfFrankfurts(this.alemanes);
-                    if(!indiceAlemanesEncontrados.isEmpty()&& indiceAlemanesEncontrados != null)//Mandar a APB las posiciones de los alemanes encontrados.
-                        this._communications.sendGermanLocationsToAPB(indiceAlemanesEncontrados, this.alemanes);
-                    //Y después, pensamos un plan corto para movernos a la casilla más prometedora
+                } else {
                     this.thinkPlan();
                 }
             }
         }
     }
-    
+
     void thinkPlan() {
         ArrayList<DroneOption> options = this.generateOptions();
         ArrayList<DroneOption> noVisitedOptions = new ArrayList<>();
@@ -244,20 +198,20 @@ public class Seeker extends Drone {
             }
             if (noVisitedOptions.size() > 0) {
                 options = noVisitedOptions;
-            } 
+            }
             DroneOption winner;
             winner = chooseFromNoVisitedOptions(options);
             if (winner != null) {
                 this.plan = winner.plan;
-                if (this.knowledge.shouldIRechargueFirst(winner))
+                if (this.knowledge.shouldIRechargueFirst(winner)) {
                     this.status = DroneStatus.NEED_RECHARGE;
+                }
             } else {
                 throw new RuntimeException("No hay un plan ganador");
             }
         }
     }
-    
-    
+
     ArrayList<DroneOption> generateOptions() {
         ArrayList<DroneOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
@@ -268,17 +222,14 @@ public class Seeker extends Drone {
                 int orientation = orientations[i];
                 if (this.knowledge.insideMap(xPosition, yPosition)) {
                     int targetHeight = this.knowledge.map.get(xPosition).get(yPosition);
-                    //Esto ya no hace falta al tener el mapa completo
-                    //TODO. Dejarlo como estaba en la P2. Para leer el thermal cuando esté llegando a los límites del thermal explorado.
-//                    if (targetHeight == -1) {
-//                        this.status = DroneStatus.NEED_SENSOR;
-//                        Info("Changed status to: " + this.status);
-//                        return null;
-//                    }
-                    if (targetHeight < this.knowledge.maxFlight) { 
+                    double thermalValue = this.getThermalValue(xPosition, yPosition);
+                    if (thermalValue == -1) {
+                        this.status = DroneStatus.NEED_SENSOR;
+                        Info("Changed status to: " + this.status);
+                        return null;
+                    }
+                    if (targetHeight < this.knowledge.maxFlight) {
                         if ((this.knowledge.currentHeight + 5 < this.knowledge.maxFlight && this.knowledge.currentHeight < targetHeight) || targetHeight <= this.knowledge.currentHeight) {
-                            //Explicación en el getThermalValue
-                            Double thermalValue = this.getThermalValue(15 - 1 + (i % 3),15 - 1 + (i / 3)); //Explicación del 15 -1 etc en el getThermalValue
                             options.add(this.generateOption(xPosition, yPosition, targetHeight, orientation, thermalValue));
                         }
                     }
@@ -287,7 +238,7 @@ public class Seeker extends Drone {
         }
         return options;
     }
-    
+
     DroneOption generateOption(int xPosition, int yPosition, int height, int orientation, Double thermalValue) {
         DroneOption option = new DroneOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition), thermalValue);
         ArrayList<DroneAction> plan = new ArrayList<>();
@@ -319,45 +270,44 @@ public class Seeker extends Drone {
         }
         option.plan = plan;
         option.cost = cost;
-        
+
         //Esto es lo que hay que tocar
         //option.calculateDistanceToTarget(this.targetPositionX, this.targetPositionY);
         /**
-         * Lo que vamos a hacer es que recorra cuatro puntos del mapa. Tiene que ir de su current position
-         * a la esquina izquierda superior - 7 posiciones, esquina derecha superior -7 posiciones
-         * esquina izquierda inferior menos 7 posiciones, etc.
-         * 
-         * * * * * * * 
-         * x * * * x *
-         * * * * * * * 
-         * * * * * * * 
+         * Lo que vamos a hacer es que recorra cuatro puntos del mapa. Tiene que
+         * ir de su current position a la esquina izquierda superior - 7
+         * posiciones, esquina derecha superior -7 posiciones esquina izquierda
+         * inferior menos 7 posiciones, etc.
+         *
+         * * * * * * *
          * x * * * x *
          * * * * * * *
-         * 
-         * Algo así. por lo que vamos a tener 4 puntos en el mapa definidos, e intentará llegar a ellos.
-         * La otra opción es que empiece a recorrerlo todo como pollo sin HEAD.
+         * * * * * * *
+         * x * * * x *
+         * * * * * * *
+         *
+         * Algo así. por lo que vamos a tener 4 puntos en el mapa definidos, e
+         * intentará llegar a ellos. La otra opción es que empiece a recorrerlo
+         * todo como pollo sin HEAD.
          */
         //Ojo, debe cambiar una vez alcancemos o hagamos un límite de pasos para llegar a la primera esquina, etc.
         option.calculateDistanceToTarget(this.targetPositionX, this.targetPositionY);
         return option;
     }
-    
-    
 
-    
-    DroneOption chooseFromAlreadyVisitedOptions(ArrayList<DroneOption> options){
-         double lastVisited = options.get(0).visitedAt;
-         DroneOption bestOption = options.get(0);
-         for (DroneOption o : options) {
+    DroneOption chooseFromAlreadyVisitedOptions(ArrayList<DroneOption> options) {
+        double lastVisited = options.get(0).visitedAt;
+        DroneOption bestOption = options.get(0);
+        for (DroneOption o : options) {
             if (o.visitedAt < lastVisited) {
-                  bestOption = o;
-                  lastVisited = o.visitedAt;
-             }
-         }    
-         return bestOption;
+                bestOption = o;
+                lastVisited = o.visitedAt;
+            }
+        }
+        return bestOption;
     }
-    
-    DroneOption chooseFromNoVisitedOptions(ArrayList<DroneOption> options){
+
+    DroneOption chooseFromNoVisitedOptions(ArrayList<DroneOption> options) {
         double min = options.get(0).puntuation;
         DroneOption bestOption = options.get(0);
         for (DroneOption o : options) {
@@ -366,102 +316,101 @@ public class Seeker extends Drone {
                 bestOption = o;
             }
         }
-         return bestOption;
+        return bestOption;
     }
-    
+
     @Override
     void executePlan() {
         this.doAction(this.plan.get(0));
         this.plan.remove(0);
-        if (this.plan.size() == 0)  {
+        if (this.plan.size() == 0) {
             this.plan = null;
         }
-        
-    }
-    
-     /**
-     * author: Domingo
-     * @return 
-     */
-    void readSensor(){
 
-       JsonObject response = this._communications.readSensor();
-       
-       //Parecido a la P2. Leemos y si es OK, actualizamos valores de los sensores.
-       if (response.get("result").asString().equals("ok")) {
+    }
+
+    /**
+     * author: Domingo
+     *
+     * @return
+     */
+    void readSensor() {
+
+        JsonObject response = this._communications.readSensor();
+
+        //Parecido a la P2. Leemos y si es OK, actualizamos valores de los sensores.
+        if (response.get("result").asString().equals("ok")) {
             System.out.print("Valores de los sensores leídos...");
             this.useEnergy(DroneAction.LECTURA_SENSORES);
             this.perception.update(response.get("details").asObject().get("perceptions").asArray());
             Info(this.perception.toString());
             this.knowledge.updateThermalMap(this.perception.thermal);
             System.out.print("\nMapa termal actualizado");
-            
+
             this.status = DroneStatus.EXPLORING;
-            Info("Changed status to: " + this.status +"after reading sensors");
+            Info("Changed status to: " + this.status + "after reading sensors");
         } else {
             System.out.print("\nERROR EN LA LECTURA DE SENSORES\n");
             this.status = DroneStatus.FINISHED;
         }
-       
-       
+
     }
-    
+
     /**
      * author: Domingo
-     * @return 
+     *
+     * @return
      */
-    public void calculateCorners(){
-        
+    public void calculateCorners() {
+
         int width = this.knowledge.mapWidth;
         int height = this.knowledge.mapHeight;
 
         //(15,15) sería la casila central en la que el thermal Deluxe cubriría la esquina completa, consiguiendo poblar el mapa completo.
         JsonObject corner1 = new JsonObject();
-        corner1.add("x",15);
-        corner1.add("y",15);
-        corner1.add("visited",false);
-        
+        corner1.add("x", 15);
+        corner1.add("y", 15);
+        corner1.add("visited", false);
+
         JsonObject corner2 = new JsonObject();
-        corner2.add("x",width - 15);
-        corner2.add("y",15);
-        corner2.add("visited",false);
-        
+        corner2.add("x", width - 15);
+        corner2.add("y", 15);
+        corner2.add("visited", false);
+
         JsonObject corner3 = new JsonObject();
-        corner3.add("x",15);
-        corner3.add("y",height - 15);
-        corner3.add("visited",false);
-        
+        corner3.add("x", 15);
+        corner3.add("y", height - 15);
+        corner3.add("visited", false);
+
         JsonObject corner4 = new JsonObject();
-        corner4.add("x", width -15);
-        corner4.add("y",height - 15);
-        corner4.add("visited",false);
-        
+        corner4.add("x", width - 15);
+        corner4.add("y", height - 15);
+        corner4.add("visited", false);
+
         JsonObject centro = new JsonObject();
-        centro.add("x", width/2);
-        centro.add("y", height/2);
-        centro.add("visited",false);
-        
-        
+        centro.add("x", width / 2);
+        centro.add("y", height / 2);
+        centro.add("visited", false);
+
         this.targetPositions.add(corner3);
         this.targetPositions.add(centro);
         this.targetPositions.add(corner4);
         this.targetPositions.add(corner2);
         this.targetPositions.add(centro);
         this.targetPositions.add(corner1);
-     
-        
+
     }
-    
+
     /**
-     * author: Domingo
-     * ThermalDELUXE = 31x31. Po lo que la casilla central está en la posición del array (15,15).
-     * Usando el juego de i%3 y i/3 podemos recorrer las casillas adyacentes a la central del mapa termal conseguido
-     * y así interpolar las coordenadas que estamos analizando con las que tenemos del thermal.
-     * @return 
+     * author: Domingo ThermalDELUXE = 31x31. Po lo que la casilla central está
+     * en la posición del array (15,15). Usando el juego de i%3 y i/3 podemos
+     * recorrer las casillas adyacentes a la central del mapa termal conseguido
+     * y así interpolar las coordenadas que estamos analizando con las que
+     * tenemos del thermal.
+     *
+     * @return
      */
-    public double getThermalValue(int xPosition, int yPosition){   
+    public double getThermalValue(int xPosition, int yPosition) {
         return this.knowledge.thermalMap.get(xPosition).get(yPosition);
     }
-    
-
 }

@@ -15,48 +15,53 @@ import java.util.Queue;
  */
 public class Administration {
 
-    int angentsSubscribed;
+    int agentsSubscribed;
     int collectedMoney;
-    
+
     ArrayList<String> bitcoins = new ArrayList();
-    
+
     // Sensores
     String sensor1;
     String sensor2;
-    
-    
+
     // Info del mundo
-    ArrayList<ArrayList<Integer> > map = new ArrayList();
+    ArrayList<ArrayList<Integer>> map = new ArrayList();
     Integer maxFlight = 256;
     Integer initialPosition1;
     Integer initialPosition2;
     Integer initialPosition3;
     Integer initialPosition4;
     
+    ArrayList<Coordinates> alemanes = new ArrayList();
+    int rescued;
+    Coordinates rescuer1Position;
+    Coordinates rescuer2Position;
+
     // Ticket de recarga
     Queue<String> rechargeTickets = new PriorityQueue();
 
     public Administration() {
-        angentsSubscribed = 0;
+        agentsSubscribed = 0;
         collectedMoney = 0;
+        rescued = 0;
     }
-    
-    public ArrayList<String> getMoney(int coins){
-        if(coins > this.bitcoins.size())
+
+    public ArrayList<String> getMoney(int coins) {
+        if (coins > this.bitcoins.size()) {
             return null;
-        
+        }
+
         ArrayList<String> payment = new ArrayList<>();
-        for(int i=0; i<coins; i++){
+        for (int i = 0; i < coins; i++) {
             payment.add(this.bitcoins.get(i));
         }
-        
+
         return payment;
     }
-    
-    
+
     //Coins may have been used
-    public void updateWastedMoney(int coins){
-        for(int i=0; i<coins; i++){
+    public void updateWastedMoney(int coins) {
+        for (int i = 0; i < coins; i++) {
             this.bitcoins.remove(0);
         }
     }
@@ -64,4 +69,10 @@ public class Administration {
     public String popRechargeTicket() {
         return this.rechargeTickets.poll();
     }
+    
+    public void rescue(Coordinates aleman){
+        this.alemanes.add(aleman);
+        this.rescued++;
+    }
+    
 }

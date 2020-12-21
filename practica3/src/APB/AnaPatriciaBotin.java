@@ -13,7 +13,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     APBCommunicationAssistant _communications;
     Administration adminData = new Administration();
     APBStatus status;
-    DroneKnowledge knowledge = new DroneKnowledge();
     APBjsonParser jsonParser = new APBjsonParser();
 
     ProductCatalogue shopsInfo = new ProductCatalogue();
@@ -61,6 +60,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.sendInitialInstructionsToDrones();
                     break;
                 case RESCUEING:
+                    this._communications.waitIddle();
                     this.status = APBStatus.FINISHED;
 
                     break;
@@ -78,7 +78,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         } else {
             this.adminData.map = this.jsonParser.getMap(response.get("map").asObject());
             this.status = APBStatus.SUBSCRIBED_TO_WORLD;
-            
+
         }
     }
 
@@ -87,19 +87,17 @@ public class AnaPatriciaBotin extends IntegratedAgent {
      */
     void shareSessionIdAndMap() {
         JsonArray parsedMap = jsonParser.parseMap(this.adminData.map);
-        while (this.adminData.angentsSubscribed < 4) {
-            System.out.print("\nNumero agentes:"+this.adminData.angentsSubscribed);
+        while (this.adminData.agentsSubscribed < 4) {
+            System.out.print("\nNumero agentes:" + this.adminData.agentsSubscribed);
             this._communications.listenAndShareSessionId(parsedMap);
-            this.adminData.angentsSubscribed++;
+            this.adminData.agentsSubscribed++;
         }
     }
 
-    
-    public void shareSessionIdWithAwacs(){
+    public void shareSessionIdWithAwacs() {
         this._communications.shareSessionIdWithAwacs();
     }
-    
-    
+
     /**
      * @author Jose Saldaña, Manuel Pancorbo
      */
@@ -126,7 +124,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     void investigateMarket() {
         JsonArray shops = this._communications.askShoppingCenters();
         this.shopsInfo.setCatalogue(shops);
-        System.out.println("\n\nCATALOGO\n: "+ this.shopsInfo.toString());
+        System.out.println("\n\nCATALOGO\n: " + this.shopsInfo.toString());
         this.status = APBStatus.SHOPPING;
     }
 
@@ -140,7 +138,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
 
         for (int i = 0; i < this._communications.getDronesNumber(); i++) {
-            this.adminData.rechargeTickets.add(this.buy("CHARGE"));
+            this.buyRecharge();
         }
 
         if (this.status != APBStatus.FINISHED) {
@@ -158,6 +156,15 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    void buyRecharge() {
+        String sensorCode = this.buyAndGetCode("CHARGE");
+        if (sensorCode != null) {
+            this.adminData.rechargeTickets.add(sensorCode);
+        } else {
+            this.status = APBStatus.FINISHED;
+        }
+    }
+    
     public String buyAndGetCode(String sensorName) {
         int option = 0;
         String sensorCode = null;
@@ -176,24 +183,24 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
         return sensorCode;
     }
-    
+
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
         this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
         this.status = APBStatus.RESCUEING;
     }
-    
+
     public void sendInitialInstructionsToSeeker(String DroneName, Integer order) {
         Integer initialPos = this.calculateDroneInitialPosition(order);
         String sensor = order == 1 ? this.adminData.sensor1 : this.adminData.sensor2;
         this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), sensor);
     }
-    
+
     public void sendInitialInstructionsToRescuer(String DroneName, Integer order) {
         Integer initialPos = this.calculateDroneInitialPosition(order);
         this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), null);
     }
-    
+
     public Integer calculateDroneInitialPosition(Integer order) {
         Integer initialPos = 0;
         int xSize = this.adminData.map.size();
@@ -231,6 +238,42 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         return initialPos;
     }
 
+    void coordinateTeam(){
+
+        if(this.adminData.rescued == 10){
+            this.status = APBStatus.FINISHED;
+            Info("\n\n\033[33m APB - MISSION COMPLETED: Se ha rescatado a los 10 alemanes");
+            return;
+        } 
+
+        this.checkRescuers();
+        this.checkRechargeRequests();
+    }
+
+    private void checkRescuers() {
+       JsonObject response = this._communications.coordinateTeam("aleman"); 
+
+       if(response == null){ return;}
+
+       Coordinates aleman = this.jsonParser.getAleman(response);
+       this.adminData.rescue(aleman);
+    }
+
+    private void checkRechargeRequests(){
+       JsonObject response = this._communications.coordinateTeam("recharge"); 
+
+       if(response == null){ return;}
+
+       String ticket = this.adminData.popRechargeTicket();
+
+       if(ticket == null){
+           this.buyRecharge();
+           ticket = this.adminData.popRechargeTicket(); //Habria que comprobar si no se pueden comprar mas
+       }
+
+       this._communications.sendRecharge(ticket);
+    }
+    
     void logout() {
 //        this.checkMessagesAndOrderToLogout();
         this._communications.switchOffAwacs();
@@ -238,9 +281,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this._communications.checkoutPlatform();
         _exitRequested = true;
     }
-    
+
     void checkMessagesAndOrderToLogout() {
-        boolean pendingRequest = true; 
+        boolean pendingRequest = true;
         while (pendingRequest) {
             pendingRequest = this._communications.checkMessagesAndOrderToLogout();
         }
