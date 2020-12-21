@@ -282,7 +282,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant{
         MessageTemplate t = MessageTemplate.MatchInReplyTo("login"+role);
         ACLMessage in = this.agent.blockingReceive(t);
 
-        if (checkError(ACLMessage.CONFIRM, in)) {
+        if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
             

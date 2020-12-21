@@ -180,6 +180,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
         this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
+        this.status = APBStatus.RESCUEING;
     }
     
     public void sendInitialInstructionsToSeeker(String DroneName, Integer order) {
@@ -231,7 +232,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     void logout() {
-        this.checkMessagesAndOrderToLogout();
+//        this.checkMessagesAndOrderToLogout();
         this._communications.switchOffAwacs();
         this._communications.checkoutWorld();
         this._communications.checkoutPlatform();
