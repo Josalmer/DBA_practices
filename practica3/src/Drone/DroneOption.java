@@ -16,10 +16,12 @@ public class DroneOption {
     Integer y;
     Integer floorHeight;
     Integer visitedAt;
+    Double thermalValue;
     ArrayList<DroneAction> plan;
     Integer cost;
     double distanceToTarget;
-    double puntuationCostRelation;
+    double thermalPuntuation;
+    double puntuation;
 
     /**
      * Constructor
@@ -29,18 +31,20 @@ public class DroneOption {
      * @param floorHeight altura de casilla destino
      * @param visited última vez visitada la casilla destino (-1 = no visitada)
      */
-    public DroneOption(Integer x, Integer y, Integer floorHeight, Integer visited) {
+    public DroneOption(Integer x, Integer y, Integer floorHeight, Integer visited, Double thermalValue) {
         this.x = x;
         this.y = y;
         this.floorHeight = floorHeight;
         this.visitedAt = visited;
+        this.thermalValue = thermalValue;
     }
     
 
     void calculateDistanceToTarget(int targetX, int targetY) {
-        // Distancia Manhattan
+        
+        //REVISAR EL CÁLCULO
         this.distanceToTarget = Math.abs(x - targetX) + Math.abs(y - targetY);
-//         Distancia de Euclides
-//	this.puntuation = (Math.sqrt(Math.pow(2,(x - ludwigX)) + Math.pow(2,(y - ludwigY))));
+        this.thermalPuntuation = thermalValue/20;
+	this.puntuation = this.distanceToTarget*0.8 + this.thermalPuntuation*0.3;
     }
 }

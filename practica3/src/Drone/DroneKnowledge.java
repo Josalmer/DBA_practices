@@ -12,8 +12,7 @@ import java.util.ArrayList;
 public class DroneKnowledge {
     Integer currentPositionX;
     Integer currentPositionY;
-    Integer ludwigPositionX;
-    Integer ludwigPositionY;
+
     Integer currentHeight;
     Integer energy;
     Integer orientation;
@@ -23,10 +22,14 @@ public class DroneKnowledge {
     Double angular;
     Double distanceToLudwig;
     Integer nActionsExecuted;
+    Integer nActionsExecutedToGetCorner;
     ArrayList<Integer> orientations;
 
     ArrayList<ArrayList<Integer>> map;
     ArrayList<ArrayList<Integer>> visitedAtMap;
+    
+    ArrayList<ArrayList<Double>> thermalMap; //Mapa termal de 7x7 desde la posición en la que estamos
+    
 
     /**
      * Inicializa el mundo del agente con la información recibida al hacer login:
@@ -40,6 +43,7 @@ public class DroneKnowledge {
     public void initializeKnowledge(JsonObject answer) {
         this.energy = 1000;
         this.nActionsExecuted = 0;
+        this.nActionsExecutedToGetCorner = 0;
         this.mapWidth = answer.get("width").asInt();
         this.mapHeight = answer.get("height").asInt();
         this.initializeMap();
@@ -123,7 +127,17 @@ public class DroneKnowledge {
                 }
             }
         }
-        this.calculateLudwigPosition();
+        //this.calculateLudwigPosition();
+    }
+    
+    /**
+     * Actualiza el conocimiento del mundo con la última percepción recibida
+     * 
+     * @author Domingo
+     * @param perception Percepción del Thermal actualizada tras la lectura de sensores
+     */
+    void updateThermalMap(ArrayList<ArrayList<Double>> thermal) {
+           this.thermalMap = thermal;
     }
 
     /**
@@ -132,17 +146,17 @@ public class DroneKnowledge {
      * 
      * @author Jose Saldaña
      */
-    void calculateLudwigPosition() {
-        double alpha = 90 - this.angular;
-        if (alpha < 0) {
-            alpha += 360;
-        }
-        alpha = alpha / 180 * Math.PI;
-        int xVariation = (int) Math.round(this.distanceToLudwig * Math.cos(alpha));
-        int yVariation = (int) Math.round(this.distanceToLudwig * Math.sin(alpha));
-        this.ludwigPositionX = this.currentPositionX + xVariation;
-        this.ludwigPositionY = this.currentPositionY - yVariation;
-    }
+//    void calculateLudwigPosition() {
+//        double alpha = 90 - this.angular;
+//        if (alpha < 0) {
+//            alpha += 360;
+//        }
+//        alpha = alpha / 180 * Math.PI;
+//        int xVariation = (int) Math.round(this.distanceToLudwig * Math.cos(alpha));
+//        int yVariation = (int) Math.round(this.distanceToLudwig * Math.sin(alpha));
+//        this.ludwigPositionX = this.currentPositionX + xVariation;
+//        this.ludwigPositionY = this.currentPositionY - yVariation;
+//    }
 
     /**
      * Calcula el nº de rotaciones necesarias para alcanzar una orientación
@@ -223,21 +237,30 @@ public class DroneKnowledge {
      * @author Jose Saldaña
      * @return booleano que indica si estoy sobre Ludwig
      */
-    public boolean amIAboveLudwig() {
-        return ((int) this.currentPositionX == (int) this.ludwigPositionX
-                && (int) this.currentPositionY == (int) this.ludwigPositionY);
+    public boolean amIAboveTarget(int targetPositionX, int targetPositionY) {
+        return ((int) this.currentPositionX == targetPositionX
+                && (int) this.currentPositionY == targetPositionY);
     }
 
     /**
      * Comprueba si he excedido límite de acciones sin encontrar el objetivo
      * 
-     * @author Jose Saldaña
+     * @author Jose Saldaña, Domingo López
      * @return booleano que indica si no puedo alcanzar el objetivo
      */
-    public boolean cantReachTarget() {
+    public boolean maxLimitActionPermited() {
         return this.nActionsExecuted > 10000;
     }
-
+    
+    /**
+     * Comprueba si he excedido límite de acciones para llegar a las esquinas
+     * 
+     * @author Domingo López
+     * @return booleano que indica si no puedo llegar a las esquinas
+     */
+    public boolean cantReachTarget(){
+        return this.nActionsExecutedToGetCorner > 3000;
+    }
     /**
      * Consulta la altura a la que se encuentra el agente
      * 
@@ -334,6 +357,7 @@ public class DroneKnowledge {
      */
     public void manageMovement(DroneAction nextMovement) {
         this.nActionsExecuted += 1;
+        this.nActionsExecutedToGetCorner += 1;
         switch (nextMovement) {
             case moveF:
                 this.moveForward();
@@ -374,6 +398,48 @@ public class DroneKnowledge {
     public boolean shouldIRechargueFirst(DroneOption bestOption){
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
         return shouldIRechargue;
+    }
+    
+     /**
+     * Comprueba si en el mapa thermal actual hay alemanes, y que no hemos avisado ya. 
+     * @author Domingo López
+     */
+    public ArrayList<Integer> checkIfFrankfurts(ArrayList<JsonObject> alemanes){
+        ArrayList<Integer> indicesAlemanesEncontrados = new ArrayList<>();
+        
+        for (int i = 0; i < this.thermalMap.size(); i++) {
+            for (int j = 0; j < this.thermalMap.get(i).size(); j++) {
+                if(this.thermalMap.get(i).get(j) == 0){
+                    //Hemos encontrado un alemán.
+                    int xAleman = this.currentPositionX -15 + i; //15 Porque en el Thermal estamos siempre en la posición (15,15)
+                    int yAleman = this.currentPositionY -15 + j;
+                    
+                    //Debemos comprobar que ese Alemán no lo hemos encontrado ya, para no volver a decírselo a Anapatricia
+                    boolean terminado = false;
+                    for (int k = 0; k < alemanes.size() && !terminado; k++) {
+                        int XalemanCapturado = alemanes.get(k).asObject().get("x").asInt();
+                        int YalemanCapturado = alemanes.get(k).asObject().get("y").asInt();
+                        
+                        if(XalemanCapturado == xAleman && YalemanCapturado == yAleman){
+                            //Descartamos el alemán.
+                            terminado = true;
+                        }
+                    }
+                    
+                    if(!terminado){//El alemán no está entre los que hemos recogido.
+                        JsonObject aleman = new JsonObject();
+                        aleman.set("x",xAleman);
+                        aleman.set("y",yAleman);
+                        alemanes.add(aleman);
+                        indicesAlemanesEncontrados.add(alemanes.size()-1);
+                    }
+                }
+                
+            }
+            
+        }
+        
+        return indicesAlemanesEncontrados;
     }
     
 }

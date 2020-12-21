@@ -256,4 +256,6 @@ public class CommunicationAssistant {
                this.bitcoins = parsedAnswer.asObject().get("coins").asArray(); 
         }
     }
+    
+
 }
