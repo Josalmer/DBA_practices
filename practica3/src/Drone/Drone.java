@@ -181,7 +181,7 @@ public class Drone extends IntegratedAgent{
     public void initialRecharge(){
         String result = this._communications.requestRecharge(this.rechargeTicket);
         if (result.equals("ok")){
-            this.knowledge.energy = 1000;
+            this.knowledge.fullRecharge();
             this.rechargeTicket = null;
         } else {
             this.status = DroneStatus.FINISHED;

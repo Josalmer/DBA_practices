@@ -330,7 +330,7 @@ public class DroneKnowledge {
                 energy = 1;
                 break;
             case touchD:
-                energy = this.getFloorHeight();
+                energy = this.currentHeight - this.getFloorHeight();
                 break;
             case LECTURA_SENSORES:
                 energy = 8;

@@ -401,7 +401,7 @@ public class Rescuer extends Drone {
      void useEnergy(DroneAction action) {
         this.knowledge.energy -= (this.knowledge.energyCost(action) * 4);
         if (this.printMessages) {
-            Info("\n\nExecuted action: " + action + " energy left: " + this.knowledge.energy);
+            Info("\n\n\033[36m " + this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);
         }
     }
     
