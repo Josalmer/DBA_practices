@@ -30,7 +30,7 @@ public class Seeker extends Drone {
                 case SUBSCRIBED_TO_WORLD:
                     this.sendCashToAPB();
                     if (this._communications.getDronesNumber().equals(2) && this.getLocalName().equals("Buscador Domingo")) {
-                        this._communications.waitIddle();
+                        this._communications.waitForFinish();
                         this.status = DroneStatus.FINISHED;
                     } else {
                         this.status = DroneStatus.WAITING_INIT_DATA;
@@ -60,6 +60,10 @@ public class Seeker extends Drone {
                     break;
                 case RECHARGING:
                     this.recharge();
+                case WAITING_FOR_FINISH:
+                    this._communications.waitForFinish();
+                    this.status = DroneStatus.FINISHED;
+                    break;
                 case FINISHED:
                     this.logout();
                     break;
@@ -96,7 +100,6 @@ public class Seeker extends Drone {
             //Iniciamos como target principal del Seeker la primera esquina
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
-            this.targetPositionVisited = this.targetPositions.get(0).asObject().get("visited").asBoolean();
         } else {
             this.status = DroneStatus.FINISHED;
         }
@@ -154,7 +157,6 @@ public class Seeker extends Drone {
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
-            this.targetPositionVisited = this.targetPositions.get(0).asObject().get("visited").asBoolean();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
         } else if (this.knowledge.maxLimitActionPermited()) {
@@ -164,14 +166,11 @@ public class Seeker extends Drone {
 
         } else if (this.knowledge.cantReachTarget()) {
             Info("\n\033[36m " + "He llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina\n");
-
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
-            this.targetPositionVisited = this.targetPositions.get(0).asObject().get("visited").asBoolean();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
-
         } else if(this.knowledge.alemanes == 10) {
             Info("\n\033[36m " + "He encontrado todos los alemanes\n");
             this.status = DroneStatus.FINISHED;
@@ -398,7 +397,6 @@ public class Seeker extends Drone {
         this.targetPositions.add(centro1);
         this.targetPositions.add(corner4);
         this.targetPositions.add(corner2);
-        this.targetPositions.add(centro2);
         this.targetPositions.add(corner1);
 
     }

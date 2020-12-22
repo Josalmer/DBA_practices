@@ -26,7 +26,7 @@ public class Rescuer extends Drone {
                 case SUBSCRIBED_TO_WORLD:
                     this.sendCashToAPB();
                     if (this._communications.getDronesNumber().equals(2) && this.getLocalName().equals("Migue al Rescate")) {
-                        this._communications.waitIddle();
+                        this._communications.waitForFinish();
                         this.status = DroneStatus.FINISHED;
                     }
                     break;

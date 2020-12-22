@@ -22,8 +22,8 @@ public class APBjsonParser extends JSONParser{
     }
 
     public Coordinates getAleman(JsonObject object){
-        int posX = object.get("aleman").asObject().get("x").asInt();
-        int posY = object.get("aleman").asObject().get("y").asInt();
+        int posX = object.get("x").asInt();
+        int posY = object.get("y").asInt();
         return new Coordinates(posX, posY);
     }
 

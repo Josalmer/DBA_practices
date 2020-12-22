@@ -26,7 +26,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage currentDroneConversation = new ACLMessage();
     String problem = "Playground1";
 
-    public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId,  boolean printMessages) {
+    public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, boolean printMessages) {
         super(_agent, identityManager, cardId, printMessages);
     }
 
@@ -212,11 +212,22 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
             System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender() + " and respond with NOT_UNDERSTOOD");
             ACLMessage agentChannel = in.createReply();
             agentChannel.setPerformative(ACLMessage.CANCEL);
+            agentChannel.setReplyWith("end");
             this.agent.send(agentChannel);
             return true;
         } else {
             return false;
         }
+    }
+
+    public void sendFinishMissionMsg(String DroneName) {
+        ACLMessage drone = new ACLMessage();
+        drone.setPerformative(ACLMessage.INFORM);
+        drone.setSender(this.agentName);
+        drone.addReceiver(new AID(DroneName, AID.ISLOCALNAME));
+        drone.setReplyWith("end");
+        this.agent.send(drone);
+        this.printSendMessage(drone);
     }
 
     public void switchOffAwacs() {
@@ -226,14 +237,14 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         awacs.addReceiver(new AID("AWACSBancoSantander", AID.ISLOCALNAME));
         this.agent.send(awacs);
     }
-    
+
     public JsonObject coordinateTeam(String key) {
         JsonObject response = new JsonObject();
 
         MessageTemplate t = MessageTemplate.MatchReplyWith(key);
         ACLMessage in = this.agent.blockingReceive(t, 1000);
 
-        if(in != null){
+        if (in != null) {
             this.printReceiveMessage(in);
             if (key.equals("mission")) {
                 this.currentDroneConversation = in.createReply();
@@ -245,7 +256,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
         return null;
     }
-    
+
     public void sendRescueMission(Coordinates aleman) {
         currentDroneConversation.setPerformative(ACLMessage.INFORM);
 
@@ -255,11 +266,11 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         params.add("y", aleman.getY());
         String parsedParams = params.toString();
         currentDroneConversation.setContent(parsedParams);
-        
+
         this.agent.send(currentDroneConversation);
         this.printSendMessage(currentDroneConversation);
     }
-    
+
     public void sendBackHomeMission(Coordinates initialPos) {
         currentDroneConversation.setPerformative(ACLMessage.INFORM);
 
@@ -269,7 +280,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         params.add("y", initialPos.getY());
         String parsedParams = params.toString();
         currentDroneConversation.setContent(parsedParams);
-        
+
         this.agent.send(currentDroneConversation);
         this.printSendMessage(currentDroneConversation);
     }
@@ -285,10 +296,5 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(currentDroneConversation);
         this.agent.send(this.currentDroneConversation);
 
-    }
-    
-    public void waitForFinish() {
-        MessageTemplate t = MessageTemplate.MatchReplyWith("finish");
-        ACLMessage in = this.agent.blockingReceive(t);
     }
 }

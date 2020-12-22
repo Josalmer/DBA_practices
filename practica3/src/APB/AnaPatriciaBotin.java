@@ -9,6 +9,7 @@ import com.eclipsesource.json.*;
 import java.util.ArrayList;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
+
     boolean printMessages = true;
 
     APBCommunicationAssistant _communications;
@@ -169,7 +170,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             this.status = APBStatus.FINISHED;
         }
     }
-    
+
     public String buyAndGetCode(String sensorName) {
         int option = 0;
         String sensorCode = null;
@@ -243,13 +244,13 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         return initialPos;
     }
 
-    void coordinateTeam(){
+    void coordinateTeam() {
 
-        if(this.adminData.rescued == 10){
+        if (this.adminData.rescued == 10) {
             this.status = APBStatus.FINISHED;
             Info("\n\n\033[33m APB - MISSION COMPLETED: Se ha rescatado a los 10 alemanes");
             return;
-        } 
+        }
         JsonObject request = this.checkRequests();
         if (request != null) {
             switch (request.get("key").asString()) {
@@ -271,49 +272,58 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             this.status = APBStatus.WAITING_FOR_FINISH;
         }
     }
-    
+
     private JsonObject checkRequests() {
-       JsonObject response;
+        JsonObject response;
 
-       response = this._communications.coordinateTeam("aleman"); 
-       if(response != null){ return response;}
+        response = this._communications.coordinateTeam("aleman");
+        if (response != null) {
+            return response;
+        }
 
-       response = this._communications.coordinateTeam("recharge"); 
-       if(response != null){ return response;}
+        response = this._communications.coordinateTeam("recharge");
+        if (response != null) {
+            return response;
+        }
 
-       response = this._communications.coordinateTeam("mission"); 
-       if(response != null){ return response;}
-        
-       return null;
+        response = this._communications.coordinateTeam("mission");
+        if (response != null) {
+            return response;
+        }
+
+        return null;
     }
-    
+
     private void saveAleman(JsonObject request) {
-        Coordinates aleman = this.jsonParser.getAleman(request);
+        Coordinates aleman = this.jsonParser.getAleman(request.get("content").asObject());
         this.adminData.alemanes.add(aleman);
     }
-    
+
     private void sendRescueMission() {
         Coordinates aleman = this.adminData.rescueAleman();
+        this.adminData.rescuerIddle = false;
         this._communications.sendRescueMission(aleman);
     }
-    
+
     private void sendBackHomeMission() {
         this._communications.sendBackHomeMission(this.adminData.initialPosition2);
+        this.adminData.rescuerIddle = false;
     }
 
-    private void manageRecharge(JsonObject request){
-       String ticket = this.adminData.popRechargeTicket();
+    private void manageRecharge(JsonObject request) {
+        String ticket = this.adminData.popRechargeTicket();
 
-       if(ticket == null){
-           this.buyRecharge();
-           ticket = this.adminData.popRechargeTicket(); //Habria que comprobar si no se pueden comprar mas
-       }
+        if (ticket == null) {
+            this.buyRecharge();
+            ticket = this.adminData.popRechargeTicket(); //Habria que comprobar si no se pueden comprar mas
+        }
 
-       this._communications.sendRecharge(ticket); // Hay que comprobar quien lo pidio para mandarselo a ese, create reply de recarga
+        this._communications.sendRecharge(ticket); // Hay que comprobar quien lo pidio para mandarselo a ese, create reply de recarga
     }
-    
+
     void logout() {
         this.checkMessagesAndOrderToLogout();
+        this.endMission();
         this._communications.switchOffAwacs();
         this._communications.checkoutWorld();
         this._communications.checkoutPlatform();
@@ -325,6 +335,13 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         while (pendingRequest) {
             pendingRequest = this._communications.checkMessagesAndOrderToLogout();
         }
+    }
+
+    void endMission() {
+        this._communications.sendFinishMissionMsg("Buscador Saldaña");
+        this._communications.sendFinishMissionMsg("Manuel al Rescate");
+        this._communications.sendFinishMissionMsg("Buscador Domingo");
+        this._communications.sendFinishMissionMsg("Migue al Rescate");
     }
 
     @Override
