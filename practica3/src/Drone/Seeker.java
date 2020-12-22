@@ -49,17 +49,12 @@ public class Seeker extends Drone {
                     break;
                 case NEED_RECHARGE:
                     this.claimRecharge();
-                    if (this.rechargeTicket == null) {
-                        this.status = DroneStatus.RECHARGING;
-                    } else {
-                        this.status = DroneStatus.FINISHED;
-                    }
-                    break;
-                case NEED_SENSOR:
-                    this.readSensor();
                     break;
                 case RECHARGING:
                     this.recharge();
+                case NEED_SENSOR:
+                    this.readSensor();
+                    break;
                 case WAITING_FOR_FINISH:
                     this._communications.waitForFinish();
                     this.status = DroneStatus.FINISHED;
@@ -109,15 +104,11 @@ public class Seeker extends Drone {
         if (this.toLand()) {
             String result = this._communications.requestRecharge(this.rechargeTicket);
             if (result.equals("ok")) {
-                this.knowledge.energy = 1000;
+                this.knowledge.fullRecharge();
                 this.rechargeTicket = null;
-                if (this.plan.isEmpty() || this.plan == null) {
-                    this.status = DroneStatus.FINISHED;
-                } else {
-                    this.status = DroneStatus.EXPLORING;
-                }
+                this.status = DroneStatus.EXPLORING;
             } else {
-                this.status = DroneStatus.FINISHED;
+                this.status = DroneStatus.WAITING_FOR_FINISH;
             }
             Info("\n\033[36m " + "Changed status to: " + this.status);
         }

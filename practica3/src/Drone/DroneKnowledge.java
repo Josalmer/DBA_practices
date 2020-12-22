@@ -191,8 +191,8 @@ public class DroneKnowledge {
      * @return booleano que indica si el agente debe recargar
      */
     public boolean needRecharge() {
-//        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
-        return false;
+        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
+//        return this.energy < 900;
     }
 
     /**
@@ -387,14 +387,12 @@ public class DroneKnowledge {
      */
     public boolean shouldIRechargueFirst(DroneOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
-//        return shouldIRechargue;
-        return false;
+        return shouldIRechargue;
     }
 
     public boolean shouldIRechargueFirst(ProvisionalDroneOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
-//        return shouldIRechargue;
-        return false;
+        return shouldIRechargue;
     }
 
     /**

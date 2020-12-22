@@ -57,11 +57,6 @@ public class Rescuer extends Drone {
                     break;
                 case NEED_RECHARGE:
                     this.claimRecharge();
-                    if (this.rechargeTicket == null) {
-                        this.status = DroneStatus.RECHARGING;
-                    } else {
-                        this.status = DroneStatus.BACKING_HOME;
-                    }
                     break;
                 case RECHARGING:
                     this.recharge();
@@ -244,12 +239,12 @@ public class Rescuer extends Drone {
 
                 String result = this._communications.requestRecharge(this.rechargeTicket);
                 if (result.equals("ok")) {
-                    this.knowledge.energy = 1000;
+                    this.knowledge.fullRecharge();
                     this.rechargeTicket = null;
-                    if (this.plan.isEmpty() || this.plan == null) {
-                        this.status = DroneStatus.FREE;
-                    } else {
+                    if (this.plan != null && this.plan.size() > 0) {
                         this.status = DroneStatus.BUSY;
+                    } else {
+                        this.status = DroneStatus.FREE;
                     }
                 } else {
                     this.status = DroneStatus.FINISHED;
@@ -359,7 +354,7 @@ public class Rescuer extends Drone {
                 onWantedBox = true;
             }
             plan.add(nextAction);
-            cost += this.knowledge.energyCost(nextAction);
+            cost += (this.knowledge.energyCost(nextAction) * 4);
         }
         option.plan = plan;
         option.cost = cost;
@@ -399,6 +394,15 @@ public class Rescuer extends Drone {
             this.plan = null;
         }
 
+    }
+  
+    
+    @Override
+     void useEnergy(DroneAction action) {
+        this.knowledge.energy -= (this.knowledge.energyCost(action) * 4);
+        if (this.printMessages) {
+            Info("\n\nExecuted action: " + action + " energy left: " + this.knowledge.energy);
+        }
     }
     
     void getLudwig() {

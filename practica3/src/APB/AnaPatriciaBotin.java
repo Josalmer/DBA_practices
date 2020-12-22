@@ -10,7 +10,7 @@ import java.util.ArrayList;
 
 public class AnaPatriciaBotin extends IntegratedAgent {
 
-    boolean printMessages = true;
+    boolean printMessages = false;
 
     APBCommunicationAssistant _communications;
     Administration adminData = new Administration();

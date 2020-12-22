@@ -105,10 +105,12 @@ public class Drone extends IntegratedAgent{
         if (response != null) {
             if (response.get("performative").asInt() == ACLMessage.REFUSE) {
                 this.rechargeTicket = null;
+                this.status = DroneStatus.WAITING_FOR_FINISH;
                 // Si es el seeker pasa a estado finished
                 // Si es el rescuer pasa a estado backing_home
             } else {
                 this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
+                this.status = DroneStatus.RECHARGING;
             }
         } else {
             this.status = DroneStatus.FINISHED;
@@ -122,8 +124,9 @@ public class Drone extends IntegratedAgent{
     
      void useEnergy(DroneAction action) {
         this.knowledge.energy -= this.knowledge.energyCost(action);
-        Info("\n\nExecuted action: " + action + " energy left: " + this.knowledge.energy);
-        
+        if (this.printMessages) {
+            Info("\n\n\033[36m " + this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);
+        }
     }
      
      boolean toLand() {

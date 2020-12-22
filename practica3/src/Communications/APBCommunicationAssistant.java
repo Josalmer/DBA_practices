@@ -24,6 +24,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
     ACLMessage shoppingChannel = new ACLMessage();
     ACLMessage currentDroneConversation = new ACLMessage();
+    ACLMessage currentRechargingConversation = new ACLMessage();
     String problem = "Playground1";
 
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, boolean printMessages) {
@@ -248,6 +249,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
             this.printReceiveMessage(in);
             if (key.equals("mission")) {
                 this.currentDroneConversation = in.createReply();
+            } else if (key.equals("recharge")) {
+                this.currentRechargingConversation = in.createReply();
             }
             response.add("content", Json.parse(in.getContent()).asObject());
             response.add("key", key);
@@ -259,6 +262,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
     public void sendRescueMission(Coordinates aleman) {
         currentDroneConversation.setPerformative(ACLMessage.INFORM);
+        currentDroneConversation.setSender(this.agentName);
 
         JsonObject params = new JsonObject();
         params.add("mission", "rescue");
@@ -267,8 +271,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         String parsedParams = params.toString();
         currentDroneConversation.setContent(parsedParams);
 
-        this.agent.send(currentDroneConversation);
         this.printSendMessage(currentDroneConversation);
+        this.agent.send(currentDroneConversation);
     }
 
     public void sendBackHomeMission(Coordinates initialPos) {
@@ -281,20 +285,20 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         String parsedParams = params.toString();
         currentDroneConversation.setContent(parsedParams);
 
+        this.printSendMessage(currentDroneConversation); 
         this.agent.send(currentDroneConversation);
-        this.printSendMessage(currentDroneConversation);
     }
 
     public void sendRecharge(String ticket) {
+        currentRechargingConversation.setPerformative(ACLMessage.INFORM);
+        currentRechargingConversation.setSender(this.agentName);
         JsonObject params = new JsonObject();
-        // NO HE COMPROBADO ESTO SI SE MANDA ASI; LO DEJO POR AQUI
-        params.add("ticket", ticket);
+        params.add("rechargeTicket", ticket);
 
         String parsedParams = params.toString();
-        this.currentDroneConversation.setContent(parsedParams);
+        currentRechargingConversation.setContent(parsedParams);
 
-        this.printSendMessage(currentDroneConversation);
-        this.agent.send(this.currentDroneConversation);
-
+        this.printSendMessage(currentRechargingConversation);
+        this.agent.send(currentRechargingConversation);
     }
 }
