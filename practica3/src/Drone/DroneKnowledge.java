@@ -387,7 +387,14 @@ public class DroneKnowledge {
      */
     public boolean shouldIRechargueFirst(DroneOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
-        return shouldIRechargue;
+//        return shouldIRechargue;
+        return false;
+    }
+
+    public boolean shouldIRechargueFirst(ProvisionalDroneOption bestOption) {
+        boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
+//        return shouldIRechargue;
+        return false;
     }
 
     /**

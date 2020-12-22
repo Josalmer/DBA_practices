@@ -72,23 +72,6 @@ public class Seeker extends Drone {
     }
 
     @Override
-    void requestLoginData() {
-        JsonObject content = new JsonObject();
-        content.add("request", "login");
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.QUERY_REF, content, "login");
-        if (response != null) {
-            this.knowledge.currentPositionX = response.get("content").asObject().get("x").asInt();
-            this.knowledge.currentPositionY = response.get("content").asObject().get("y").asInt();
-            this.knowledge.currentHeight = this.knowledge.map.get(this.knowledge.currentPositionX).get(this.knowledge.currentPositionY);
-            this.rechargeTicket = response.get("content").asObject().get("rechargeTicket").asString();
-            this.sensorTicket = response.get("content").asObject().get("sensorTicket").asString();
-        } else {
-            this.status = DroneStatus.FINISHED;
-        }
-
-    }
-
-    @Override
     void receiveLoginData() {
         JsonObject response = this._communications.receiveFromAPB("login");
         if (response != null) {
@@ -100,6 +83,7 @@ public class Seeker extends Drone {
             //Iniciamos como target principal del Seeker la primera esquina
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
+            this.targetPositions.remove(0);
         } else {
             this.status = DroneStatus.FINISHED;
         }
@@ -148,20 +132,22 @@ public class Seeker extends Drone {
      */
     void reactiveBehaviour() {
 
-        if (this.targetPositions.get(0) == null) {
-            Info("\n\033[36m " + "He explorado todas las esquinas....Saliendo del mundo\n");
-            this.status = DroneStatus.FINISHED;
-            Info("\n\033[36m " + "Changed status to: " + this.status);
-        } else if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
-            Info("\n\033[36m " + "He llegado a la esquina " + this.targetPositions.get(0).asObject() + "\n");
-            this.targetPositions.remove(0);
-            this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
-            this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
-            this.knowledge.nActionsExecutedToGetCorner = 0;
-            this.plan = null;
+        if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
+            if (this.targetPositions.isEmpty()) {
+                Info("\n\033[36m " + "He explorado todas las esquinas....Saliendo del mundo\n");
+                this.status = DroneStatus.WAITING_FOR_FINISH;
+                Info("\n\033[36m " + "Changed status to: " + this.status);
+            } else {
+                Info("\n\033[36m " + "He llegado a la esquina " + this.targetPositions.get(0).asObject() + "\n");
+                this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
+                this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
+                this.targetPositions.remove(0);
+                this.knowledge.nActionsExecutedToGetCorner = 0;
+                this.plan = null;
+            }
         } else if (this.knowledge.maxLimitActionPermited()) {
             Info("\n\033[36m " + "He llegado al máximo de acciones permitidas....Saliendo del mundo\n");
-            this.status = DroneStatus.FINISHED;
+            this.status = DroneStatus.WAITING_FOR_FINISH;
             Info("\n\033[36m " + "Changed status to: " + this.status);
 
         } else if (this.knowledge.cantReachTarget()) {
@@ -173,7 +159,10 @@ public class Seeker extends Drone {
             this.plan = null;
         } else if(this.knowledge.alemanes == 10) {
             Info("\n\033[36m " + "He encontrado todos los alemanes\n");
-            this.status = DroneStatus.FINISHED;
+            this.doAction(DroneAction.moveUP);
+            this.doAction(DroneAction.moveUP);
+            this.doAction(DroneAction.moveUP);
+            this.status = DroneStatus.WAITING_FOR_FINISH;
             Info("\n\033[36m " + "Changed status to: " + this.status);
         } else {
             if (this.knowledge.needRecharge()) {
@@ -193,14 +182,14 @@ public class Seeker extends Drone {
         ArrayList<DroneOption> options = this.generateOptions();
         ArrayList<DroneOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
-            for (DroneOption o : options) {
-                if (o.visitedAt == -1) {
-                    noVisitedOptions.add(o);
-                }
-            }
-            if (noVisitedOptions.size() > 0) {
-                options = noVisitedOptions;
-            }
+//            for (DroneOption o : options) {
+//                if (o.visitedAt == -1) {
+//                    noVisitedOptions.add(o);
+//                }
+//            }
+//            if (noVisitedOptions.size() > 0) {
+//                options = noVisitedOptions;
+//            }
             DroneOption winner;
             winner = chooseFromNoVisitedOptions(options);
             if (winner != null) {
@@ -369,35 +358,46 @@ public class Seeker extends Drone {
         int height = this.knowledge.mapHeight;
 
         //(15,15) sería la casila central en la que el thermal Deluxe cubriría la esquina completa, consiguiendo poblar el mapa completo.
-        JsonObject corner1 = new JsonObject();
-        corner1.add("x", 15);
-        corner1.add("y", 15);
+        JsonObject p1 = new JsonObject();
+        p1.add("x", 10);
+        p1.add("y", 10);
 
-        JsonObject corner2 = new JsonObject();
-        corner2.add("x", width - 15);
-        corner2.add("y", 15);
+        JsonObject p2 = new JsonObject();
+        p2.add("x", 10);
+        p2.add("y", height - 10);
 
-        JsonObject corner3 = new JsonObject();
-        corner3.add("x", 15);
-        corner3.add("y", height - 15);
+        JsonObject p3 = new JsonObject();
+        p3.add("x", 40);
+        p3.add("y", height - 10);
 
-        JsonObject corner4 = new JsonObject();
-        corner4.add("x", width - 15);
-        corner4.add("y", height - 15);
+        JsonObject p4 = new JsonObject();
+        p4.add("x", 40);
+        p4.add("y", 10);
 
-        JsonObject centro1 = new JsonObject();
-        centro1.add("x", width / 2);
-        centro1.add("y", height / 2);
+        JsonObject p5 = new JsonObject();
+        p5.add("x", 70);
+        p5.add("y", 10);
 
-        JsonObject centro2 = new JsonObject();
-        centro2.add("x", width / 2);
-        centro2.add("y", height / 2);
+        JsonObject p6 = new JsonObject();
+        p6.add("x", 70);
+        p6.add("y", height - 10);
 
-        this.targetPositions.add(corner3);
-        this.targetPositions.add(centro1);
-        this.targetPositions.add(corner4);
-        this.targetPositions.add(corner2);
-        this.targetPositions.add(corner1);
+        JsonObject p7 = new JsonObject();
+        p7.add("x", width - 10);
+        p7.add("y", height - 10);
+
+        JsonObject p8 = new JsonObject();
+        p8.add("x", width - 10);
+        p8.add("y", 10);
+
+        this.targetPositions.add(p2);
+        this.targetPositions.add(p3);
+        this.targetPositions.add(p4);
+        this.targetPositions.add(p5);
+        this.targetPositions.add(p6);
+        this.targetPositions.add(p7);
+        this.targetPositions.add(p8);
+        this.targetPositions.add(p1);
 
     }
 

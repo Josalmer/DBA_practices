@@ -384,4 +384,11 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(APBChannel);
 
     }
+    
+    public void sendFinishMsgToAPB() {
+        APBChannel.setPerformative(ACLMessage.INFORM);
+        APBChannel.setReplyWith("end");
+        this.agent.send(APBChannel);
+        this.printSendMessage(APBChannel);
+    }
 }

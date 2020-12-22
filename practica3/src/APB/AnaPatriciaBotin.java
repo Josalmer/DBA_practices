@@ -192,7 +192,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
-        this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
+        this.sendInitialInstructionsToRescuer("Manuel al Rescate", 5);
         this.status = APBStatus.RESCUEING;
     }
 
@@ -220,9 +220,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 this.adminData.initialPosition1 = new Coordinates(initialPos, initialPos);
                 break;
             case 2:
-                initialPos = this.adminData.initialPosition1.getX() + 1;
+                initialPos = this.adminData.initialPosition1.getX() + 5;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos--;
+                    initialPos = initialPos + 5;
                 }
                 this.adminData.initialPosition2 = new Coordinates(initialPos, initialPos);
                 break;
@@ -234,23 +234,20 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 this.adminData.initialPosition3 = new Coordinates(initialPos, initialPos);
                 break;
             case 4:
-                initialPos = this.adminData.initialPosition3.getX() - 1;
+                initialPos = this.adminData.initialPosition3.getX() - 5;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos++;
+                    initialPos = initialPos -5;
                 }
                 this.adminData.initialPosition4 = new Coordinates(initialPos, initialPos);
+                break;
+            case 5:
+                this.adminData.initialPosition2 = new Coordinates(0, 0);
                 break;
         }
         return initialPos;
     }
 
     void coordinateTeam() {
-
-        if (this.adminData.rescued == 10) {
-            this.status = APBStatus.FINISHED;
-            Info("\n\n\033[33m APB - MISSION COMPLETED: Se ha rescatado a los 10 alemanes");
-            return;
-        }
         JsonObject request = this.checkRequests();
         if (request != null) {
             switch (request.get("key").asString()) {
@@ -322,7 +319,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     void logout() {
-        this.checkMessagesAndOrderToLogout();
         this.endMission();
         this._communications.switchOffAwacs();
         this._communications.checkoutWorld();
