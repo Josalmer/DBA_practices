@@ -75,7 +75,7 @@ public class CommunicationAssistant {
         this.agentName = this.agent.getAID();
         this._identitymanager = identityManager;
         this._myCardID = cardId;
-        this.printMessages = true;
+        this.printMessages = false;
     }
 
     public void setPrintMessages(boolean print){

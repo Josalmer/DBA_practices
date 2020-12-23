@@ -14,13 +14,13 @@ public class Rescuer extends Drone {
     // END CONFIGURATION ---------------------------------------------
     @Override
     public void plainExecute() {
-        this.printMessages = true;
+        this.printMessages = false;
         this.color = "\033[36m";
         this._communications.setPrintMessages(this.printMessages);
         
         while (!_exitRequested) {
             
-            print(this.getLocalName() + " - Current Status: " + this.status);
+            print("Current Status: " + this.status);
             
             switch (this.status) {
 
@@ -405,7 +405,7 @@ public class Rescuer extends Drone {
      void useEnergy(DroneAction action) {
         this.knowledge.energy -= (this.knowledge.energyCost(action) * 4);
         if (this.printMessages) {
-            print(this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);
+            print("Executed action: " + action + " energy left: " + this.knowledge.energy);
         }
     }
     

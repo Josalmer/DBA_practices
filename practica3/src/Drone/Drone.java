@@ -177,7 +177,7 @@ public class Drone extends IntegratedAgent{
 
     public void print(String event){
         if(this.printMessages){
-            Info("\n\n" + this.color + event);
+            Info("\n\n" + this.color + " " + this.getLocalName() + " - " + event);
         }
     }
     

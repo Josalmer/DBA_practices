@@ -17,13 +17,13 @@ public class Seeker extends Drone {
     @Override
     public void plainExecute() {
         
-        this.printMessages = true;
+        this.printMessages = false;
         this.color = "";
         this._communications.setPrintMessages(this.printMessages);
         
         while (!_exitRequested) {
             
-            print(this.getLocalName() + " - Current Status: " + this.status);
+            print("Current Status: " + this.status);
             
             switch (this.status) {
 

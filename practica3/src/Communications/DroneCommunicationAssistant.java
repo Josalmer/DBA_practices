@@ -205,6 +205,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * @return resultado de la perticion
      */
     public String sendActionWorldManager(String content) {
+        worldChannel.setSender(agentName);
         worldChannel.setPerformative(ACLMessage.REQUEST);
         worldChannel.setProtocol("REGULAR");
         worldChannel.setReplyWith("REPLY###");
@@ -318,6 +319,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      */
     public JsonObject readSensor() {
         //Creamos mensaje para leer sensores
+        worldChannel.setSender(agentName);
         worldChannel.setPerformative(ACLMessage.QUERY_REF);
         worldChannel.setProtocol("REGULAR");
 
@@ -381,6 +383,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     
     public void sendFinishMsgToAPB() {
         APBChannel.setPerformative(ACLMessage.INFORM);
+        APBChannel.setSender(agentName);
         APBChannel.setReplyWith("end");
         
         this.printSendMessage(APBChannel);

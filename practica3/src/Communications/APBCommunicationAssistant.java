@@ -74,6 +74,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.printReceiveMessage(in);
 
         ACLMessage agentChannel = in.createReply();
+        agentChannel.setSender(this.agentName);
         agentChannel.setPerformative(ACLMessage.INFORM);
 
         JsonObject params = new JsonObject();
@@ -261,6 +262,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
    
     public void sendBackHomeMission(Coordinates initialPos) {
         currentDroneConversation.setPerformative(ACLMessage.INFORM);
+        currentDroneConversation.setSender(this.agentName);
 
         JsonObject params = initialPos.getJSON();
         params.add("mission", "backHome");
