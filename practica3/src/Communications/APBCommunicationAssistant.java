@@ -277,6 +277,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
     public void sendBackHomeMission(Coordinates initialPos) {
         currentDroneConversation.setPerformative(ACLMessage.INFORM);
+        currentDroneConversation.setSender(this.agentName);
 
         JsonObject params = new JsonObject();
         params.add("mission", "backHome");

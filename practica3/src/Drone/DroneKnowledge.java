@@ -246,7 +246,7 @@ public class DroneKnowledge {
      * @return booleano que indica si no puedo llegar a las esquinas
      */
     public boolean cantReachTarget() {
-        return this.nActionsExecutedToGetCorner > 3000;
+        return this.nActionsExecutedToGetCorner > 800;
     }
 
     /**
