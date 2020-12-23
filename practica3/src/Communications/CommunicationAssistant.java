@@ -70,14 +70,17 @@ public class CommunicationAssistant {
      * @param identityManager
      * @param cardId
      */
-    public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, boolean printMessages) {
+    public CommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         this.agent = _agent;
         this.agentName = this.agent.getAID();
         this._identitymanager = identityManager;
         this._myCardID = cardId;
-        this.printMessages = printMessages;
+        this.printMessages = true;
     }
 
+    public void setPrintMessages(boolean print){
+        this.printMessages = print;
+    }
     public Integer getDronesNumber() {
         return this.nDrones;
     }
@@ -111,11 +114,11 @@ public class CommunicationAssistant {
         MessageTemplate t = MessageTemplate.MatchInReplyTo("subscribe" + this.agent.getLocalName());
         ACLMessage in = this.agent.blockingReceive(t);
 
-        this.printReceiveMessage(in);
         if (checkError(ACLMessage.INFORM, in)) {
             return false;
         }
                   
+        this.printReceiveMessage(in);
        // identityManagerChannel = in.createReply(); 
         boolean validYP = this.getYellowPages();  
         return validYP;
@@ -129,13 +132,11 @@ public class CommunicationAssistant {
        
         this.printSendMessage(identityManagerChannel);
         this.agent.send(identityManagerChannel);
-       
-            
+              
         MessageTemplate t = MessageTemplate.MatchInReplyTo("yp" + this.agent.getLocalName());
         ACLMessage in = this.agent.blockingReceive(t);
         this.printReceiveMessage(in);
-        
-       
+          
         yp = new YellowPages();
         yp.updateYellowPages(in);
        
@@ -191,8 +192,8 @@ public class CommunicationAssistant {
         identityManagerChannel.setContent("");
         identityManagerChannel.setConversationId(this.sessionId);
          
-        this.agent.send(identityManagerChannel);
         this.printSendMessage(identityManagerChannel);
+        this.agent.send(identityManagerChannel);
     }
 
     /**
@@ -205,12 +206,13 @@ public class CommunicationAssistant {
         worldChannel = message(this.agent.getAID(), worldManager, ACLMessage.CANCEL,"ANALYTICS");
         worldChannel.setContent("");
         worldChannel.setConversationId(this.sessionId);
+        
         this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
     }
-   
- 
     
+    
+    /** FUNCIONES APOYO **/
     public boolean checkError(int wantedPerformative, ACLMessage in){
         if(in.getPerformative() == wantedPerformative)
             return false;

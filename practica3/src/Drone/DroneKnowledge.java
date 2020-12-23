@@ -5,13 +5,11 @@
  */
 package Drone;
 
+import MapOption.Coordinates;
 import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonValue;
 import java.util.ArrayList;
 
 public class DroneKnowledge {
-
-    Drone agent;
     
     Integer currentPositionX;
     Integer currentPositionY;
@@ -22,7 +20,6 @@ public class DroneKnowledge {
     Integer mapWidth;
     Integer mapHeight;
     Integer maxFlight = 256;
-    Integer alemanes;
     Integer nActionsExecuted;
     Integer nActionsExecutedToGetCorner;
     ArrayList<Integer> orientations;
@@ -31,14 +28,8 @@ public class DroneKnowledge {
     ArrayList<ArrayList<Integer>> visitedAtMap;
     ArrayList<ArrayList<Double>> thermalMap; //Mapa termal de 7x7 desde la posición en la que estamos
 
-    /**
-     * Constructor del agent knowledge
-     *
-     * @param _agent
-     */
-    public DroneKnowledge(Drone _agent) {
-        this.agent = _agent;
-    }
+    Integer alemanes;
+    ArrayList<Coordinates> germans;
 
     /**
      * Inicializa el mundo del agente con la información recibida al hacer
@@ -60,6 +51,7 @@ public class DroneKnowledge {
         this.initializeVisitedAtMap();
         this.initializeThermalMap();
         this.initializePossibleOrientations();
+        this.germans = new ArrayList<Coordinates>();
     }
 
     /**
@@ -130,11 +122,12 @@ public class DroneKnowledge {
                 if (xPosition >= 0 && yPosition >= 0 && xPosition < this.mapWidth && yPosition < this.mapHeight) {
                     thermalValue = thermal.get(i).get(j);
                     if (thermalValue == 0 && this.thermalMap.get(xPosition).get(yPosition) == -1.0) {
-                        this.agent._communications.informGermanFound(xPosition, yPosition);
+                        this.germans.add(new Coordinates(xPosition, yPosition));
+                        //this.agent._communications.informGermanFound(xPosition, yPosition);
                         this.alemanes++;
-                        if (this.agent.printMessages) {
+                        //if (this.agent.printMessages) {
                             System.out.println("\n\n\033[36m " + "Encontrados " + this.alemanes + " alemanes");
-                        }
+                        //}
                     }
                     this.thermalMap.get(xPosition).set(yPosition, thermalValue);
                 }
@@ -142,6 +135,14 @@ public class DroneKnowledge {
         }
     }
 
+    Coordinates getGerman(){      
+        if(this.germans.isEmpty())
+            return null;
+        
+        Coordinates next = this.germans.get(0);
+        this.germans.remove(0);
+        return next;
+    }
     /**
      * Calcula el nº de rotaciones necesarias para alcanzar una orientación
      * determinada
@@ -385,12 +386,12 @@ public class DroneKnowledge {
      *
      * @author Domingo López
      */
-    public boolean shouldIRechargueFirst(DroneOption bestOption) {
+    public boolean shouldIRechargueFirst(SeekerOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
         return shouldIRechargue;
     }
 
-    public boolean shouldIRechargueFirst(ProvisionalDroneOption bestOption) {
+    public boolean shouldIRechargueFirst(DroneOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
         return shouldIRechargue;
     }

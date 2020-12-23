@@ -1,5 +1,6 @@
 package Drone;
 
+import MapOption.Coordinates;
 import com.eclipsesource.json.*;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
@@ -15,10 +16,15 @@ public class Seeker extends Drone {
 
     @Override
     public void plainExecute() {
+        
+        this.printMessages = true;
+        this.color = "";
+        this._communications.setPrintMessages(this.printMessages);
+        
         while (!_exitRequested) {
-            if (this.printMessages) {
-                Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
-            }
+            
+            print(this.getLocalName() + " - Current Status: " + this.status);
+            
             switch (this.status) {
 
                 case SUBSCRIBED_TO_PLATFORM:
@@ -92,10 +98,10 @@ public class Seeker extends Drone {
 
         String result = this._communications.loginWorld("seeker", x, y, sensors);
         if (result.equals("error")) {
-            System.out.print("\nError en el login del Seeker");
+            print("Error en el login del Seeker");
             this.status = DroneStatus.FINISHED;
         } else {
-            System.out.print("\nSeeker logueado correctamente en el mundo. Enviado el ticket del sensor al server y visto bueno\n");
+            print("Seeker logueado correctamente en el mundo. Enviado el ticket del sensor al server y visto bueno");
         }
     }
 
@@ -110,7 +116,7 @@ public class Seeker extends Drone {
             } else {
                 this.status = DroneStatus.WAITING_FOR_FINISH;
             }
-            Info("\n\033[36m " + "Changed status to: " + this.status);
+           print("Changed status to: " + this.status);
         }
     }
 
@@ -125,11 +131,11 @@ public class Seeker extends Drone {
 
         if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
             if (this.targetPositions.isEmpty()) {
-                Info("\n\033[36m " + "He explorado todas las esquinas....Saliendo del mundo\n");
+                print("He explorado todas las esquinas....Saliendo del mundo");
                 this.status = DroneStatus.WAITING_FOR_FINISH;
-                Info("\n\033[36m " + "Changed status to: " + this.status);
+                print("Changed status to: " + this.status);
             } else {
-                Info("\n\033[36m " + "He llegado a la esquina " + this.targetPositions.get(0).asObject() + "\n");
+                print("He llegado a la esquina " + this.targetPositions.get(0).asObject());
                 this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
                 this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
                 this.targetPositions.remove(0);
@@ -137,28 +143,28 @@ public class Seeker extends Drone {
                 this.plan = null;
             }
         } else if (this.knowledge.maxLimitActionPermited()) {
-            Info("\n\033[36m " + "He llegado al máximo de acciones permitidas....Saliendo del mundo\n");
+            print("He llegado al máximo de acciones permitidas....Saliendo del mundo");
             this.status = DroneStatus.WAITING_FOR_FINISH;
-            Info("\n\033[36m " + "Changed status to: " + this.status);
+            print("Changed status to: " + this.status);
 
         } else if (this.knowledge.cantReachTarget()) {
-            Info("\n\033[36m " + "He llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina\n");
+            print("He llegado al máximo de acciones permitidas para llegar al destino/Corner....Cambiando a la siguiente esquina");
             this.targetPositions.remove(0);
             this.targetPositionX = this.targetPositions.get(0).asObject().get("x").asInt();
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
         } else if(this.knowledge.alemanes == 10) {
-            Info("\n\033[36m " + "He encontrado todos los alemanes\n");
+            print("He encontrado todos los alemanes");
             this.doAction(DroneAction.moveUP);
             this.doAction(DroneAction.moveUP);
             this.doAction(DroneAction.moveUP);
             this.status = DroneStatus.WAITING_FOR_FINISH;
-            Info("\n\033[36m " + "Changed status to: " + this.status);
+            print("Changed status to: " + this.status);
         } else {
             if (this.knowledge.needRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
-                Info("\n\033[36m " + "Changed status to: " + this.status);
+                print("Changed status to: " + this.status);
             } else {
                 if (this.plan != null) {
                     this.executePlan();
@@ -170,8 +176,8 @@ public class Seeker extends Drone {
     }
 
     void thinkPlan() {
-        ArrayList<DroneOption> options = this.generateOptions();
-        ArrayList<DroneOption> noVisitedOptions = new ArrayList<>();
+        ArrayList<SeekerOption> options = this.generateOptions();
+        ArrayList<SeekerOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
 //            for (DroneOption o : options) {
 //                if (o.visitedAt == -1) {
@@ -181,7 +187,7 @@ public class Seeker extends Drone {
 //            if (noVisitedOptions.size() > 0) {
 //                options = noVisitedOptions;
 //            }
-            DroneOption winner;
+            SeekerOption winner;
             winner = chooseFromNoVisitedOptions(options);
             if (winner != null) {
                 this.plan = winner.plan;
@@ -194,8 +200,8 @@ public class Seeker extends Drone {
         }
     }
 
-    ArrayList<DroneOption> generateOptions() {
-        ArrayList<DroneOption> options = new ArrayList<>();
+    ArrayList<SeekerOption> generateOptions() {
+        ArrayList<SeekerOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
         for (int i = 0; i < 9; i++) {
             if (i != 4) { // Not check current position
@@ -207,7 +213,7 @@ public class Seeker extends Drone {
                     double thermalValue = this.getThermalValue(xPosition, yPosition);
                     if (thermalValue == -1.0) {
                         this.status = DroneStatus.NEED_SENSOR;
-                        Info("\n\033[36m " + "Changed status to: " + this.status);
+                        print("Changed status to: " + this.status);
                         return null;
                     }
                     if (targetHeight < this.knowledge.maxFlight) {
@@ -221,8 +227,8 @@ public class Seeker extends Drone {
         return options;
     }
 
-    DroneOption generateOption(int xPosition, int yPosition, int height, int orientation, Double thermalValue) {
-        DroneOption option = new DroneOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition), thermalValue);
+    SeekerOption generateOption(int xPosition, int yPosition, int height, int orientation, Double thermalValue) {
+        SeekerOption option = new SeekerOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition), thermalValue);
         ArrayList<DroneAction> plan = new ArrayList<>();
         int cost = 0;
         boolean onWantedBox = false;
@@ -277,10 +283,10 @@ public class Seeker extends Drone {
         return option;
     }
 
-    DroneOption chooseFromAlreadyVisitedOptions(ArrayList<DroneOption> options) {
+    SeekerOption chooseFromAlreadyVisitedOptions(ArrayList<SeekerOption> options) {
         double lastVisited = options.get(0).visitedAt;
-        DroneOption bestOption = options.get(0);
-        for (DroneOption o : options) {
+        SeekerOption bestOption = options.get(0);
+        for (SeekerOption o : options) {
             if (o.visitedAt < lastVisited) {
                 bestOption = o;
                 lastVisited = o.visitedAt;
@@ -289,10 +295,10 @@ public class Seeker extends Drone {
         return bestOption;
     }
 
-    DroneOption chooseFromNoVisitedOptions(ArrayList<DroneOption> options) {
+    SeekerOption chooseFromNoVisitedOptions(ArrayList<SeekerOption> options) {
         double min = options.get(0).puntuation;
-        DroneOption bestOption = options.get(0);
-        for (DroneOption o : options) {
+        SeekerOption bestOption = options.get(0);
+        for (SeekerOption o : options) {
             if (o.puntuation < min) {
                 min = o.puntuation;
                 bestOption = o;
@@ -322,20 +328,32 @@ public class Seeker extends Drone {
 
         //Parecido a la P2. Leemos y si es OK, actualizamos valores de los sensores.
         if (response.get("result").asString().equals("ok")) {
-            Info("\n\033[36m " + "Valores de los sensores leídos...");
+            print("Valores de los sensores leídos...");
             this.useEnergy(DroneAction.LECTURA_SENSORES);
             this.perception.update(response.get("details").asObject().get("perceptions").asArray());
-            Info("\n\033[36m " + this.perception.toString());
+            print(this.perception.toString());
+            
             this.knowledge.updateThermalMap(this.perception.thermal);
-            Info("\n\033[36m " + "Mapa termal actualizado");
+            
+            this.sendGermans();
+            
+            print("Mapa termal actualizado");
 
             this.status = DroneStatus.EXPLORING;
-            Info("\n\033[36m " + "Changed status to: " + this.status + "after reading sensors");
+            print("Changed status to: " + this.status + "after reading sensors");
         } else {
-            Info("\n\033[36m " + "ERROR EN LA LECTURA DE SENSORES\n");
+            print("ERROR EN LA LECTURA DE SENSORES\n");
             this.status = DroneStatus.FINISHED;
         }
 
+    }
+    
+    public void sendGermans(){
+        Coordinates german = this.knowledge.getGerman();
+        while(german !=null){
+            this._communications.informGermanFound(german.x, german.y);
+            german = this.knowledge.getGerman();   
+        }
     }
 
     /**
@@ -404,4 +422,6 @@ public class Seeker extends Drone {
     public double getThermalValue(int xPosition, int yPosition) {
         return this.knowledge.thermalMap.get(xPosition).get(yPosition);
     }
+    
+    
 }

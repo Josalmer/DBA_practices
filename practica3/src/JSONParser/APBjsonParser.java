@@ -1,7 +1,7 @@
 
 package JSONParser;
 
-import APB.Coordinates;
+import MapOption.Coordinates;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
