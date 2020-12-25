@@ -1,5 +1,6 @@
 package APB;
 
+import MapOption.Coordinates;
 import Communications.APBCommunicationAssistant;
 import Drone.DroneKnowledge;
 import IntegratedAgent.IntegratedAgent;
@@ -27,8 +28,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void setup() {
         super.setup();
 
-        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID, printMessages);
-
+        this._communications = new APBCommunicationAssistant(this, "Sphinx", _myCardID);
+        this._communications.setPrintMessages(printMessages);
         if (this._communications.chekingPlatform()) {
             this.status = APBStatus.SUBSCRIBED_TO_PLATFORM;
             _exitRequested = false;
@@ -220,7 +221,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 this.adminData.initialPosition1 = new Coordinates(initialPos, initialPos);
                 break;
             case 2:
-                initialPos = this.adminData.initialPosition1.getX() + 5;
+                initialPos = this.adminData.initialPosition1.x + 5;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos = initialPos + 5;
                 }
@@ -234,7 +235,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 this.adminData.initialPosition3 = new Coordinates(initialPos, initialPos);
                 break;
             case 4:
-                initialPos = this.adminData.initialPosition3.getX() - 5;
+                initialPos = this.adminData.initialPosition3.x - 5;
                 while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
                     initialPos = initialPos -5;
                 }

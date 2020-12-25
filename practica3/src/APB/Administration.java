@@ -5,6 +5,7 @@
  */
 package APB;
 
+import MapOption.Coordinates;
 import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Queue;

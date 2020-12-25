@@ -30,8 +30,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
     ArrayList<Integer> acceptedPerformatives = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
 
-    public DroneCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId, boolean printMessages) {
-        super(_agent, identityManager, cardId, printMessages);
+    public DroneCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
+        super(_agent, identityManager, cardId);
     }
 
     /**
@@ -42,17 +42,16 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * @return JsonObject de respuesta
      */
     public JsonObject requestSessionKeyToAPB() {
-
         APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
+        APBChannel.setReplyWith("session");
 
         JsonObject content = new JsonObject();
         content.add("request", "session");
-        String parsedContent = content.toString();
-
-        APBChannel.setContent(parsedContent);
-        APBChannel.setReplyWith("session");
-
+        APBChannel.setContent(content.toString());
+ 
+        this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
+        
         ACLMessage in = this.agent.blockingReceive();
 
         if (checkAPBError(in)) {
@@ -79,12 +78,11 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
 
         JsonObject content = new JsonObject();
         content.add("cash", bitcoins);
-        String parsedContent = content.toString();
 
-        APBChannel.setContent(parsedContent);
+        APBChannel.setContent(content.toString());
 
-        this.agent.send(APBChannel);
         this.printSendMessage(APBChannel);
+        this.agent.send(APBChannel);
     }
 
     /**
@@ -94,14 +92,13 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * @return ACLMessage de respuesta
      */
     public void sendMessageToAPB(int performative, JsonObject content, String key) {
-        String parsedContent = content.toString();
         APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
 
         if (key != null) {
             APBChannel.setReplyWith(key);
         }
 
-        APBChannel.setContent(parsedContent);
+        APBChannel.setContent(content.toString());
 
         this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
@@ -115,16 +112,15 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * @return JsonObject de respuesta
      */
     public JsonObject sendAndReceiveToAPB(int performative, JsonObject content, String key) {
-        String parsedContent = content.toString();
         APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
-        APBChannel.setContent(parsedContent);
+        APBChannel.setContent(content.toString());
 
         if (key != null) {
             APBChannel.setReplyWith(key);
         }
 
-        this.agent.send(APBChannel);
         this.printSendMessage(APBChannel);
+        this.agent.send(APBChannel);
 
         ACLMessage in = this.agent.blockingReceive();
 
@@ -188,8 +184,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         content.add("recharge", ticket);
         worldChannel.setContent(content.toString());
 
-        this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
+        this.agent.send(worldChannel);
 
         ACLMessage in = this.agent.blockingReceive();
         if (checkError(ACLMessage.INFORM, in)) {
@@ -209,6 +205,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * @return resultado de la perticion
      */
     public String sendActionWorldManager(String content) {
+        worldChannel.setSender(agentName);
         worldChannel.setPerformative(ACLMessage.REQUEST);
         worldChannel.setProtocol("REGULAR");
         worldChannel.setReplyWith("REPLY###");
@@ -217,8 +214,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         request.add("operation", content);
         worldChannel.setContent(request.toString());
 
-        this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
+        this.agent.send(worldChannel);
 
         ACLMessage in = this.agent.blockingReceive();
         if (checkError(ACLMessage.INFORM, in)) {
@@ -272,8 +269,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         content.add("posy", y);
         worldChannel.setContent(content.toString());
 
-        this.agent.send(worldChannel);
         this.printSendMessage(worldChannel);
+        this.agent.send(worldChannel);
 
         MessageTemplate t = MessageTemplate.MatchInReplyTo("login" + role);
         ACLMessage in = this.agent.blockingReceive(t);
@@ -322,6 +319,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      */
     public JsonObject readSensor() {
         //Creamos mensaje para leer sensores
+        worldChannel.setSender(agentName);
         worldChannel.setPerformative(ACLMessage.QUERY_REF);
         worldChannel.setProtocol("REGULAR");
 
@@ -330,8 +328,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         this.worldChannel.setContent(content.toString());
 
         //Enviamos mensaje para leer sensores
-        this.agent.send(this.worldChannel);
         this.printSendMessage(worldChannel);
+        this.agent.send(this.worldChannel);
 
         ACLMessage in = this.agent.blockingReceive();
 
@@ -341,9 +339,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
 
         this.printReceiveMessage(in);
 
-        String response = in.getContent();
-        JsonObject parsedResponse = Json.parse(response).asObject();
-
+        JsonObject parsedResponse = Json.parse(in.getContent()).asObject();
         return parsedResponse;
 
     }
@@ -361,8 +357,9 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
 
             JsonObject aleman = new JsonObject();
             aleman.set("aleman", alemanes.get(indicesAlemanes.get(i)));
-
             APBChannel.setContent(aleman.toString());
+            
+            this.printSendMessage(APBChannel);
             this.agent.send(APBChannel);
         }
 
@@ -380,15 +377,16 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         aleman.set("y", y);
 
         APBChannel.setContent(aleman.toString());
-        this.agent.send(APBChannel);
         this.printSendMessage(APBChannel);
-
+        this.agent.send(APBChannel);
     }
     
     public void sendFinishMsgToAPB() {
         APBChannel.setPerformative(ACLMessage.INFORM);
+        APBChannel.setSender(agentName);
         APBChannel.setReplyWith("end");
-        this.agent.send(APBChannel);
+        
         this.printSendMessage(APBChannel);
+        this.agent.send(APBChannel);
     }
 }

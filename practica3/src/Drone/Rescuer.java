@@ -14,10 +14,14 @@ public class Rescuer extends Drone {
     // END CONFIGURATION ---------------------------------------------
     @Override
     public void plainExecute() {
+        this.printMessages = true;
+        this.color = "\033[36m";
+        this._communications.setPrintMessages(this.printMessages);
+        
         while (!_exitRequested) {
-            if (this.printMessages) {
-                Info("\n\n\033[36m " + this.getLocalName() + " - Current Status: " + this.status);
-            }
+            
+            print("Current Status: " + this.status);
+            
             switch (this.status) {
 
                 case SUBSCRIBED_TO_PLATFORM:
@@ -249,7 +253,7 @@ public class Rescuer extends Drone {
                 } else {
                     this.status = DroneStatus.FINISHED;
                 }
-                Info("Changed status to: " + this.status);
+                print("Changed status to: " + this.status);
 
             } else { //Si no tengo ticket
 
@@ -260,7 +264,7 @@ public class Rescuer extends Drone {
     
     public void executeReactive() {
         if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
-            Info("\n\033[36m " + "Above Target " + this.targetPositionX + ", " + this.targetPositionY + "\n");
+            print("Above Target " + this.targetPositionX + ", " + this.targetPositionY + "\n");
             if (this.currentMission.equals("rescue")) {
                 this.status = DroneStatus.ABOVE_TARGET;
             } else {
@@ -270,7 +274,7 @@ public class Rescuer extends Drone {
         } else {
             if (this.knowledge.needRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
-                Info("\n\033[36m " + "Changed status to: " + this.status);
+                print("Changed status to: " + this.status);
             } else {
                 if (this.plan != null) {
                     this.executePlan();
@@ -282,8 +286,8 @@ public class Rescuer extends Drone {
     }
     
     void thinkPlan() {
-        ArrayList<ProvisionalDroneOption> options = this.generateOptions();
-        ArrayList<ProvisionalDroneOption> noVisitedOptions = new ArrayList<>();
+        ArrayList<DroneOption> options = this.generateOptions();
+        ArrayList<DroneOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
 //            for (ProvisionalDroneOption o : options) {
 //                if (o.visitedAt == -1) {
@@ -293,7 +297,7 @@ public class Rescuer extends Drone {
 //            if (noVisitedOptions.size() > 0) {
 //                options = noVisitedOptions;
 //            }
-            ProvisionalDroneOption winner;
+            DroneOption winner;
             winner = chooseFromNoVisitedOptions(options);
             if (winner != null) {
                 this.plan = winner.plan;
@@ -306,8 +310,8 @@ public class Rescuer extends Drone {
         }
     }
 
-    ArrayList<ProvisionalDroneOption> generateOptions() {
-        ArrayList<ProvisionalDroneOption> options = new ArrayList<>();
+    ArrayList<DroneOption> generateOptions() {
+        ArrayList<DroneOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
         for (int i = 0; i < 9; i++) {
             if (i != 4) { // Not check current position
@@ -327,8 +331,8 @@ public class Rescuer extends Drone {
         return options;
     }
 
-    ProvisionalDroneOption generateOption(int xPosition, int yPosition, int height, int orientation) {
-        ProvisionalDroneOption option = new ProvisionalDroneOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
+    DroneOption generateOption(int xPosition, int yPosition, int height, int orientation) {
+        DroneOption option = new DroneOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
         ArrayList<DroneAction> plan = new ArrayList<>();
         int cost = 0;
         boolean onWantedBox = false;
@@ -362,10 +366,10 @@ public class Rescuer extends Drone {
         return option;
     }
 
-    ProvisionalDroneOption chooseFromAlreadyVisitedOptions(ArrayList<ProvisionalDroneOption> options) {
+    DroneOption chooseFromAlreadyVisitedOptions(ArrayList<DroneOption> options) {
         double lastVisited = options.get(0).visitedAt;
-        ProvisionalDroneOption bestOption = options.get(0);
-        for (ProvisionalDroneOption o : options) {
+        DroneOption bestOption = options.get(0);
+        for (DroneOption o : options) {
             if (o.visitedAt < lastVisited) {
                 bestOption = o;
                 lastVisited = o.visitedAt;
@@ -374,10 +378,10 @@ public class Rescuer extends Drone {
         return bestOption;
     }
 
-    ProvisionalDroneOption chooseFromNoVisitedOptions(ArrayList<ProvisionalDroneOption> options) {
+    DroneOption chooseFromNoVisitedOptions(ArrayList<DroneOption> options) {
         double min = options.get(0).puntuation;
-        ProvisionalDroneOption bestOption = options.get(0);
-        for (ProvisionalDroneOption o : options) {
+        DroneOption bestOption = options.get(0);
+        for (DroneOption o : options) {
             if (o.puntuation < min) {
                 min = o.puntuation;
                 bestOption = o;
@@ -401,7 +405,7 @@ public class Rescuer extends Drone {
      void useEnergy(DroneAction action) {
         this.knowledge.energy -= (this.knowledge.energyCost(action) * 4);
         if (this.printMessages) {
-            Info("\n\n\033[36m " + this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);
+            print("Executed action: " + action + " energy left: " + this.knowledge.energy);
         }
     }
     
@@ -409,17 +413,17 @@ public class Rescuer extends Drone {
         if (this.toLand()) {
             this.doAction(DroneAction.rescue);
             this.status = DroneStatus.FREE;
-            Info("Rescatado Ludwig");
-            Info("Changed status to: " + this.status);
+            print("Rescatado Ludwig");
+            print("Changed status to: " + this.status);
         }
     }
 
     void landHome() {
         if (this.toLand()) {
-            Info("Aterrizado en casa");
+            print("Aterrizado en casa");
             this._communications.sendFinishMsgToAPB();
             this.status = DroneStatus.WAITING_FOR_FINISH;
-            Info("Changed status to: " + this.status);
+            print("Changed status to: " + this.status);
         }
     }
     

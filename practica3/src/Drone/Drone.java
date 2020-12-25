@@ -20,6 +20,8 @@ import java.util.ArrayList;
  */
 public class Drone extends IntegratedAgent{
     boolean printMessages = true;
+    String color="";
+    
     String APBAccountNumber;
 
     DroneCommunicationAssistant _communications;
@@ -38,8 +40,8 @@ public class Drone extends IntegratedAgent{
     public void setup() {
         super.setup();
 
-        this._communications = new DroneCommunicationAssistant(this, "Sphinx", _myCardID, printMessages);
-        this.knowledge = new DroneKnowledge(this);
+        this._communications = new DroneCommunicationAssistant(this, "Sphinx", _myCardID);
+        this.knowledge = new DroneKnowledge();
 
         if (this._communications.chekingPlatform()) {
             this.status = DroneStatus.SUBSCRIBED_TO_PLATFORM;
@@ -49,10 +51,9 @@ public class Drone extends IntegratedAgent{
             _exitRequested = true;
         }
     }
-        @Override
-    public void plainExecute() {
-      //Se sobrecarga en el hijo
-    }
+    
+    @Override
+    public void plainExecute() {}
     
     public void checkingRadio(String role){
         boolean logedIn = this._communications.checkingRadio(role);
@@ -81,24 +82,19 @@ public class Drone extends IntegratedAgent{
         }
     }
     
-    void requestLoginData() {
-        //Este metodo tendra que ser sobrecargado en el hijo    
-    }
+    void requestLoginData(){}
     
-    void receiveLoginData() {
-        //Este metodo tendra que ser sobrecargado en el hijo    
-    }
+    void receiveLoginData(){}
     
-    void loginWorld(int x , int y) {
-        //Este metodo tendra que ser sobrecargado en el hijo    
-    }
+    void loginWorld(int x , int y) {}
+    
     void logout() {
         this._communications.checkoutWorld();
         this._communications.checkoutPlatform();
         _exitRequested = true;
     }
     
-     void claimRecharge(){
+    void claimRecharge(){
         JsonObject content = new JsonObject();
         content.add("request", "recharge");
         JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, "recharge");
@@ -117,19 +113,15 @@ public class Drone extends IntegratedAgent{
         }
     } 
           
-    public void recharge(){
-     
-    }
+    public void recharge(){}
   
     
-     void useEnergy(DroneAction action) {
+    void useEnergy(DroneAction action) {
         this.knowledge.energy -= this.knowledge.energyCost(action);
-        if (this.printMessages) {
-            Info("\n\n\033[36m " + this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);
-        }
+        this.print(this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);  
     }
      
-     boolean toLand() {
+    boolean toLand() {
         if (this.knowledge.canTouchDown()) {
             this.doAction(DroneAction.touchD);
             return true;
@@ -139,7 +131,7 @@ public class Drone extends IntegratedAgent{
         }
     }
      
-     void doAction(DroneAction action){
+    void doAction(DroneAction action){
      
         String answer = this._communications.sendActionWorldManager(action.toString());
 
@@ -151,10 +143,7 @@ public class Drone extends IntegratedAgent{
         }
     }
      
-      void executePlan(){
-       
-    }
-        
+    void executePlan(){}
         
     void executeAction(DroneAction action){
         switch(action){
@@ -169,9 +158,7 @@ public class Drone extends IntegratedAgent{
         }
     }
     
-    void elaboratePlan(){
-        //Se sobrecarga en el hijo
-    }
+    void elaboratePlan(){}
     
     @Override
     public void takeDown() {
@@ -188,4 +175,10 @@ public class Drone extends IntegratedAgent{
         }
     }
 
+    public void print(String event){
+        if(this.printMessages){
+            Info("\n\n" + this.color + " " + this.getLocalName() + " - " + event);
+        }
+    }
+    
 }
