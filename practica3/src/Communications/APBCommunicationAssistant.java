@@ -25,7 +25,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage shoppingChannel = new ACLMessage();
     ACLMessage currentDroneConversation = new ACLMessage();
     ACLMessage currentRechargingConversation = new ACLMessage();
-    String problem = "Playground1";
+    String problem = "World2";
 
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
@@ -181,14 +181,14 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         return parsedAnswer.get("reference").asString();
     }
 
-    public void sendInitialInstructions(String DroneName, Integer initialPos, String rechargeTicket, String sensor) {
+    public void sendInitialInstructions(String DroneName, Coordinates initialPos, String rechargeTicket, String sensor) {
         ACLMessage drone = message(agentName, DroneName, ACLMessage.INFORM, "REGULAR");
         drone.setReplyWith("login");
 
         // Set content
         JsonObject params = new JsonObject();
-        params.add("x", initialPos);
-        params.add("y", initialPos);
+        params.add("x", initialPos.x);
+        params.add("y", initialPos.y);
         params.add("rechargeTicket", rechargeTicket);
         if (sensor != null) {
             params.add("sensorTicket", sensor);

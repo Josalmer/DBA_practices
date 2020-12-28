@@ -154,7 +154,7 @@ public class Seeker extends Drone {
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
-        } else if(this.knowledge.alemanes == 10) {
+        } else if(this.knowledge.alemanes >= 10) {
             print("He encontrado todos los alemanes");
             this.doAction(DroneAction.moveUP);
             this.doAction(DroneAction.moveUP);

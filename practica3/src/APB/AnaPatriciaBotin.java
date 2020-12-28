@@ -193,56 +193,64 @@ public class AnaPatriciaBotin extends IntegratedAgent {
 
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
-        this.sendInitialInstructionsToRescuer("Manuel al Rescate", 5);
+        this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
         this.status = APBStatus.RESCUEING;
     }
 
     public void sendInitialInstructionsToSeeker(String DroneName, Integer order) {
-        Integer initialPos = this.calculateDroneInitialPosition(order);
+        Coordinates initialPos = this.calculateDroneInitialPosition(order);
         String sensor = order == 1 ? this.adminData.sensor1 : this.adminData.sensor2;
         this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), sensor);
     }
 
     public void sendInitialInstructionsToRescuer(String DroneName, Integer order) {
-        Integer initialPos = this.calculateDroneInitialPosition(order);
+        Coordinates initialPos = this.calculateDroneInitialPosition(order);
         this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), null);
     }
 
-    public Integer calculateDroneInitialPosition(Integer order) {
-        Integer initialPos = 0;
+    public Coordinates calculateDroneInitialPosition(Integer order) {
+        Coordinates initialPos = new Coordinates(0, 0);
         int xSize = this.adminData.map.size();
         int ySize = this.adminData.map.get(0).size();
         switch (order) {
             case 1:
-                initialPos = 15;
-                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos++;
+                initialPos = new Coordinates(15, 15);
+                while (this.adminData.map.get(initialPos.x).get(initialPos.y) > this.adminData.maxFlight) {
+                    initialPos.x++;
+                    initialPos.y++;
                 }
-                this.adminData.initialPosition1 = new Coordinates(initialPos, initialPos);
+                this.adminData.initialPosition1 = initialPos;
+//                initialPos = new Coordinates(255, 30);
+//                this.adminData.initialPosition1 = initialPos;
                 break;
             case 2:
-                initialPos = this.adminData.initialPosition1.x + 5;
-                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos = initialPos + 5;
+                initialPos.x = this.adminData.initialPosition1.x + 5;
+                initialPos.y = this.adminData.initialPosition1.y + 5;
+                while (this.adminData.map.get(initialPos.x).get(initialPos.y) > this.adminData.maxFlight) {
+                    initialPos.x = initialPos.x + 5;
+                    initialPos.y = initialPos.y + 5;
                 }
-                this.adminData.initialPosition2 = new Coordinates(initialPos, initialPos);
+                this.adminData.initialPosition2 = initialPos;
+//                initialPos = new Coordinates(250, 30);
+//                this.adminData.initialPosition2 = initialPos;
                 break;
             case 3:
-                initialPos = xSize - 15;
-                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos--;
+                initialPos.x = xSize - 15;
+                initialPos.y = ySize - 15;
+                while (this.adminData.map.get(initialPos.x).get(initialPos.y) > this.adminData.maxFlight) {
+                    initialPos.x--;
+                    initialPos.y--;
                 }
-                this.adminData.initialPosition3 = new Coordinates(initialPos, initialPos);
+                this.adminData.initialPosition3 = initialPos;
                 break;
             case 4:
-                initialPos = this.adminData.initialPosition3.x - 5;
-                while (this.adminData.map.get(initialPos).get(initialPos) > this.adminData.maxFlight) {
-                    initialPos = initialPos -5;
+                initialPos.x = this.adminData.initialPosition3.x - 5;
+                initialPos.y = this.adminData.initialPosition3.y - 5;
+                while (this.adminData.map.get(initialPos.x).get(initialPos.y) > this.adminData.maxFlight) {
+                    initialPos.x = initialPos.x -5;
+                    initialPos.y = initialPos.y -5;
                 }
-                this.adminData.initialPosition4 = new Coordinates(initialPos, initialPos);
-                break;
-            case 5:
-                this.adminData.initialPosition2 = new Coordinates(0, 0);
+                this.adminData.initialPosition4 = initialPos;
                 break;
         }
         return initialPos;
@@ -265,7 +273,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
         if (this.adminData.rescuerIddle && this.adminData.alemanes.size() > 0) {
             this.sendRescueMission();
-        } else if (this.adminData.rescuerIddle && this.adminData.rescued == 10) {
+        } else if (this.adminData.rescuerIddle && this.adminData.rescued >= 10) {
             this.sendBackHomeMission();
             this.status = APBStatus.WAITING_FOR_FINISH;
         }

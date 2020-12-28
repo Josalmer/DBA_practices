@@ -90,7 +90,6 @@ public class Drone extends IntegratedAgent{
     
     void logout() {
         this._communications.checkoutWorld();
-        this._communications.checkoutPlatform();
         _exitRequested = true;
     }
     
