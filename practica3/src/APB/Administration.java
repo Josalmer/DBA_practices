@@ -12,7 +12,7 @@ import java.util.Queue;
 
 /**
  *
- * @author Jose Saldaña
+ * @author Jose Saldaña, Manuel Pancorbo
  */
 public class Administration {
 
@@ -32,7 +32,7 @@ public class Administration {
     Coordinates initialPosition2;
     Coordinates initialPosition3;
     Coordinates initialPosition4;
-    
+
     ArrayList<Coordinates> alemanes = new ArrayList();
     int rescued;
     int found = 2;
@@ -75,12 +75,12 @@ public class Administration {
     public String popRechargeTicket() {
         return this.rechargeTickets.poll();
     }
-    
-    public Coordinates rescueAleman(){
+
+    public Coordinates rescueAleman() {
         Coordinates aleman = this.alemanes.get(0);
         this.alemanes.remove(0);
         this.rescued++;
         return aleman;
     }
-    
+
 }

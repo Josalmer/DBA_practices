@@ -63,6 +63,9 @@ public class Seeker extends Drone {
                     this.readSensor();
                     break;
                 case WAITING_FOR_FINISH:
+                    this.doAction(DroneAction.moveUP);
+                    this.doAction(DroneAction.moveUP);
+                    this.doAction(DroneAction.moveUP);
                     this._communications.waitForFinish();
                     this.status = DroneStatus.FINISHED;
                     break;
@@ -157,9 +160,6 @@ public class Seeker extends Drone {
             this.plan = null;
         } else if(!this.searching) {
             print("He encontrado todos los alemanes");
-            this.doAction(DroneAction.moveUP);
-            this.doAction(DroneAction.moveUP);
-            this.doAction(DroneAction.moveUP);
             this.status = DroneStatus.WAITING_FOR_FINISH;
             print("Changed status to: " + this.status);
         } else {

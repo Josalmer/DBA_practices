@@ -78,6 +78,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Subscribe Word Manager con Analytics
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
     void checkingWorld() {
         JsonObject response = this._communications.checkingWorld();
         if (response == null) {
@@ -90,6 +94,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Comparte mapa y session id con los drones
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void shareSessionIdAndMap() {
@@ -101,11 +106,16 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Comparte session id con Awacs
+     * @author Domingo Lopez, Miguel García
+     */
     public void shareSessionIdWithAwacs() {
         this._communications.shareSessionIdWithAwacs();
     }
 
     /**
+     * Subscribe World Manager por Regular
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void checkingRadio() {
@@ -117,6 +127,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Recoge el dinero que le mandan los drones
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
     void collectMoney() {
         while (this.adminData.collectedMoney < 3) {
             JsonArray money = this._communications.listenAndCollectMoney();
@@ -126,6 +140,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Guarda toda la información que necesita de los distintos shopping centers
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void investigateMarket() {
@@ -136,6 +151,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     /**
+     * Compra inicial, x tickets de recarga + y ticket de thermal dlx (x = nº de drones, y = nº de seekers)
      * @author Jose Saldaña, Manuel Pancorbo
      */
     void initialShopping() {
@@ -153,6 +169,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Compra el sensor especificado
+     * @author Manuel Pancorbo
+     * @param SensorName nombre del sensor a comprar
+     * @return Código del sensor comprado
+     */
     String buy(String SensorName) {
         String sensorCode = this.buyAndGetCode(SensorName);
         if (sensorCode == null) {
@@ -163,6 +185,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Compra un ticket de regalo
+     * @author Manuel Pancorbo
+     */
     void buyRecharge() {
         String sensorCode = this.buyAndGetCode("CHARGE");
         if (sensorCode != null) {
@@ -172,6 +198,12 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Compra el sensor especificado (intenta en varias tiendas)
+     * @author Manuel Pancorbo
+     * @param sensorName nombre del sensor a comprar
+     * @return Código del sensor especificado
+     */
     public String buyAndGetCode(String sensorName) {
         int option = 0;
         String sensorCode = null;
@@ -191,6 +223,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         return sensorCode;
     }
 
+    /**
+     * Manda las instrucciones iniciales a los drones
+     * @author Jose Saldaña
+     */
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
         this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
@@ -201,17 +237,36 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this.status = APBStatus.RESCUEING;
     }
 
+    /**
+     * Manda las instrucciones iniciales al seeker
+     * @author Jose Saldaña
+     * @param DroneName nombre del Drone
+     * @param order número de orden del Drone
+     */
     public void sendInitialInstructionsToSeeker(String DroneName, Integer order) {
         Coordinates initialPos = this.calculateDroneInitialPosition(order);
         String sensor = order == 1 ? this.adminData.sensor1 : this.adminData.sensor2;
         this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), sensor);
     }
 
+
+    /**
+     * Manda las instrucciones iniciales al rescuer
+     * @author Jose Saldaña
+     * @param DroneName nombre del Drone
+     * @param order número de orden del Drone
+     */
     public void sendInitialInstructionsToRescuer(String DroneName, Integer order) {
         Coordinates initialPos = this.calculateDroneInitialPosition(order);
         this._communications.sendInitialInstructions(DroneName, initialPos, this.adminData.popRechargeTicket(), null);
     }
 
+    /**
+     * Calcula las posiciones iniciales del drone, para un nº de orden dado
+     * @author Jose Saldaña
+     * @param order nº de orden del drone (de 1 a 4)
+     * @return Coordenadas de inicio para ese drone
+     */
     public Coordinates calculateDroneInitialPosition(Integer order) {
         Coordinates initialPos = new Coordinates(0, 0);
         int xSize = this.adminData.map.size();
@@ -247,16 +302,20 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 initialPos.x = this.adminData.initialPosition3.x - 5;
                 initialPos.y = this.adminData.initialPosition3.y - 5;
                 while (this.adminData.map.get(initialPos.x).get(initialPos.y) > this.adminData.maxFlight) {
-                    initialPos.x = initialPos.x -5;
-                    initialPos.y = initialPos.y -5;
+                    initialPos.x = initialPos.x - 5;
+                    initialPos.y = initialPos.y - 5;
                 }
-                initialPos = new Coordinates (90, 0);
+                initialPos = new Coordinates(90, 0);
                 this.adminData.initialPosition4 = initialPos;
                 break;
         }
         return initialPos;
     }
 
+    /**
+     * Coordina el rescate
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
     void coordinateTeam() {
         JsonObject request = this.checkRequests();
         if (request != null) {
@@ -290,6 +349,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
     }
 
+    /**
+     * Chequea si hay peticiones de los drones
+     * @author Jose Saldaña
+     * @return JsonObject con la Petición de un drone
+     */
     private JsonObject checkRequests() {
         JsonObject response;
 
@@ -311,12 +375,22 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         return null;
     }
 
+    /**
+     * Almacena la posición de un aleman encontrado por 1 seeker y manda nueva misión a seeker
+     * @author
+     * @param request del drone que rescato al aleman
+     */
     private void saveAleman(JsonObject request) {
         Coordinates aleman = this.jsonParser.getAleman(request.get("content").asObject());
         this.adminData.alemanes.add(aleman);
         this._communications.nextSeekerMission(this.adminData.found);
     }
 
+    /**
+     * Manda a un rescuer a 
+     * @author Jose Saldaña
+     * @param number 
+     */
     private void sendRescueMission(int number) {
         Coordinates aleman = this.adminData.rescueAleman();
         if (number == 1) {
@@ -328,7 +402,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     }
 
     private void sendBackHomeMission(int number) {
-        Coordinates initialPosition = new Coordinates(0,0);
+        Coordinates initialPosition = new Coordinates(0, 0);
         if (number == 1) {
             initialPosition = this.adminData.initialPosition2;
             this.adminData.rescuer1Iddle = false;
