@@ -108,7 +108,8 @@ public class Drone extends IntegratedAgent{
     
     /**
      * Login en el world de los drones
-     * @param coordenada X y coordenada Y inicial de los drones
+     * @param x Coordenada X inicial del drone
+     * @param y Coordenada Y inicial del drone
      * @author Domingo Lopez
      */
     void loginWorld(int x , int y) {}

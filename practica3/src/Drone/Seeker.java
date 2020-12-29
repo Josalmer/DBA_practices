@@ -7,29 +7,31 @@ import java.util.ArrayList;
 
 /**
  * Clase seeker que hereda de Drone
+ *
  * @author Domingo López
  */
 public class Seeker extends Drone {
+
     String sensorTicket;
     int targetPositionX;
     int targetPositionY;
     boolean targetPositionVisited;
     boolean searching = true;
-    
+
     //JsonObjects de las posiciones en el mapa que va a tener que visitar el seeker
-   ArrayList<JsonObject> targetPositions = new ArrayList<>();
+    ArrayList<JsonObject> targetPositions = new ArrayList<>();
 
     @Override
     public void plainExecute() {
-        
+
         this.printMessages = true;
         this.color = "";
         this._communications.setPrintMessages(this.printMessages);
-        
+
         while (!_exitRequested) {
-            
+
             print("Current Status: " + this.status);
-            
+
             switch (this.status) {
 
                 case SUBSCRIBED_TO_PLATFORM:
@@ -124,7 +126,7 @@ public class Seeker extends Drone {
             } else {
                 this.status = DroneStatus.WAITING_FOR_FINISH;
             }
-           print("Changed status to: " + this.status);
+            print("Changed status to: " + this.status);
         }
     }
 
@@ -161,7 +163,7 @@ public class Seeker extends Drone {
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
-        } else if(!this.searching) {
+        } else if (this.knowledge.alemanes >= 10) {
             print("He encontrado todos los alemanes");
             this.status = DroneStatus.WAITING_FOR_FINISH;
             print("Changed status to: " + this.status);
@@ -181,7 +183,7 @@ public class Seeker extends Drone {
 
     /**
      * Piensa un plan reactivo a la mejor casilla cercana
-     * 
+     *
      * @author Domingo López
      *
      */
@@ -201,10 +203,9 @@ public class Seeker extends Drone {
         }
     }
 
-    
     /**
      * Genera las opciones circundantes a la posición en la que nos encontramos
-     * 
+     *
      * @author Domingo López
      *
      * @return options generadas
@@ -238,6 +239,7 @@ public class Seeker extends Drone {
 
     /**
      * Genera una SeekerOption con al mejor opción posible
+     *
      * @param xPosition
      * @param yPosition
      * @param height
@@ -283,6 +285,7 @@ public class Seeker extends Drone {
 
     /**
      * Elige la mejor opción de las generadas
+     *
      * @param options array de opciones
      * @return bestOption
      * @author Jose Saldaña
@@ -312,6 +315,7 @@ public class Seeker extends Drone {
 
     /**
      * Lee los sensores mandando petición al servidor
+     *
      * @author: Domingo
      *
      */
@@ -322,11 +326,11 @@ public class Seeker extends Drone {
             this.useEnergy(DroneAction.LECTURA_SENSORES);
             this.perception.update(response.get("details").asObject().get("perceptions").asArray());
             print(this.perception.toString());
-            
+
             this.knowledge.updateThermalMap(this.perception.thermal);
-            
+
             this.sendGermans();
-            
+
             print("Mapa termal actualizado");
 
             this.status = DroneStatus.EXPLORING;
@@ -336,22 +340,25 @@ public class Seeker extends Drone {
             this.status = DroneStatus.FINISHED;
         }
     }
-    
+
     /**
      * Manda las coordeadas de los alemanes encontrados
-     * @author Miguel García Tenorio, Jose Saldaña, Domingo López, Manuel Pancorbo
+     *
+     * @author Miguel García Tenorio, Jose Saldaña, Domingo López, Manuel
+     * Pancorbo
      *
      */
-    public void sendGermans(){
+    public void sendGermans() {
         Coordinates german = this.knowledge.getGerman();
-        while(german !=null){
-            this.searching  = this._communications.informGermanFound(german.x, german.y);
-            german = this.knowledge.getGerman();   
+        while (german != null) {
+            this.searching = this._communications.informGermanFound(german.x, german.y);
+            german = this.knowledge.getGerman();
         }
     }
 
     /**
      * Calcula las esquinas iniciales de donde parten los seekers
+     *
      * @author Domingo
      *
      */
@@ -370,19 +377,19 @@ public class Seeker extends Drone {
         p2.add("y", height - 10);
 
         JsonObject p3 = new JsonObject();
-        p3.add("x", width/3);
+        p3.add("x", width / 3);
         p3.add("y", height - 10);
 
         JsonObject p4 = new JsonObject();
-        p4.add("x", width/3);
+        p4.add("x", width / 3);
         p4.add("y", 10);
 
         JsonObject p5 = new JsonObject();
-        p5.add("x", 2*width/3);
+        p5.add("x", 2 * width / 3);
         p5.add("y", 10);
 
         JsonObject p6 = new JsonObject();
-        p6.add("x", 2*width/3);
+        p6.add("x", 2 * width / 3);
         p6.add("y", height - 10);
 
         JsonObject p7 = new JsonObject();
@@ -393,22 +400,34 @@ public class Seeker extends Drone {
         p8.add("x", width - 10);
         p8.add("y", 10);
 
-        if (this.getLocalName().equals("Buscador Domingo")) {
-            this.targetPositions.add(p8);
-            this.targetPositions.add(p5);
-            this.targetPositions.add(p6);
-            this.targetPositions.add(p7);
-        } else {
+        if (this._communications.getDronesNumber() == 2) {
             this.targetPositions.add(p2);
             this.targetPositions.add(p3);
             this.targetPositions.add(p4);
+            this.targetPositions.add(p5);
+            this.targetPositions.add(p6);
+            this.targetPositions.add(p7);
+            this.targetPositions.add(p8);
             this.targetPositions.add(p1);
+        } else {
+            if (this.getLocalName().equals("Buscador Domingo")) {
+                this.targetPositions.add(p8);
+                this.targetPositions.add(p5);
+                this.targetPositions.add(p6);
+                this.targetPositions.add(p7);
+            } else {
+                this.targetPositions.add(p2);
+                this.targetPositions.add(p3);
+                this.targetPositions.add(p4);
+                this.targetPositions.add(p1);
+            }
         }
 
     }
 
     /**
      * Obtiene el valor del thermal de una posición concreta
+     *
      * @param xPosition posición x del mapa Thermal
      * @param yPosition posición y del mapa Thermal
      * @author Domingo López
@@ -417,6 +436,5 @@ public class Seeker extends Drone {
     public double getThermalValue(int xPosition, int yPosition) {
         return this.knowledge.thermalMap.get(xPosition).get(yPosition);
     }
-    
-    
+
 }
