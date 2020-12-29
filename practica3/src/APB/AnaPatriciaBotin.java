@@ -194,6 +194,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
         this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
+        this.sendInitialInstructionsToSeeker("Buscador Domingo", 3);
+        this.sendInitialInstructionsToRescuer("Migue al Rescate", 4);
         this.status = APBStatus.RESCUEING;
     }
 
@@ -246,6 +248,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     initialPos.x = initialPos.x -5;
                     initialPos.y = initialPos.y -5;
                 }
+                initialPos = new Coordinates (90, 0);
                 this.adminData.initialPosition4 = initialPos;
                 break;
         }
@@ -299,6 +302,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     private void saveAleman(JsonObject request) {
         Coordinates aleman = this.jsonParser.getAleman(request.get("content").asObject());
         this.adminData.alemanes.add(aleman);
+        this._communications.nextSeekerMission(this.adminData.found);
     }
 
     private void sendRescueMission() {

@@ -35,6 +35,7 @@ public class Administration {
     
     ArrayList<Coordinates> alemanes = new ArrayList();
     int rescued;
+    int found = 2;
     boolean rescuerIddle;
     Coordinates rescuer1Position;
     Coordinates rescuer2Position;

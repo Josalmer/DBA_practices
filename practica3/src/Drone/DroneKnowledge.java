@@ -288,6 +288,28 @@ public class DroneKnowledge {
         // Update memory
         this.visitedAtMap.get(this.currentPositionX).set(this.currentPositionY, this.nActionsExecuted);
     }
+    
+    public Coordinates nextPosition() {
+        int ABScurrentOrientation = Math.abs(this.orientation); // Valor absoluto de la orientación
+        int newXPosition = this.currentPositionX;
+        int newYPosition = this.currentPositionY;
+        // Posición X
+        if (ABScurrentOrientation != 0 && ABScurrentOrientation != 180) {
+            newXPosition += this.orientation / ABScurrentOrientation;
+        }
+
+        // Posición Y
+        if (ABScurrentOrientation != 90) {
+            if (ABScurrentOrientation == 45 || ABScurrentOrientation == 0) {
+                newYPosition -= 1;
+            } else {
+                newYPosition += 1;
+            }
+        }
+        Coordinates newPosition = new Coordinates(newXPosition, newYPosition);
+        
+        return newPosition;
+    }
 
     /**
      * Realiza un giro a izquierda o derecha

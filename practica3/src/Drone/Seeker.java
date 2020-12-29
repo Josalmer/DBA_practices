@@ -10,6 +10,7 @@ public class Seeker extends Drone {
     int targetPositionX;
     int targetPositionY;
     boolean targetPositionVisited;
+    boolean searching = true;
     
     //JsonObjects de las posiciones en el mapa que va a tener que visitar el seeker
    ArrayList<JsonObject> targetPositions = new ArrayList<>();
@@ -17,7 +18,7 @@ public class Seeker extends Drone {
     @Override
     public void plainExecute() {
         
-        this.printMessages = false;
+        this.printMessages = true;
         this.color = "";
         this._communications.setPrintMessages(this.printMessages);
         
@@ -154,7 +155,7 @@ public class Seeker extends Drone {
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
-        } else if(this.knowledge.alemanes >= 10) {
+        } else if(!this.searching) {
             print("He encontrado todos los alemanes");
             this.doAction(DroneAction.moveUP);
             this.doAction(DroneAction.moveUP);
@@ -177,18 +178,9 @@ public class Seeker extends Drone {
 
     void thinkPlan() {
         ArrayList<SeekerOption> options = this.generateOptions();
-        ArrayList<SeekerOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
-//            for (DroneOption o : options) {
-//                if (o.visitedAt == -1) {
-//                    noVisitedOptions.add(o);
-//                }
-//            }
-//            if (noVisitedOptions.size() > 0) {
-//                options = noVisitedOptions;
-//            }
             SeekerOption winner;
-            winner = chooseFromNoVisitedOptions(options);
+            winner = chooseBestOption(options);
             if (winner != null) {
                 this.plan = winner.plan;
                 if (this.knowledge.shouldIRechargueFirst(winner)) {
@@ -258,44 +250,11 @@ public class Seeker extends Drone {
         }
         option.plan = plan;
         option.cost = cost;
-
-        //Esto es lo que hay que tocar
-        //option.calculateDistanceToTarget(this.targetPositionX, this.targetPositionY);
-        /**
-         * Lo que vamos a hacer es que recorra cuatro puntos del mapa. Tiene que
-         * ir de su current position a la esquina izquierda superior - 7
-         * posiciones, esquina derecha superior -7 posiciones esquina izquierda
-         * inferior menos 7 posiciones, etc.
-         *
-         * * * * * * *
-         * x * * * x *
-         * * * * * * *
-         * * * * * * *
-         * x * * * x *
-         * * * * * * *
-         *
-         * Algo así. por lo que vamos a tener 4 puntos en el mapa definidos, e
-         * intentará llegar a ellos. La otra opción es que empiece a recorrerlo
-         * todo como pollo sin HEAD.
-         */
-        //Ojo, debe cambiar una vez alcancemos o hagamos un límite de pasos para llegar a la primera esquina, etc.
         option.calculateDistanceToTarget(this.targetPositionX, this.targetPositionY);
         return option;
     }
 
-    SeekerOption chooseFromAlreadyVisitedOptions(ArrayList<SeekerOption> options) {
-        double lastVisited = options.get(0).visitedAt;
-        SeekerOption bestOption = options.get(0);
-        for (SeekerOption o : options) {
-            if (o.visitedAt < lastVisited) {
-                bestOption = o;
-                lastVisited = o.visitedAt;
-            }
-        }
-        return bestOption;
-    }
-
-    SeekerOption chooseFromNoVisitedOptions(ArrayList<SeekerOption> options) {
+    SeekerOption chooseBestOption(ArrayList<SeekerOption> options) {
         double min = options.get(0).puntuation;
         SeekerOption bestOption = options.get(0);
         for (SeekerOption o : options) {
@@ -323,10 +282,7 @@ public class Seeker extends Drone {
      * @return
      */
     void readSensor() {
-
         JsonObject response = this._communications.readSensor();
-
-        //Parecido a la P2. Leemos y si es OK, actualizamos valores de los sensores.
         if (response.get("result").asString().equals("ok")) {
             print("Valores de los sensores leídos...");
             this.useEnergy(DroneAction.LECTURA_SENSORES);
@@ -345,13 +301,12 @@ public class Seeker extends Drone {
             print("ERROR EN LA LECTURA DE SENSORES\n");
             this.status = DroneStatus.FINISHED;
         }
-
     }
     
     public void sendGermans(){
         Coordinates german = this.knowledge.getGerman();
         while(german !=null){
-            this._communications.informGermanFound(german.x, german.y);
+            this.searching  = this._communications.informGermanFound(german.x, german.y);
             german = this.knowledge.getGerman();   
         }
     }
@@ -376,19 +331,19 @@ public class Seeker extends Drone {
         p2.add("y", height - 10);
 
         JsonObject p3 = new JsonObject();
-        p3.add("x", 40);
+        p3.add("x", width/3);
         p3.add("y", height - 10);
 
         JsonObject p4 = new JsonObject();
-        p4.add("x", 40);
+        p4.add("x", width/3);
         p4.add("y", 10);
 
         JsonObject p5 = new JsonObject();
-        p5.add("x", 70);
+        p5.add("x", 2*width/3);
         p5.add("y", 10);
 
         JsonObject p6 = new JsonObject();
-        p6.add("x", 70);
+        p6.add("x", 2*width/3);
         p6.add("y", height - 10);
 
         JsonObject p7 = new JsonObject();
@@ -399,14 +354,17 @@ public class Seeker extends Drone {
         p8.add("x", width - 10);
         p8.add("y", 10);
 
-        this.targetPositions.add(p2);
-        this.targetPositions.add(p3);
-        this.targetPositions.add(p4);
-        this.targetPositions.add(p5);
-        this.targetPositions.add(p6);
-        this.targetPositions.add(p7);
-        this.targetPositions.add(p8);
-        this.targetPositions.add(p1);
+        if (this.getLocalName().equals("Buscador Domingo")) {
+            this.targetPositions.add(p8);
+            this.targetPositions.add(p5);
+            this.targetPositions.add(p6);
+            this.targetPositions.add(p7);
+        } else {
+            this.targetPositions.add(p2);
+            this.targetPositions.add(p3);
+            this.targetPositions.add(p4);
+            this.targetPositions.add(p1);
+        }
 
     }
 
