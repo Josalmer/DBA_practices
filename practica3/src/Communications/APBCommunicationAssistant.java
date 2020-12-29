@@ -34,11 +34,9 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     }
 
     /**
-     * Crea una cuenta en el banco para el agente
+     * Subscribe con analytics en el world
      *
-     * @author Jose Saldaña
-     * @return nº de cuenta, formato: ACC#ejemplo, si algo sale mal devuelve
-     * "error"
+     * @return Devuelve la respuesta del world manager
      */
     public JsonObject checkingWorld() {
         worldChannel = message(agentName, worldManager, ACLMessage.SUBSCRIBE, "ANALYTICS");
@@ -66,9 +64,10 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     }
 
     /**
-     * Queda a la escucha para compartir numero de cuenta con los drones
+     * Queda a la escucha para compartir numero de session con los drones
      *
-     * @author Jose Saldaña, Manuel pancorbo
+     * @param map Mapa para compartir
+     * @author Jose Saldaña, Manuel Pancorbo
      */
     public void listenAndShareSessionId(JsonArray map) {
         MessageTemplate t = MessageTemplate.MatchReplyWith("session");
@@ -84,14 +83,18 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         params.add("map", map);
         agentChannel.setContent(params.toString());
 
-         this.printSendMessage(agentChannel);
+        this.printSendMessage(agentChannel);
         this.agent.send(agentChannel);
     }
 
+    /**
+     * Comparte el session id con Awacs
+     *
+     * @author Domingo Lopez, Miguel García
+     */
     public void shareSessionIdWithAwacs() {
         System.out.println("\n------SHARING SESSION WITH AWACS------\n");
         ACLMessage out = this.message(this.agentName, "AWACSBancoSantander", 0, "REGULAR");
-//        ACLMessage out = this.message(this.agentName, "AWACS", 0, "REGULAR");
         out.setConversationId(this.sessionId);
         this.agent.send(out);
     }
@@ -99,7 +102,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     /**
      * Queda a la escucha para recibir los bitcoins de los drones
      *
-     * @author Jose Saldaña, Domingo Lopez, Manuel pancorbo
+     * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
+     * @return Devuelve el array con los bitcoins
      */
     public JsonArray listenAndCollectMoney() {
         MessageTemplate t = MessageTemplate.MatchReplyWith("money");
@@ -114,7 +118,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
      * Construye el catalogo de productos necesarios
      *
      * @author Jose Saldaña, Manuel Pancorbo
-     * @return array con los catalogos "error"
+     * @return array con los catalogos de los shopping centers
      */
     public JsonArray askShoppingCenters() {
         String[] id = this.sessionId.split("#");
@@ -135,6 +139,13 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         return array;
     }
 
+    /**
+     * Pregunta a cada centro comercial individualmente
+     *
+     * @author Manuel Pancorbo
+     * @param receiver nombre del shopping center
+     * @return el catalogo de del shopping center especificado
+     */
     public JsonArray askSingleShoppingCenter(String receiver) {
         shoppingChannel = message(agentName, receiver, ACLMessage.QUERY_REF, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + receiver);
@@ -156,6 +167,15 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         return parsedAnswer.get("products").asArray();
     }
 
+    /**
+     * Compra un objeto de la tienda
+     *
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param sensorName ele objeto a comprar
+     * @param seller la tienda donde comprarlo
+     * @param payment array de bitcoins para pagar
+     * @return el ticket del objeto comprado
+     */
     public String buyCommunication(String sensorName, String seller, JsonArray payment) {
         shoppingChannel = message(agentName, seller, ACLMessage.REQUEST, "REGULAR");
         shoppingChannel.setReplyWith("shopping" + sensorName);
@@ -183,6 +203,15 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         return parsedAnswer.get("reference").asString();
     }
 
+    /**
+     * Manda las instrucciones iniciales a un dron
+     *
+     * @author Jose Saldaña
+     * @param DroneName Nombre del dron
+     * @param initialPos Posición inicial del dron (x, y)
+     * @param rechargeTicket Ticket de recarga inicial para el dron
+     * @param sensor Ticket del sensor (solo si es seeker)
+     */
     public void sendInitialInstructions(String DroneName, Coordinates initialPos, String rechargeTicket, String sensor) {
         ACLMessage drone = message(agentName, DroneName, ACLMessage.INFORM, "REGULAR");
         drone.setReplyWith("login");
@@ -201,34 +230,38 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.agent.send(drone);
     }
 
-    public boolean checkMessagesAndOrderToLogout() {
-        ACLMessage in = this.agent.blockingReceive(3000);
-        if (in != null) {
-            System.out.println("APB received " + in.getPerformative(in.getPerformative()) + " from: " + in.getSender() + " and respond with NOT_UNDERSTOOD");
-            ACLMessage agentChannel = in.createReply();
-            agentChannel.setPerformative(ACLMessage.CANCEL);
-            agentChannel.setReplyWith("end");
-            this.agent.send(agentChannel);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
+    /**
+     * Finaliza la misión de un drone
+     *
+     * @author Jose Saldaña
+     * @param DroneName Nombre del drone
+     */
     public void sendFinishMissionMsg(String DroneName) {
         ACLMessage drone = message(agentName, DroneName, ACLMessage.INFORM, "REGULAR");
         drone.setReplyWith("end");
-        
+
         this.printSendMessage(drone);
-        this.agent.send(drone);      
+        this.agent.send(drone);
     }
 
+    /**
+     * Apaga Awacs con un cancel
+     *
+     * @author Domingo Lopez, Miguel García
+     */
     public void switchOffAwacs() {
         ACLMessage awacs = message(agentName, "AWACSBancoSantander", ACLMessage.CANCEL, "REGULAR");
         this.printSendMessage(awacs);
         this.agent.send(awacs);
     }
 
+    /**
+     * Recibe las peticiones de los drones
+     *
+     * @author Jose Saldaña
+     * @param key Clave de la petición del drone
+     * @return JsonObject con la petición del drone
+     */
     public JsonObject coordinateTeam(String key) {
         JsonObject response = new JsonObject();
 
@@ -236,7 +269,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         ACLMessage in = this.agent.blockingReceive(t, 1000);
 
         if (in == null) {
-           return null;
+            return null;
         }
 
         this.printReceiveMessage(in);
@@ -256,7 +289,13 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         response.add("key", key);
         return response;
     }
-  
+
+    /**
+     * Manda la próxima misión al seeker
+     *
+     * @author Jose Saldaña
+     * @param found nº de alemanes encontrados
+     */
     public void nextSeekerMission(int found) {
         currentSeekerConversation.setPerformative(ACLMessage.INFORM);
         currentSeekerConversation.setSender(this.agentName);
@@ -272,7 +311,14 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(currentSeekerConversation);
         this.agent.send(currentSeekerConversation);
     }
-  
+
+    /**
+     * Manda una misión de rescate al rescuer
+     *
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param aleman Coordenadas del aleman (x, y)
+     * @param number orden del rescuer
+     */
     public void sendRescueMission(Coordinates aleman, int number) {
         ACLMessage rescuerChannel = new ACLMessage();
         if (number == 1) {
@@ -290,7 +336,14 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.printSendMessage(rescuerChannel);
         this.agent.send(rescuerChannel);
     }
-   
+
+    /**
+     * Manda una misión de volver a casa al rescuer
+     *
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param initialPos Coordenadas de inicio del rescuer (x, y)
+     * @param number orden del rescuer
+     */
     public void sendBackHomeMission(Coordinates initialPos, int number) {
         ACLMessage rescuerChannel = new ACLMessage();
         if (number == 1) {
@@ -305,14 +358,20 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         params.add("mission", "backHome");
         rescuerChannel.setContent(params.toString());
 
-        this.printSendMessage(rescuerChannel); 
+        this.printSendMessage(rescuerChannel);
         this.agent.send(rescuerChannel);
     }
 
+    /**
+     * Manda el ticket de recarga al último drone que pidio una recarga
+     *
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param ticket Ticket de la recarga
+     */
     public void sendRecharge(String ticket) {
         currentRechargingConversation.setPerformative(ACLMessage.INFORM);
         currentRechargingConversation.setSender(this.agentName);
-        
+
         JsonObject params = new JsonObject();
         params.add("rechargeTicket", ticket);
         currentRechargingConversation.setContent(params.toString());
