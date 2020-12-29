@@ -18,10 +18,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-/**
- *
- * @author manuel
- */
 public class DroneCommunicationAssistant extends CommunicationAssistant {
 
     boolean printMessages;
@@ -39,7 +35,6 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * Los drones solicitan la sessionId y el mapa a APB y esperan la respuesta
      *
      * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
-     * @param performative, content
      * @return JsonObject de respuesta
      */
     public JsonObject requestSessionKeyToAPB() {
@@ -49,10 +44,10 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         JsonObject content = new JsonObject();
         content.add("request", "session");
         APBChannel.setContent(content.toString());
- 
+
         this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
-        
+
         ACLMessage in = this.agent.blockingReceive();
 
         if (checkAPBError(in)) {
@@ -70,8 +65,6 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * Los drones mandan su dinero a APB
      *
      * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
-     * @param performative, content
-     * @return JsonObject de respuesta
      */
     public void sendCashToAPB() {
         APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
@@ -89,8 +82,10 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     /**
      * Manda un mensaje a Ana Patricia Botin y no espera respuesta
      *
-     * @param content
-     * @return ACLMessage de respuesta
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @param performative Perfomartiva del mensaje a enviar
+     * @param content Contenido del mensaje a enviar
+     * @param key (opcional) Clave del mensaje a enviar
      */
     public void sendMessageToAPB(int performative, JsonObject content, String key) {
         APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
@@ -109,7 +104,9 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * Manda un mensaje a Ana Patricia Botin y espera respuesta
      *
      * @author Jose Saldaña, Manuel Pancorbo
-     * @param performative, content
+     * @param performative Perfomartiva del mensaje a enviar
+     * @param content Contenido del mensaje a enviar
+     * @param key (opcional) Clave del mensaje a enviar
      * @return JsonObject de respuesta
      */
     public JsonObject sendAndReceiveToAPB(int performative, JsonObject content, String key) {
@@ -140,10 +137,10 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     }
 
     /**
-     * Manda un mensaje a Ana Patricia Botin y espera respuesta
+     * Espera un mensaje de APB
      *
      * @author Jose Saldaña, Manuel Pancorbo
-     * @param performative, content
+     * @param key, (opcional) clave del mensjae que se espera
      * @return JsonObject de respuesta
      */
     public JsonObject receiveFromAPB(String key) {
@@ -173,7 +170,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     /**
      * Un dron pide recargar al WorldManager de un mundo
      *
-     * @author Miguel García
+     * @author Miguel García, Domingo Lopez
+     * @param ticket Ticket para recargar
      * @return resultado de la perticion
      */
     public String requestRecharge(String ticket) {
@@ -202,7 +200,8 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     /**
      * Un drone manda un movimiento al worldManager
      *
-     * @author Miguel García
+     * @author Miguel García, Domingo Lopez
+     * @param content operación
      * @return resultado de la perticion
      */
     public String sendActionWorldManager(String content) {
@@ -229,24 +228,14 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     }
 
     /**
-     * EL drone se logue en el mundo
+     * El drone se logea en el mundo con su posición y sensores
      *
-     * @author Miguel García
-     * @param role
-     * @param x
-     * @param y
-     * @param sensors
-     * @return
-     */
-    /**
-     * Nueva modifiación 19/12/2020
-     *
-     * @author Domingo
-     * @param role
-     * @param x
-     * @param y
-     * @param sensors
-     * @return
+     * @author Domingo Lopez, Miguel García
+     * @param role Role del drone
+     * @param x Posición x del drone
+     * @param y Posición y del drone
+     * @param sensors Array de sensores del
+     * @return resultado de la perticion
      */
     public String loginWorld(String role, int x, int y, ArrayList<String> sensors) {
         worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "REGULAR");
@@ -297,19 +286,15 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         }
     }
 
-    /**
-     * author: Domingo
-     *
-     * @return
-     */
     public String getSessionID() {
         return this.sessionId;
     }
 
     /**
-     * author: Domingo
+     * Lectura de sensores
      *
-     * @return
+     * @author Domingo Lopez
+     * @return JsonObject con la percepción
      */
     public JsonObject readSensor() {
         //Creamos mensaje para leer sensores
@@ -339,7 +324,12 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     }
 
     /**
-     * @author Jose Saldaña
+     * Informa de que se ha encontrado un aleman
+     *
+     * @author Jose Saldaña, Domingo Lopez
+     * @param x coordenada x del aleman
+     * @param y coordenada y del aleman
+     * @return booleano que indica si se continua buscando alemanes
      */
     public boolean informGermanFound(int x, int y) {
         APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
@@ -365,16 +355,30 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         String mission = Json.parse(in.getContent()).asObject().get("mission").asString();
         return mission.equals("continue");
     }
-    
+
+    /**
+     * Informa que se ha recogido el último aleman
+     *
+     * @author Jose Saldaña
+     */
     public void sendFinishMsgToAPB() {
         APBChannel.setPerformative(ACLMessage.INFORM);
         APBChannel.setSender(agentName);
         APBChannel.setReplyWith("end");
-        
+
         this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
     }
-    
+
+    /**
+     * Comprueba si la posición a la que se quiere mover el drone esta libre o
+     * no
+     *
+     * @author Jose Saldaña, Domingo Lopez, Miguel García
+     * @param newPosition Coordenadas de posición objetivo (x, y)
+     * @param z Altura objetivo
+     * @return booleano que indica si esta libre o no
+     */
     public boolean checkIfFree(Coordinates newPosition, int z) {
         boolean free = true;
         // Pendiente de desarrollar el checkeo de posición en radio
@@ -384,7 +388,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
 //            return false;
 //        }
 //        this.printReceiveMessage(in);
-        
+
         return free;
     }
 }

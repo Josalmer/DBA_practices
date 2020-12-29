@@ -6,7 +6,7 @@
 package APB;
 
 /**
- * @author manuel
+ * @author Manuel Pancorbo
  */
 public class Coordinates {
 
