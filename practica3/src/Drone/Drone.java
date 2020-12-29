@@ -131,6 +131,10 @@ public class Drone extends IntegratedAgent{
     }
      
     void doAction(DroneAction action){
+        
+        if (action == DroneAction.moveF) {
+            while (!this._communications.checkIfFree(this.knowledge.nextPosition(), this.knowledge.currentHeight)) { }
+        }
      
         String answer = this._communications.sendActionWorldManager(action.toString());
 

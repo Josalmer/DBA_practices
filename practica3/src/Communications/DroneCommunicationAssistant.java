@@ -6,6 +6,7 @@
 package Communications;
 
 import IntegratedAgent.IntegratedAgent;
+import MapOption.Coordinates;
 import PublicKeys.PublicCardID;
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonArray;
@@ -294,13 +295,6 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         } else {
             return true;
         }
-        /*
-        for(int performative : this.acceptedPerformatives){
-            if(!checkError(performative, in)){
-                return false;
-            }
-        }
-        return true;*/
     }
 
     /**
@@ -345,31 +339,10 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
     }
 
     /**
-     * author: Domingo
-     *
-     * @return
-     */
-    public void sendGermanLocationToAPB(ArrayList<Integer> indicesAlemanes, ArrayList<JsonObject> alemanes) {
-
-        for (int i = 0; i < indicesAlemanes.size(); i++) {
-            APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
-            APBChannel.setReplyWith("aleman");
-
-            JsonObject aleman = new JsonObject();
-            aleman.set("aleman", alemanes.get(indicesAlemanes.get(i)));
-            APBChannel.setContent(aleman.toString());
-            
-            this.printSendMessage(APBChannel);
-            this.agent.send(APBChannel);
-        }
-
-    }
-
-    /**
      * @author Jose Saldaña
      */
-    public void informGermanFound(int x, int y) {
-        APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
+    public boolean informGermanFound(int x, int y) {
+        APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
         APBChannel.setReplyWith("aleman");
 
         JsonObject aleman = new JsonObject();
@@ -379,6 +352,18 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         APBChannel.setContent(aleman.toString());
         this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
+
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("aleman");
+        ACLMessage in = this.agent.blockingReceive(t);
+
+        if (this.checkError(ACLMessage.INFORM, in)) {
+            return false;
+        }
+
+        this.printReceiveMessage(in);
+
+        String mission = Json.parse(in.getContent()).asObject().get("mission").asString();
+        return mission.equals("continue");
     }
     
     public void sendFinishMsgToAPB() {
@@ -388,5 +373,18 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
         
         this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
+    }
+    
+    public boolean checkIfFree(Coordinates newPosition, int z) {
+        boolean free = true;
+        // Pendiente de desarrollar el checkeo de posición en radio
+//        ACLMessage in = this.agent.blockingReceive();
+//
+//        if (checkError(ACLMessage.INFORM, in)) {
+//            return false;
+//        }
+//        this.printReceiveMessage(in);
+        
+        return free;
     }
 }

@@ -12,7 +12,7 @@ import java.util.Queue;
 
 /**
  *
- * @author Jose Saldaña
+ * @author Jose Saldaña, Manuel Pancorbo
  */
 public class Administration {
 
@@ -32,10 +32,12 @@ public class Administration {
     Coordinates initialPosition2;
     Coordinates initialPosition3;
     Coordinates initialPosition4;
-    
+
     ArrayList<Coordinates> alemanes = new ArrayList();
     int rescued;
-    boolean rescuerIddle;
+    int found = 2;
+    boolean rescuer1Iddle;
+    boolean rescuer2Iddle;
     Coordinates rescuer1Position;
     Coordinates rescuer2Position;
 
@@ -46,7 +48,8 @@ public class Administration {
         agentsSubscribed = 0;
         collectedMoney = 0;
         rescued = 0;
-        rescuerIddle = false;
+        rescuer1Iddle = false;
+        rescuer2Iddle = false;
     }
 
     public ArrayList<String> getMoney(int coins) {
@@ -72,12 +75,12 @@ public class Administration {
     public String popRechargeTicket() {
         return this.rechargeTickets.poll();
     }
-    
-    public Coordinates rescueAleman(){
+
+    public Coordinates rescueAleman() {
         Coordinates aleman = this.alemanes.get(0);
         this.alemanes.remove(0);
         this.rescued++;
         return aleman;
     }
-    
+
 }

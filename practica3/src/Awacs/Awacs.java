@@ -144,7 +144,6 @@ public class Awacs extends IntegratedAgent {
                 try {
                     jsContent = Json.parse(line).asObject();
                     if (jsContent.names().contains("drones")) {
-                        // Info("Received drone update");
                         JsonArray jsaDrones = jsContent.get("drones").asArray();
                         for (JsonValue jsvd : jsaDrones) {
                             this.updateDrone(jsvd.asObject());
@@ -152,10 +151,8 @@ public class Awacs extends IntegratedAgent {
                     }
                     if (jsContent.names().contains("map")) {
                         myMap = jsContent.getString("problem", "unknown");
-                        // Info("Received map " + myMap);
                         myHeightMap = new Map2DGrayscale(10, 10);
                         if (myHeightMap.fromJson(jsContent.get("map").asObject())) {
-                            //Info(myMap + " successfully loaded");
                             showFullWorld();
                         } else {
                             Error("Could not load " + myMap + " properly");
@@ -419,33 +416,8 @@ public class Awacs extends IntegratedAgent {
                 print("AN").setBackground(DIALBGR).setText(DIALFRG).
                 print(String.format("%3.0f", dr.angle));
         myTable.resetColors();
-//        myTable.setCursorXY(tshiftx + 2, tshifty + 7 + H*dr.order).print("AL");
-//        myTable.printHMinibar(tshiftx+5, tshifty+5+H*dr.order, dr.distance, , 20, lightblue, gray);
-//        myTable.setBackground(black).print(String.format("%3.0f", dr.energylevel));
-//        myTable.resetColors();
-//        myTable.setBackground(black).setText(white);
-//        if (getInt() == NOREADING) { 
-//            myTable.println("X");
-//            return this;
-//        }
-//        if (max >= 1000) {
-//            myTable.print(String.format("%4.0f", getDouble()));
-//        } else if (max >= 100) {
-//            myTable.print(String.format("%3.0f", getDouble()));
-//        } else {
-//            myTable.print(String.format("%2.0f", getDouble()));
-//        }
-
     }
 
-//    protected void showDrone(liveBot dr) {
-//        this.plot(dr.getPosition().getX(), dr.getPosition().getY(), droneColors[dr.order]);
-//        this.plot(dr.getPosition().getX() - 1, dr.getPosition().getY() - 1, droneColors[dr.order]);
-//        this.plot(dr.getPosition().getX() - 1, dr.getPosition().getY() + 1, droneColors[dr.order]);
-//        this.plot(dr.getPosition().getX() + 1, dr.getPosition().getY() + 1, droneColors[dr.order]);
-//        this.plot(dr.getPosition().getX() + 1, dr.getPosition().getY() - 1, droneColors[dr.order]);
-//    }
-//
     protected void showDrone(liveBot dr) {
         double x = dr.getPosition().getX(), y = dr.getPosition().getY();
         this.plot(x, y, black);
@@ -532,97 +504,4 @@ public class Awacs extends IntegratedAgent {
             }
         }
     }
-
-//
-//class DroneRecord {
-//
-//    protected int x, y, z;
-//    protected String name, team;
-//    protected int color;
-//    protected int compass;
-//    protected int energy;
-//    protected int altitude;
-//
-//    public int getX() {
-//        return x;
-//    }
-//
-//    public int getY() {
-//        return y;
-//    }
-//
-//    public int getZ() {
-//        return z;
-//    }
-//
-//    public String getName() {
-//        return name;
-//    }
-//
-//    public String getTeam() {
-//        return team;
-//    }
-//
-//    public int getColor() {
-//        return color;
-//    }
-//
-//    public int getCompass() {
-//        return compass;
-//    }
-//
-//    public int getEnergy() {
-//        return energy;
-//    }
-//
-//    public int getAltitude() {
-//        return altitude;
-//    }
-//
-//    public void setX(int x) {
-//        this.x = x;
-//    }
-//
-//    public void setY(int y) {
-//        this.y = y;
-//    }
-//
-//    public void setZ(int z) {
-//        this.z = z;
-//    }
-//
-//    public void setName(String name) {
-//        this.name = name;
-//    }
-//
-//    public void setTeam(String team) {
-//        this.team = team;
-//    }
-//
-//    public void setColor(int color) {
-//        this.color = color;
-//    }
-//
-//    public void setCompass(int compass) {
-//        this.compass = compass;
-//    }
-//
-//    public void setEnergy(int energy) {
-//        this.energy = energy;
-//    }
-//
-//    public void setAltitude(int altitude) {
-//        this.altitude = altitude;
-//    }
-//
-//    public void fromJson(JsonObject update) {
-//        setX(update.getInt("x", -1));
-//        setY(update.getInt("y", -1));
-//        setZ(update.getInt("z", -1));
-//        setEnergy(update.getInt("energy", -1));
-//        setAltitude(update.getInt("altitude", -1));
-//        setCompass(update.getInt("compass", -1));
-//        setName(update.getString("name", "unknown"));
-//        setTeam(update.getString("team", "unknown"));
-//    }
 }

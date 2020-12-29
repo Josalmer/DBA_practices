@@ -46,11 +46,9 @@ public class Rescuer extends Drone {
                     this.status = DroneStatus.FREE;
                     break;
                 case FREE:
-//                    this.receivePlan();
-                    this.provisionalReceivePlan();
+                    this.receivePlan();
                     break;
                 case BUSY:
-//                    this.executePlan();
                     this.executeReactive();
                     break;
                 case ABOVE_TARGET:
@@ -95,111 +93,17 @@ public class Rescuer extends Drone {
             this.status = DroneStatus.FINISHED;
         }
     }
-
-    @Override
-    void elaboratePlan() {
-
-        int currentYPosition = this.knowledge.currentPositionY;
-        int currentXPosition = this.knowledge.currentPositionX;
-        int destinyYPosition;
-        int destinyXPosition;
-        int height;
-        int orientation = -1;
-
-        int provisionalOrientation = this.knowledge.orientation;
-        int provisionalHeigth = this.knowledge.currentHeight;
-        boolean onWantedBox = false;
-        DroneAction nextAction;
-
-        //Esto todavia no se muy bien como se va a hacer
-        // Pero mi idea es que APB le mande un array de int 
-        // El array tendra:
-        //  [ x,y,Altura,x,y,Altura ....]
-        //Cada tres posiciones del array se corresponderia una casilla
-        // Necesito tambien la altura para saber si el agente tiene que meter la
-        // accion de elevarse en el plan
-        for (int i = 0; i < this.planInMap.size(); i += 2) {
-            destinyYPosition = this.planInMap.get(i + 1);
-            destinyXPosition = this.planInMap.get(i);
-            height = this.knowledge.map.get(destinyYPosition).get(destinyXPosition);
-
-            if (currentXPosition > destinyXPosition && currentYPosition == destinyYPosition) {
-                orientation = -90;
-            } else if (currentXPosition < destinyXPosition && currentYPosition == destinyYPosition) {
-                orientation = -90;
-            } else if (currentXPosition == destinyXPosition && currentYPosition > destinyYPosition) {
-                orientation = 0;
-            } else if (currentXPosition == destinyXPosition && currentYPosition < destinyYPosition) {
-                orientation = 180;
-            } else if (currentXPosition > destinyXPosition && currentYPosition > destinyYPosition) {
-                orientation = -45;
-            } else if (currentXPosition < destinyXPosition && currentYPosition > destinyYPosition) {
-                orientation = 45;
-            } else if (currentXPosition > destinyXPosition && currentYPosition < destinyYPosition) {
-                orientation = -135;
-            } else if (currentXPosition < destinyXPosition && currentYPosition < destinyYPosition) {
-                orientation = 135;
-            }
-
-            while (!onWantedBox) {
-                if (orientation != provisionalOrientation) {
-                    int turns = this.knowledge.howManyTurns(orientation);
-                    if (this.knowledge.shouldTurnRight(turns)) {
-                        nextAction = DroneAction.rotateR;
-                        provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, true);
-                    } else {
-                        nextAction = DroneAction.rotateL;
-                        provisionalOrientation = this.knowledge.getNextOrientation(provisionalOrientation, false);
-                    }
-                } else if (provisionalHeigth < height) {
-                    nextAction = DroneAction.moveUP;
-                    provisionalHeigth += 5;
-                } else {
-                    nextAction = DroneAction.moveUP;
-                    onWantedBox = true;
-                }
-
-                this.plan.add(nextAction);
-
-            }
-
-            currentYPosition = destinyYPosition;
-            currentXPosition = currentXPosition;
-
-        }
-
-        this.knowledge.currentPositionX = currentXPosition;
-        this.knowledge.currentPositionY = currentYPosition;
-
-    }
-
+    
     void receivePlan() {
         JsonObject content = new JsonObject();
         content.add("request", "mission");
-        JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, "mission");
-        if (response != null) {
-            String mission = response.get("content").asObject().get("mission").asString();
-
-            if (mission.equals("rescue")) {
-                this.planInMap = this.parser.getPlan(response.get("content").asObject());
-                this.elaboratePlan();
-                this.status = DroneStatus.BUSY;
-            }
-
-            if (mission.equals("backHome")) {
-                this.planInMap = this.parser.getPlan(response.get("content").asObject());
-                this.elaboratePlan();
-                this.status = DroneStatus.BACKING_HOME;
-            }
-
+        int number;
+        if (this.getLocalName().equals("Migue al Rescate")) {
+            number = 2;
         } else {
-            this.status = DroneStatus.FINISHED;
+            number = 1;
         }
-    }
-    
-    void provisionalReceivePlan() {
-        JsonObject content = new JsonObject();
-        content.add("request", "mission");
+        content.add("number", number);
         JsonObject response = this._communications.sendAndReceiveToAPB(ACLMessage.REQUEST, content, "mission");
         if (response != null) {
             this.currentMission = response.get("content").asObject().get("mission").asString();
@@ -221,21 +125,6 @@ public class Rescuer extends Drone {
         }
     }
 
-//    @Override
-//    void executePlan() {
-//        if (this.knowledge.needRecharge()) {
-//            this.status = DroneStatus.NEED_RECHARGE;
-//        } else {
-//            // Comprobar si puede moverse (mirar la radio del mundo)
-//            this.doAction(this.plan.get(0));
-//            this.plan.remove(0);
-//            if (this.plan.isEmpty()) {
-//                this.status = DroneStatus.FREE;
-//                this.plan = null;
-//            }
-//        }
-//    }
-
     @Override
     public void recharge() {
         if (this.toLand()) {
@@ -254,11 +143,7 @@ public class Rescuer extends Drone {
                     this.status = DroneStatus.FINISHED;
                 }
                 print("Changed status to: " + this.status);
-
-            } else { //Si no tengo ticket
-
             }
-
         }
     }
     
@@ -287,18 +172,9 @@ public class Rescuer extends Drone {
     
     void thinkPlan() {
         ArrayList<DroneOption> options = this.generateOptions();
-        ArrayList<DroneOption> noVisitedOptions = new ArrayList<>();
         if (options != null) {
-//            for (ProvisionalDroneOption o : options) {
-//                if (o.visitedAt == -1) {
-//                    noVisitedOptions.add(o);
-//                }
-//            }
-//            if (noVisitedOptions.size() > 0) {
-//                options = noVisitedOptions;
-//            }
             DroneOption winner;
-            winner = chooseFromNoVisitedOptions(options);
+            winner = chooseBestOption(options);
             if (winner != null) {
                 this.plan = winner.plan;
                 if (this.knowledge.shouldIRechargueFirst(winner)) {
@@ -366,19 +242,7 @@ public class Rescuer extends Drone {
         return option;
     }
 
-    DroneOption chooseFromAlreadyVisitedOptions(ArrayList<DroneOption> options) {
-        double lastVisited = options.get(0).visitedAt;
-        DroneOption bestOption = options.get(0);
-        for (DroneOption o : options) {
-            if (o.visitedAt < lastVisited) {
-                bestOption = o;
-                lastVisited = o.visitedAt;
-            }
-        }
-        return bestOption;
-    }
-
-    DroneOption chooseFromNoVisitedOptions(ArrayList<DroneOption> options) {
+    DroneOption chooseBestOption(ArrayList<DroneOption> options) {
         double min = options.get(0).puntuation;
         DroneOption bestOption = options.get(0);
         for (DroneOption o : options) {
