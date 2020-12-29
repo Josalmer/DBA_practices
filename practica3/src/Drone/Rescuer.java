@@ -272,7 +272,7 @@ public class Rescuer extends Drone {
             }
             this.plan = null;
         } else {
-            if (this.knowledge.needRecharge()) {
+            if (this.knowledge.rescuerNeedRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
                 print("Changed status to: " + this.status);
             } else {

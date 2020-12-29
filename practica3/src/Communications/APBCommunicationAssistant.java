@@ -25,7 +25,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage shoppingChannel = new ACLMessage();
     ACLMessage currentDroneConversation = new ACLMessage();
     ACLMessage currentRechargingConversation = new ACLMessage();
-    String problem = "World2";
+    String problem = "Playground2";
 
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);

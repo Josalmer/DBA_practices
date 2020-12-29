@@ -220,8 +220,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     initialPos.y++;
                 }
                 this.adminData.initialPosition1 = initialPos;
-//                initialPos = new Coordinates(255, 30);
-//                this.adminData.initialPosition1 = initialPos;
                 break;
             case 2:
                 initialPos.x = this.adminData.initialPosition1.x + 5;
@@ -231,8 +229,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     initialPos.y = initialPos.y + 5;
                 }
                 this.adminData.initialPosition2 = initialPos;
-//                initialPos = new Coordinates(250, 30);
-//                this.adminData.initialPosition2 = initialPos;
                 break;
             case 3:
                 initialPos.x = xSize - 15;
