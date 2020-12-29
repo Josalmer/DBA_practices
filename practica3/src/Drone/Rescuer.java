@@ -238,11 +238,12 @@ public class Rescuer extends Drone {
 
     /**
      * Piensa un plan reactivo a la mejor casilla cercana
-     * @param xPosition
-     * @param yPosition
-     * @param height
-     * @param orientation
+     * @param xPosition posicionX de la opción
+     * @param yPosition posiciónY de la opción
+     * @param height altura de la opción
+     * @param orientation orientación de la opción
      * @author Miguel García Tenorio
+     * @return option DroneOption generada
      *
      */
     DroneOption generateOption(int xPosition, int yPosition, int height, int orientation) {

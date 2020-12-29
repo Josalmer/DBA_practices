@@ -240,12 +240,14 @@ public class Seeker extends Drone {
     /**
      * Genera una SeekerOption con al mejor opción posible
      *
-     * @param xPosition
-     * @param yPosition
-     * @param height
-     * @param orientation
-     * @param thermalValue
+     * @param xPosition posición x de la opción
+     * @param yPosition posición y de la opción
+     * @param height altura de la opción
+     * @param orientation orientación de la opción
+     * @param thermalValue valor del thermal
      * @author Domingo López, Jose Saldaña
+     * 
+     * @return option SeekerOption
      *
      */
     SeekerOption generateOption(int xPosition, int yPosition, int height, int orientation, Double thermalValue) {
@@ -316,7 +318,7 @@ public class Seeker extends Drone {
     /**
      * Lee los sensores mandando petición al servidor
      *
-     * @author: Domingo
+     * @author Domingo
      *
      */
     void readSensor() {

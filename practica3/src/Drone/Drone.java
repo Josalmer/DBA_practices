@@ -156,7 +156,7 @@ public class Drone extends IntegratedAgent{
   
     /**
      * Consumir energía de los drones
-     *
+     * @param DroneAction
      * @author Domingo López, Jose Saldaña
      */
     void useEnergy(DroneAction action) {
@@ -182,7 +182,7 @@ public class Drone extends IntegratedAgent{
     
     /**
      * Realizar acción de drone pasada por parámetro. Se envía al WorldManager la acción a realizar
-     * @param DroneAction, la acción que va a realizar
+     * @param action, DroneAction la acción que va a realizar
      * @author Jose Saldaña, Domingo Lopez
      */
     void doAction(DroneAction action){
@@ -209,7 +209,7 @@ public class Drone extends IntegratedAgent{
     
     /**
      * Ejecutar acción pasada
-     * @param DroneAction, la acción que va a ejecutar
+     * @param action, DroneAction de la acción que va a ejecutar
      * @author Jose Saldaña, Domingo Lopez, Miguel García
      */
     void executeAction(DroneAction action){
