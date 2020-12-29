@@ -15,6 +15,7 @@ public class Rescuer extends Drone {
     int targetPositionX;
     int targetPositionY;
     String currentMission;
+    DroneStatus previousStatus;
     // END CONFIGURATION ---------------------------------------------
     @Override
     public void plainExecute() {
@@ -144,11 +145,7 @@ public class Rescuer extends Drone {
                 if (result.equals("ok")) {
                     this.knowledge.fullRecharge();
                     this.rechargeTicket = null;
-                    if (this.plan != null && this.plan.size() > 0) {
-                        this.status = DroneStatus.BUSY;
-                    } else {
-                        this.status = DroneStatus.FREE;
-                    }
+                    this.status = this.previousStatus;
                 } else {
                     this.status = DroneStatus.FINISHED;
                 }
@@ -174,6 +171,12 @@ public class Rescuer extends Drone {
             this.plan = null;
         } else {
             if (this.knowledge.rescuerNeedRecharge()) {
+                if ((this.plan != null && this.plan.size() > 0)) {
+                    this.previousStatus = DroneStatus.BUSY;
+                } else {
+                    this.previousStatus = DroneStatus.FREE;
+                }
+                this.plan = null;
                 this.status = DroneStatus.NEED_RECHARGE;
                 print("Changed status to: " + this.status);
             } else {

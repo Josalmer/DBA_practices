@@ -24,7 +24,7 @@ public class Seeker extends Drone {
     @Override
     public void plainExecute() {
 
-        this.printMessages = true;
+        this.printMessages = false;
         this.color = "";
         this._communications.setPrintMessages(this.printMessages);
 
@@ -69,9 +69,9 @@ public class Seeker extends Drone {
                     this.readSensor();
                     break;
                 case WAITING_FOR_FINISH:
-                    this.doAction(DroneAction.moveUP);
-                    this.doAction(DroneAction.moveUP);
-                    this.doAction(DroneAction.moveUP);
+                    if (this.knowledge.currentHeight < 250) {
+                        this.doAction(DroneAction.moveUP);
+                    }
                     this._communications.waitForFinish();
                     this.status = DroneStatus.FINISHED;
                     break;
@@ -163,6 +163,7 @@ public class Seeker extends Drone {
             this.targetPositionY = this.targetPositions.get(0).asObject().get("y").asInt();
             this.knowledge.nActionsExecutedToGetCorner = 0;
             this.plan = null;
+//        } else if (!this.searching) {
         } else if (this.knowledge.alemanes >= 10) {
             print("He encontrado todos los alemanes");
             this.status = DroneStatus.WAITING_FOR_FINISH;
@@ -170,6 +171,7 @@ public class Seeker extends Drone {
         } else {
             if (this.knowledge.needRecharge()) {
                 this.status = DroneStatus.NEED_RECHARGE;
+                this.plan = null;
                 print("Changed status to: " + this.status);
             } else {
                 if (this.plan != null) {
@@ -368,58 +370,70 @@ public class Seeker extends Drone {
         int height = this.knowledge.mapHeight;
 
         //(15,15) sería la casila central en la que el thermal Deluxe cubriría la esquina completa, consiguiendo poblar el mapa completo.
-        JsonObject p1 = new JsonObject();
-        p1.add("x", 10);
-        p1.add("y", 10);
-
-        JsonObject p2 = new JsonObject();
-        p2.add("x", 10);
-        p2.add("y", height - 10);
-
-        JsonObject p3 = new JsonObject();
-        p3.add("x", width / 3);
-        p3.add("y", height - 10);
-
-        JsonObject p4 = new JsonObject();
-        p4.add("x", width / 3);
-        p4.add("y", 10);
-
-        JsonObject p5 = new JsonObject();
-        p5.add("x", 2 * width / 3);
-        p5.add("y", 10);
-
-        JsonObject p6 = new JsonObject();
-        p6.add("x", 2 * width / 3);
-        p6.add("y", height - 10);
-
-        JsonObject p7 = new JsonObject();
-        p7.add("x", width - 10);
-        p7.add("y", height - 10);
-
-        JsonObject p8 = new JsonObject();
-        p8.add("x", width - 10);
-        p8.add("y", 10);
+        JsonObject t1 = new JsonObject();
+        t1.add("x", 10);
+        t1.add("y", 10);
+        
+        JsonObject t2 = new JsonObject();
+        t2.add("x", width/4);
+        t2.add("y", 10);
+        
+        JsonObject t3 = new JsonObject();
+        t3.add("x", width/2);
+        t3.add("y", 10);
+        
+        JsonObject t4 = new JsonObject();
+        t4.add("x", 3 * width/4);
+        t4.add("y", 10);
+        
+        JsonObject t5 = new JsonObject();
+        t5.add("x", width -10);
+        t5.add("y", 10);
+        
+        JsonObject b1 = new JsonObject();
+        b1.add("x", 10);
+        b1.add("y", height -10);
+        
+        JsonObject b2 = new JsonObject();
+        b2.add("x", width/4);
+        b2.add("y", height -10);
+        
+        JsonObject b3 = new JsonObject();
+        b3.add("x", width/2);
+        b3.add("y", height -10);
+        
+        JsonObject b4 = new JsonObject();
+        b4.add("x", 3 * width/4);
+        b4.add("y", height -10);
+        
+        JsonObject b5 = new JsonObject();
+        b5.add("x", width -10);
+        b5.add("y", height -10);
 
         if (this._communications.getDronesNumber() == 2) {
-            this.targetPositions.add(p2);
-            this.targetPositions.add(p3);
-            this.targetPositions.add(p4);
-            this.targetPositions.add(p5);
-            this.targetPositions.add(p6);
-            this.targetPositions.add(p7);
-            this.targetPositions.add(p8);
-            this.targetPositions.add(p1);
+            this.targetPositions.add(b1);
+            this.targetPositions.add(b2);
+            this.targetPositions.add(t2);
+            this.targetPositions.add(t3);
+            this.targetPositions.add(b3);
+            this.targetPositions.add(b4);
+            this.targetPositions.add(t4);
+            this.targetPositions.add(t5);
+            this.targetPositions.add(b5);
+            this.targetPositions.add(t1);
         } else {
             if (this.getLocalName().equals("Buscador Domingo")) {
-                this.targetPositions.add(p8);
-                this.targetPositions.add(p5);
-                this.targetPositions.add(p6);
-                this.targetPositions.add(p7);
+                this.targetPositions.add(b1);
+                this.targetPositions.add(b2);
+                this.targetPositions.add(t2);
+                this.targetPositions.add(t3);
+                this.targetPositions.add(b3);
+                this.targetPositions.add(t1);
             } else {
-                this.targetPositions.add(p2);
-                this.targetPositions.add(p3);
-                this.targetPositions.add(p4);
-                this.targetPositions.add(p1);
+                this.targetPositions.add(t5);
+                this.targetPositions.add(t4);
+                this.targetPositions.add(b4);
+                this.targetPositions.add(b5);
             }
         }
 

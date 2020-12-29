@@ -27,7 +27,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage currentRescuer1Conversation = new ACLMessage();
     ACLMessage currentRescuer2Conversation = new ACLMessage();
     ACLMessage currentRechargingConversation = new ACLMessage();
-    String problem = "World1";
+    String problem = "Playground2";
 
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
@@ -285,7 +285,9 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
                 this.currentRescuer2Conversation = in.createReply();
             }
         }
-        response.add("content", Json.parse(in.getContent()).asObject());
+        if (in.getContent() != null) {
+            response.add("content", Json.parse(in.getContent()).asObject());
+        }
         response.add("key", key);
         return response;
     }

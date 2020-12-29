@@ -201,7 +201,7 @@ public class DroneKnowledge {
      * @return booleano que indica si el agente debe recargar
      */
     public boolean needRecharge() {
-        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
+        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 50);
     }
 
     /**
@@ -212,7 +212,7 @@ public class DroneKnowledge {
      * @return booleano que indica si el agente debe recargar
      */
     public boolean rescuerNeedRecharge() {
-        return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 120);
+        return this.energy < ((4 * (this.currentHeight - this.getFloorHeight())) + 50);
     }
 
     /**

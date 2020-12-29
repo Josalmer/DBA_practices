@@ -67,10 +67,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 case RESCUEING:
                     this.coordinateTeam();
                     break;
-                case WAITING_FOR_FINISH:
-                    this._communications.waitForFinish();
-                    this.status = APBStatus.FINISHED;
-                    break;
                 case FINISHED:
                     this.logout();
                     break;
@@ -349,6 +345,9 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                         this.adminData.rescuer2Iddle = true;
                     }
                     break;
+                case "end":
+                    this.status = APBStatus.FINISHED;
+                    break;
             }
         }
         if (this.adminData.rescuer1Iddle && this.adminData.alemanes.size() > 0) {
@@ -357,10 +356,8 @@ public class AnaPatriciaBotin extends IntegratedAgent {
             this.sendRescueMission(2);
         } else if (this.adminData.rescuer1Iddle && this.adminData.rescued >= 10) {
             this.sendBackHomeMission(1);
-            this.status = APBStatus.WAITING_FOR_FINISH;
         } else if (this.adminData.rescuer2Iddle && this.adminData.rescued >= 10) {
             this.sendBackHomeMission(2);
-            this.status = APBStatus.WAITING_FOR_FINISH;
         }
     }
 
@@ -384,6 +381,11 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         }
 
         response = this._communications.coordinateTeam("mission");
+        if (response != null) {
+            return response;
+        }
+        
+        response = this._communications.coordinateTeam("end");
         if (response != null) {
             return response;
         }
