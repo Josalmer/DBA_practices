@@ -24,7 +24,8 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
 
     ACLMessage shoppingChannel = new ACLMessage();
     ACLMessage currentSeekerConversation = new ACLMessage();
-    ACLMessage currentRescuerConversation = new ACLMessage();
+    ACLMessage currentRescuer1Conversation = new ACLMessage();
+    ACLMessage currentRescuer2Conversation = new ACLMessage();
     ACLMessage currentRechargingConversation = new ACLMessage();
     String problem = "Playground1";
 
@@ -244,7 +245,12 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         } else if (key.equals("aleman")) {
             this.currentSeekerConversation = in.createReply();
         } else if (key.equals("mission")) {
-            this.currentRescuerConversation = in.createReply();
+            int number = Json.parse(in.getContent()).asObject().get("number").asInt();
+            if (number == 1) {
+                this.currentRescuer1Conversation = in.createReply();
+            } else {
+                this.currentRescuer2Conversation = in.createReply();
+            }
         }
         response.add("content", Json.parse(in.getContent()).asObject());
         response.add("key", key);
@@ -267,28 +273,40 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         this.agent.send(currentSeekerConversation);
     }
   
-    public void sendRescueMission(Coordinates aleman) {
-        currentRescuerConversation.setPerformative(ACLMessage.INFORM);
-        currentRescuerConversation.setSender(this.agentName);
+    public void sendRescueMission(Coordinates aleman, int number) {
+        ACLMessage rescuerChannel = new ACLMessage();
+        if (number == 1) {
+            rescuerChannel = currentRescuer1Conversation;
+        } else {
+            rescuerChannel = currentRescuer2Conversation;
+        }
+        rescuerChannel.setPerformative(ACLMessage.INFORM);
+        rescuerChannel.setSender(this.agentName);
 
         JsonObject params = aleman.getJSON();
         params.add("mission", "rescue");
-        currentRescuerConversation.setContent(params.toString());
+        rescuerChannel.setContent(params.toString());
 
-        this.printSendMessage(currentRescuerConversation);
-        this.agent.send(currentRescuerConversation);
+        this.printSendMessage(rescuerChannel);
+        this.agent.send(rescuerChannel);
     }
    
-    public void sendBackHomeMission(Coordinates initialPos) {
-        currentRescuerConversation.setPerformative(ACLMessage.INFORM);
-        currentRescuerConversation.setSender(this.agentName);
+    public void sendBackHomeMission(Coordinates initialPos, int number) {
+        ACLMessage rescuerChannel = new ACLMessage();
+        if (number == 1) {
+            rescuerChannel = currentRescuer1Conversation;
+        } else {
+            rescuerChannel = currentRescuer2Conversation;
+        }
+        rescuerChannel.setPerformative(ACLMessage.INFORM);
+        rescuerChannel.setSender(this.agentName);
 
         JsonObject params = initialPos.getJSON();
         params.add("mission", "backHome");
-        currentRescuerConversation.setContent(params.toString());
+        rescuerChannel.setContent(params.toString());
 
-        this.printSendMessage(currentRescuerConversation); 
-        this.agent.send(currentRescuerConversation);
+        this.printSendMessage(rescuerChannel); 
+        this.agent.send(rescuerChannel);
     }
 
     public void sendRecharge(String ticket) {

@@ -194,8 +194,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     public void sendInitialInstructionsToDrones() {
         this.sendInitialInstructionsToSeeker("Buscador Saldaña", 1);
         this.sendInitialInstructionsToRescuer("Manuel al Rescate", 2);
-        this.sendInitialInstructionsToSeeker("Buscador Domingo", 3);
-        this.sendInitialInstructionsToRescuer("Migue al Rescate", 4);
+        if (this._communications.getDronesNumber() == 4) {
+            this.sendInitialInstructionsToSeeker("Buscador Domingo", 3);
+            this.sendInitialInstructionsToRescuer("Migue al Rescate", 4);
+        }
         this.status = APBStatus.RESCUEING;
     }
 
@@ -266,14 +268,24 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     this.manageRecharge(request);
                     break;
                 case "mission":
-                    this.adminData.rescuerIddle = true;
+                    int rescuer = request.get("content").asObject().get("number").asInt();
+                    if (rescuer == 1) {
+                        this.adminData.rescuer1Iddle = true;
+                    } else {
+                        this.adminData.rescuer2Iddle = true;
+                    }
                     break;
             }
         }
-        if (this.adminData.rescuerIddle && this.adminData.alemanes.size() > 0) {
-            this.sendRescueMission();
-        } else if (this.adminData.rescuerIddle && this.adminData.rescued >= 10) {
-            this.sendBackHomeMission();
+        if (this.adminData.rescuer1Iddle && this.adminData.alemanes.size() > 0) {
+            this.sendRescueMission(1);
+        } else if (this.adminData.rescuer2Iddle && this.adminData.alemanes.size() > 0) {
+            this.sendRescueMission(2);
+        } else if (this.adminData.rescuer1Iddle && this.adminData.rescued >= 10) {
+            this.sendBackHomeMission(1);
+            this.status = APBStatus.WAITING_FOR_FINISH;
+        } else if (this.adminData.rescuer2Iddle && this.adminData.rescued >= 10) {
+            this.sendBackHomeMission(2);
             this.status = APBStatus.WAITING_FOR_FINISH;
         }
     }
@@ -305,15 +317,26 @@ public class AnaPatriciaBotin extends IntegratedAgent {
         this._communications.nextSeekerMission(this.adminData.found);
     }
 
-    private void sendRescueMission() {
+    private void sendRescueMission(int number) {
         Coordinates aleman = this.adminData.rescueAleman();
-        this.adminData.rescuerIddle = false;
-        this._communications.sendRescueMission(aleman);
+        if (number == 1) {
+            this.adminData.rescuer1Iddle = false;
+        } else {
+            this.adminData.rescuer2Iddle = false;
+        }
+        this._communications.sendRescueMission(aleman, number);
     }
 
-    private void sendBackHomeMission() {
-        this._communications.sendBackHomeMission(this.adminData.initialPosition2);
-        this.adminData.rescuerIddle = false;
+    private void sendBackHomeMission(int number) {
+        Coordinates initialPosition = new Coordinates(0,0);
+        if (number == 1) {
+            initialPosition = this.adminData.initialPosition2;
+            this.adminData.rescuer1Iddle = false;
+        } else {
+            initialPosition = this.adminData.initialPosition4;
+            this.adminData.rescuer2Iddle = false;
+        }
+        this._communications.sendBackHomeMission(initialPosition, number);
     }
 
     private void manageRecharge(JsonObject request) {

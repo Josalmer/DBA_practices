@@ -42,7 +42,7 @@ public class CommunicationAssistant {
     boolean printMessages;
     
     String serviceAgent = "Analytics group Banco Santander";
-    Integer nDrones = 4;
+    Integer nDrones = 2;
     
     ACLMessage identityManagerChannel = new ACLMessage(); // Todos
     ACLMessage worldChannel = new ACLMessage(); // Todos

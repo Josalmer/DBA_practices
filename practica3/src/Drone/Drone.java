@@ -133,7 +133,6 @@ public class Drone extends IntegratedAgent{
     void doAction(DroneAction action){
         
         if (action == DroneAction.moveF) {
-            this.print(this.getLocalName() + ", Executed action, currentPosition: (" + this.knowledge.currentPositionX + ", " + this.knowledge.currentPositionY + ")\n");  
             while (!this._communications.checkIfFree(this.knowledge.nextPosition(), this.knowledge.currentHeight)) { }
         }
      

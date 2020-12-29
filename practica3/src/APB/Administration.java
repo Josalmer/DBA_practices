@@ -36,7 +36,8 @@ public class Administration {
     ArrayList<Coordinates> alemanes = new ArrayList();
     int rescued;
     int found = 2;
-    boolean rescuerIddle;
+    boolean rescuer1Iddle;
+    boolean rescuer2Iddle;
     Coordinates rescuer1Position;
     Coordinates rescuer2Position;
 
@@ -47,7 +48,8 @@ public class Administration {
         agentsSubscribed = 0;
         collectedMoney = 0;
         rescued = 0;
-        rescuerIddle = false;
+        rescuer1Iddle = false;
+        rescuer2Iddle = false;
     }
 
     public ArrayList<String> getMoney(int coins) {
