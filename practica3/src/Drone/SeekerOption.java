@@ -4,8 +4,8 @@ package Drone;
 import Drone.DroneOption;
 
 /**
- *
- * @author domin
+ * Clase SeekerOption que hereada de DroneOption
+ * @author Jose Saldaña, Manuel Pancorbo
  */
 public class SeekerOption extends DroneOption{
     
@@ -18,6 +18,7 @@ public class SeekerOption extends DroneOption{
      * @param y componente y de casillo destino
      * @param floorHeight altura de casilla destino
      * @param visited última vez visitada la casilla destino (-1 = no visitada)
+     * @param thermalValue valor del thermal 
      */
     public SeekerOption(Integer x, Integer y, Integer floorHeight, Integer visited, Double thermalValue) {
         super(x,y,floorHeight, visited);

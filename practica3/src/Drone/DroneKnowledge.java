@@ -9,6 +9,10 @@ import MapOption.Coordinates;
 import com.eclipsesource.json.JsonObject;
 import java.util.ArrayList;
 
+/**
+* Clase DroneKnowledge que contiene el conocimiento del drone
+* @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo, Miguel García
+*/
 public class DroneKnowledge {
     
     Integer currentPositionX;
@@ -36,8 +40,7 @@ public class DroneKnowledge {
      * login: ancho, alto, máximo vuelo, etc Además inicializa los mapas
      * internos de altura de casillas y de casillas visitadas en -1
      *
-     * @author Jose Saldaña
-     * @author Manuel Pancorbo
+     * @author Manuel Pancorbo, Jose Saldaña
      * @param answer JsonObject recibido al hacer login
      */
     public void initializeKnowledge(JsonObject answer) {
@@ -109,7 +112,7 @@ public class DroneKnowledge {
     /**
      * Actualiza el conocimiento del mundo con la última percepción recibida
      *
-     * @author Jose Saldaña
+     * @author Jose Saldaña, Domingo López
      * @param thermal Percepción del Thermal actualizada tras la lectura de
      * sensores
      */
@@ -135,6 +138,12 @@ public class DroneKnowledge {
         }
     }
 
+    /**
+     * Obtiene las coordenadas de un Alemán
+     *
+     * @author Jose Saldaña, Domingo López
+     * @return Coordeadas del alemán
+     */
     Coordinates getGerman(){      
         if(this.germans.isEmpty())
             return null;
@@ -195,6 +204,13 @@ public class DroneKnowledge {
         return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 30);
     }
 
+    /**
+     * Determina si el agente RESCUER debe comenzar a aproximarse al suelo para recargar
+     * la batería
+     *
+     * @author Jose Saldaña
+     * @return booleano que indica si el agente debe recargar
+     */
     public boolean rescuerNeedRecharge() {
         return this.energy < ((1 * (this.currentHeight - this.getFloorHeight())) + 120);
     }
@@ -226,6 +242,8 @@ public class DroneKnowledge {
      * Consulta si estoy encima de Ludwig
      *
      * @author Jose Saldaña
+     * @param targetPositionX posicionX del Target
+     * @param targetPositionY posicionY del Target
      * @return booleano que indica si estoy sobre Ludwig
      */
     public boolean amIAboveTarget(int targetPositionX, int targetPositionY) {
@@ -289,6 +307,12 @@ public class DroneKnowledge {
         this.visitedAtMap.get(this.currentPositionX).set(this.currentPositionY, this.nActionsExecuted);
     }
     
+    /**
+     * Calcula la siguiente casilla a la que el drone va a moverse
+     *
+     * @author Manuel Pancorbo
+     * @return Coordenadas de la siguiente posición a donde moverse
+     */
     public Coordinates nextPosition() {
         int ABScurrentOrientation = Math.abs(this.orientation); // Valor absoluto de la orientación
         int newXPosition = this.currentPositionX;
@@ -331,10 +355,8 @@ public class DroneKnowledge {
     /**
      * Devuelve la energía que gasta una acción
      *
-     * @author Domingo Lopez
-     * @author Manuel Pancorbo
+     * @author Domingo López, Manuel Pancorbo
      * @param action acción para consultar energía
-     * @param nSensors nº de sensores cargados en dron
      * @return cantidad de energía para la acción action
      */
     public int energyCost(DroneAction action) {
@@ -368,8 +390,7 @@ public class DroneKnowledge {
     /**
      * Modifica el estado interno del agente tras realizar una acción
      *
-     * @author Manuel Pancorbo
-     * @author Domingo Lopez
+     * @author Domingo Lopez, Manuel Pancorbo
      * @param nextMovement acción a ejecutar
      */
     public void manageMovement(DroneAction nextMovement) {
@@ -409,13 +430,21 @@ public class DroneKnowledge {
     /**
      * Comprueba si necesita recargar antes de optar por la opción ganadora
      *
-     * @author Domingo López
+     * @author Domingo López, Manuel Pancorbo
+     * @param bestOption, mejor opción del seeker teniendo en cuenta el Thermal
+     * @return boolean que indica que debe recargar antes
      */
     public boolean shouldIRechargueFirst(SeekerOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
         return shouldIRechargue;
     }
-
+    
+    /**
+     * Comprueba si necesita recargar antes de optar por la opción ganadora
+     * @param bestOption, mejor opción del agente
+     * @return booleano indicando que debe recargar antes
+     * @author Domingo López, Manuel Pancorbo
+     */
     public boolean shouldIRechargueFirst(DroneOption bestOption) {
         boolean shouldIRechargue = (this.currentHeight - bestOption.floorHeight) + 30 > this.energy;
         return shouldIRechargue;
@@ -424,8 +453,9 @@ public class DroneKnowledge {
     /**
      * Comprueba si en el mapa thermal actual hay alemanes, y que no hemos
      * avisado ya.
-     *
+     * @param alemanes de alemnas ya encontrados
      * @author Domingo López
+     * @return Indices del array de alemanes que contiene alemanes nuevos
      */
     public ArrayList<Integer> checkIfFrankfurts(ArrayList<JsonObject> alemanes) {
         ArrayList<Integer> indicesAlemanesEncontrados = new ArrayList<>();

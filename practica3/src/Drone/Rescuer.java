@@ -6,6 +6,10 @@ import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * Clase Rescuer que hereda de Drone
+ * @author Miguel García 
+ */
 public class Rescuer extends Drone {
     // AGENT CONFIGURATION -------------------------------------------
     int targetPositionX;
@@ -93,7 +97,12 @@ public class Rescuer extends Drone {
             this.status = DroneStatus.FINISHED;
         }
     }
-    
+     /**
+     * Recibe un plan de una misión
+     * 
+     * @author Miguel García Tenorio
+     *
+     */
     void receivePlan() {
         JsonObject content = new JsonObject();
         content.add("request", "mission");
@@ -125,6 +134,7 @@ public class Rescuer extends Drone {
         }
     }
 
+
     @Override
     public void recharge() {
         if (this.toLand()) {
@@ -147,6 +157,12 @@ public class Rescuer extends Drone {
         }
     }
     
+    /**
+     * Realiza el comportamiento reactivo del Rescuer
+     * 
+     * @author Miguel García Tenorio
+     *
+     */
     public void executeReactive() {
         if (this.knowledge.amIAboveTarget(this.targetPositionX, this.targetPositionY)) {
             print("Above Target " + this.targetPositionX + ", " + this.targetPositionY + "\n");
@@ -170,6 +186,12 @@ public class Rescuer extends Drone {
         }
     }
     
+    /**
+     * Piensa un plan reactivo a la mejor casilla cercana
+     * 
+     * @author Miguel García Tenorio
+     *
+     */
     void thinkPlan() {
         ArrayList<DroneOption> options = this.generateOptions();
         if (options != null) {
@@ -185,7 +207,14 @@ public class Rescuer extends Drone {
             }
         }
     }
-
+    
+    /**
+     * Genera las opciones circundantes a la posición en la que nos encontramos
+     * 
+     * @author Miguel García Tenorio
+     *
+     * @return options generadas
+     */
     ArrayList<DroneOption> generateOptions() {
         ArrayList<DroneOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
@@ -207,6 +236,15 @@ public class Rescuer extends Drone {
         return options;
     }
 
+    /**
+     * Piensa un plan reactivo a la mejor casilla cercana
+     * @param xPosition
+     * @param yPosition
+     * @param height
+     * @param orientation
+     * @author Miguel García Tenorio
+     *
+     */
     DroneOption generateOption(int xPosition, int yPosition, int height, int orientation) {
         DroneOption option = new DroneOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition));
         ArrayList<DroneAction> plan = new ArrayList<>();
@@ -242,6 +280,13 @@ public class Rescuer extends Drone {
         return option;
     }
 
+    /**
+     * Elige la mejor opción de las generadas
+     * @param options array de opciones
+     * @return bestOption
+     * @author Miguel García Tenorio
+     *
+     */
     DroneOption chooseBestOption(ArrayList<DroneOption> options) {
         double min = options.get(0).puntuation;
         DroneOption bestOption = options.get(0);
@@ -273,6 +318,11 @@ public class Rescuer extends Drone {
         }
     }
     
+     /**
+     * Obtiene a Ludwig si puede aterrizar
+     * @author Miguel García Tenorio
+     *
+     */
     void getLudwig() {
         if (this.toLand()) {
             this.doAction(DroneAction.rescue);
@@ -282,6 +332,11 @@ public class Rescuer extends Drone {
         }
     }
 
+    /**
+     * Aterriza en el lugar de inicio
+     * @author Miguel García Tenorio, Jose Saldaña
+     *
+     */
     void landHome() {
         if (this.toLand()) {
             print("Aterrizado en casa");
@@ -291,6 +346,7 @@ public class Rescuer extends Drone {
         }
     }
     
+    @Override
     boolean toLand() {
         if (this.knowledge.canTouchDown()) {
             this.doAction(DroneAction.touchD);

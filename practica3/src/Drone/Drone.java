@@ -15,8 +15,8 @@ import java.util.ArrayList;
 
 
 /**
- *
- * @author migue
+ * Clase Drone que hereda de IntegratedAgent
+ * @author Miguel García 
  */
 public class Drone extends IntegratedAgent{
     boolean printMessages = true;
@@ -55,6 +55,11 @@ public class Drone extends IntegratedAgent{
     @Override
     public void plainExecute() {}
     
+    /**
+     * Checking en el worldManager
+     * @param role Role de los agentes
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
     public void checkingRadio(String role){
         boolean logedIn = this._communications.checkingRadio(role);
         if (logedIn) {
@@ -64,11 +69,21 @@ public class Drone extends IntegratedAgent{
         }
     }
     
+    /**
+     * Los drones mandan su dinero a APB
+     *
+     * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
+     */
     void sendCashToAPB() {
         this._communications.sendCashToAPB();
         this.status = DroneStatus.WAITING_INIT_DATA;
     }
 
+    /**
+     * Solicitud de ID de sesión y mapa a APB
+     *
+     * @author Jose Saldaña, Domingo Lopez
+     */
     void requestSessionIdAndMap() {
         JsonObject response = this._communications.requestSessionKeyToAPB();
         if (response != null) {
@@ -82,17 +97,37 @@ public class Drone extends IntegratedAgent{
         }
     }
     
-    void requestLoginData(){}
     
+//    void requestLoginData(){}
+    
+    /**
+     * Recepción de datos iniciales (Id de sesión y mapa)
+     * @author Jose Saldaña, Domingo Lopez, Miguel García
+     */
     void receiveLoginData(){}
     
+    /**
+     * Login en el world de los drones
+     * @param coordenada X y coordenada Y inicial de los drones
+     * @author Domingo Lopez
+     */
     void loginWorld(int x , int y) {}
     
+    /**
+     * Deslogueo del mundo
+     *
+     * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo,Miguel García Tenorio
+     */
     void logout() {
         this._communications.checkoutWorld();
         _exitRequested = true;
     }
     
+    /**
+     * Solicitud de ticket de recarga a APB
+     *
+     * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo, Miguel García Tenorio
+     */
     void claimRecharge(){
         JsonObject content = new JsonObject();
         content.add("request", "recharge");
@@ -111,15 +146,29 @@ public class Drone extends IntegratedAgent{
             this.status = DroneStatus.FINISHED;
         }
     } 
-          
+    
+    /**
+     * Realizar recarga de la energía del drone
+     * @author Jose Saldaña, Domingo Lopez, Miguel García
+     */
     public void recharge(){}
   
-    
+    /**
+     * Consumir energía de los drones
+     *
+     * @author Domingo López, Jose Saldaña
+     */
     void useEnergy(DroneAction action) {
         this.knowledge.energy -= this.knowledge.energyCost(action);
         this.print(this.getLocalName() + ", Executed action: " + action + " energy left: " + this.knowledge.energy);  
     }
      
+    /**
+     * Aterrizar el dron
+     *
+     * @author Jose Saldaña,Manuel Pancorbo, Miguel García Tenorio
+     * @return boolean de aterrizaje
+     */
     boolean toLand() {
         if (this.knowledge.canTouchDown()) {
             this.doAction(DroneAction.touchD);
@@ -129,7 +178,12 @@ public class Drone extends IntegratedAgent{
             return false;
         }
     }
-     
+    
+    /**
+     * Realizar acción de drone pasada por parámetro. Se envía al WorldManager la acción a realizar
+     * @param DroneAction, la acción que va a realizar
+     * @author Jose Saldaña, Domingo Lopez
+     */
     void doAction(DroneAction action){
         
         if (action == DroneAction.moveF) {
@@ -145,9 +199,18 @@ public class Drone extends IntegratedAgent{
             this.status = DroneStatus.FINISHED;
         }
     }
-     
+    
+    /**
+     * Ejecución del plan para el comportamiento reactivo
+     * @author Jose Saldaña, Domingo Lopez, Miguel García Tenorio
+     */
     void executePlan(){}
-        
+    
+    /**
+     * Ejecutar acción pasada
+     * @param DroneAction, la acción que va a ejecutar
+     * @author Jose Saldaña, Domingo Lopez, Miguel García
+     */
     void executeAction(DroneAction action){
         switch(action){
             case recharge:
@@ -160,14 +223,20 @@ public class Drone extends IntegratedAgent{
                 break;
         }
     }
-    
-    void elaboratePlan(){}
-    
+
+    /**
+     * Función de deslogueo de la plataforma
+     * @author Jose Saldaña, Domingo Lopez, Miguel García, Manuel Pancorbo
+     */
     @Override
     public void takeDown() {
         super.takeDown();
     }
    
+    /**
+     * Recarga de energía inicial para los drones
+     * @author Jose Saldaña, Domingo Lopez
+     */
     public void initialRecharge(){
         String result = this._communications.requestRecharge(this.rechargeTicket);
         if (result.equals("ok")){
@@ -178,6 +247,11 @@ public class Drone extends IntegratedAgent{
         }
     }
 
+    /**
+     * Función de impresión de mensaje formateado
+     * @param event String
+     * @author Jose Saldaña, Manuel Pancorbo
+     */
     public void print(String event){
         if(this.printMessages){
             Info("\n\n" + this.color + " " + this.getLocalName() + " - " + event);
