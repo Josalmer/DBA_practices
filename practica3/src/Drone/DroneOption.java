@@ -7,7 +7,7 @@ import MapOption.MinimalOption;
 import java.util.ArrayList;
 
 /**
- *
+ * Clase DroneOption que hereda de NinimalOption
  * @author jose
  */
 public class DroneOption extends MinimalOption{
@@ -30,6 +30,12 @@ public class DroneOption extends MinimalOption{
         this.visitedAt = visited;
     }
     
+    /**
+     * Constructor
+     * @author Jose Saldaña
+     * @param targetX componente x de casilla destino
+     * @param targetY componente y de casillo destino
+     */
     public void calculateDistanceToTarget(int targetX, int targetY) {
         this.distance = Math.abs(this.coordinates.x - targetX) + Math.abs(this.coordinates.y - targetY);
         this.puntuation = this.distance;

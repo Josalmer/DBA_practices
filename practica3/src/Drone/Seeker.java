@@ -5,6 +5,10 @@ import com.eclipsesource.json.*;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
 
+/**
+ * Clase seeker que hereda de Drone
+ * @author Domingo López
+ */
 public class Seeker extends Drone {
     String sensorTicket;
     int targetPositionX;
@@ -125,10 +129,9 @@ public class Seeker extends Drone {
     }
 
     /**
-     * Comportamiento Reactivo para la P3
+     * Comportamiento Reactivo para la P3 del Seeker
      *
      * @author Domingo López, Jose Saldaña
-     * @return
      *
      */
     void reactiveBehaviour() {
@@ -176,6 +179,12 @@ public class Seeker extends Drone {
         }
     }
 
+    /**
+     * Piensa un plan reactivo a la mejor casilla cercana
+     * 
+     * @author Domingo López
+     *
+     */
     void thinkPlan() {
         ArrayList<SeekerOption> options = this.generateOptions();
         if (options != null) {
@@ -192,6 +201,14 @@ public class Seeker extends Drone {
         }
     }
 
+    
+    /**
+     * Genera las opciones circundantes a la posición en la que nos encontramos
+     * 
+     * @author Domingo López
+     *
+     * @return options generadas
+     */
     ArrayList<SeekerOption> generateOptions() {
         ArrayList<SeekerOption> options = new ArrayList<>();
         int[] orientations = {-45, 0, 45, -90, 0, 90, -135, 180, 135};
@@ -219,6 +236,16 @@ public class Seeker extends Drone {
         return options;
     }
 
+    /**
+     * Genera una SeekerOption con al mejor opción posible
+     * @param xPosition
+     * @param yPosition
+     * @param height
+     * @param orientation
+     * @param thermalValue
+     * @author Domingo López, Jose Saldaña
+     *
+     */
     SeekerOption generateOption(int xPosition, int yPosition, int height, int orientation, Double thermalValue) {
         SeekerOption option = new SeekerOption(xPosition, yPosition, height, this.knowledge.visitedAtMap.get(xPosition).get(yPosition), thermalValue);
         ArrayList<DroneAction> plan = new ArrayList<>();
@@ -254,6 +281,13 @@ public class Seeker extends Drone {
         return option;
     }
 
+    /**
+     * Elige la mejor opción de las generadas
+     * @param options array de opciones
+     * @return bestOption
+     * @author Jose Saldaña
+     *
+     */
     SeekerOption chooseBestOption(ArrayList<SeekerOption> options) {
         double min = options.get(0).puntuation;
         SeekerOption bestOption = options.get(0);
@@ -277,9 +311,9 @@ public class Seeker extends Drone {
     }
 
     /**
-     * author: Domingo
+     * Lee los sensores mandando petición al servidor
+     * @author: Domingo
      *
-     * @return
      */
     void readSensor() {
         JsonObject response = this._communications.readSensor();
@@ -303,6 +337,11 @@ public class Seeker extends Drone {
         }
     }
     
+    /**
+     * Manda las coordeadas de los alemanes encontrados
+     * @author Miguel García Tenorio, Jose Saldaña, Domingo López, Manuel Pancorbo
+     *
+     */
     public void sendGermans(){
         Coordinates german = this.knowledge.getGerman();
         while(german !=null){
@@ -312,9 +351,9 @@ public class Seeker extends Drone {
     }
 
     /**
-     * author: Domingo
+     * Calcula las esquinas iniciales de donde parten los seekers
+     * @author Domingo
      *
-     * @return
      */
     public void calculateCorners() {
 
@@ -369,13 +408,11 @@ public class Seeker extends Drone {
     }
 
     /**
-     * author: Domingo ThermalDELUXE = 31x31. Po lo que la casilla central está
-     * en la posición del array (15,15). Usando el juego de i%3 y i/3 podemos
-     * recorrer las casillas adyacentes a la central del mapa termal conseguido
-     * y así interpolar las coordenadas que estamos analizando con las que
-     * tenemos del thermal.
-     *
-     * @return
+     * Obtiene el valor del thermal de una posición concreta
+     * @param xPosition posición x del mapa Thermal
+     * @param yPosition posición y del mapa Thermal
+     * @author Domingo López
+     * @return double valor del thermal
      */
     public double getThermalValue(int xPosition, int yPosition) {
         return this.knowledge.thermalMap.get(xPosition).get(yPosition);

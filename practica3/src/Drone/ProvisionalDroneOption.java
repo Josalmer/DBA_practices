@@ -37,10 +37,14 @@ public class ProvisionalDroneOption {
         this.visitedAt = visited;
     }
     
-
+    /**
+     * Calcula la distancia al objetivo
+     * @author Jose Saldaña
+     * @param targetX componente x de casilla destino
+     * @param targetY componente y de casillo destino
+     */
     void calculateDistanceToTarget(int targetX, int targetY) {
         
-        //REVISAR EL CÁLCULO
         this.distanceToTarget = Math.abs(x - targetX) + Math.abs(y - targetY);
         this.puntuation = this.distanceToTarget;
     }

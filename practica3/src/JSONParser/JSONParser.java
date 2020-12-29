@@ -11,11 +11,18 @@ import com.eclipsesource.json.JsonObject;
 import java.util.ArrayList;
 
 /**
- *
- * @author manuel
+ * Clase parseadora JSONParser
+ * @author Manuel Pancorbo
  */
 public class JSONParser {
     
+    /**
+     * Obtiene el mapa como Array de Enteros
+     * @param map JsonObject
+     * @author Manuel Pancorbo
+     * @return Matriz de enteros
+     *
+     */
     public ArrayList<ArrayList<Integer>> getMap(JsonObject map){
         Map2DGrayscale myMap = new Map2DGrayscale();
         ArrayList<ArrayList<Integer>> arrayMap = new ArrayList<>();
@@ -31,6 +38,13 @@ public class JSONParser {
         return arrayMap;
     }
     
+    /**
+     * Pârsea el mapa como JSONArray
+     * @param map Matriz de enteros
+     * @author Manuel Pancorbo
+     * @return JsonArray del mapa
+     *
+     */
     public JsonArray parseMap (ArrayList<ArrayList<Integer>> map){
         return convertIntegerMatrixtoJSONArray(map);
     }
@@ -104,7 +118,13 @@ public class JSONParser {
         return doubleMatrix;
     }
     
-    
+    /**
+     * Convierte a string un JsonArray
+     * @param array JsonArray
+     * @author Manuel Pancorbo
+     * @return String
+     *
+     */
     public ArrayList<String> convertToStringArray(JsonArray array) {
         ArrayList<String> strings = new ArrayList<>();
         for (int i = 0; i < array.size(); i++) {
@@ -113,7 +133,13 @@ public class JSONParser {
         return strings;
     }
     
-    
+    /**
+     * Convierte array de enteros a JSONArray
+     * @param array Array de enteros
+     * @author Manuel Pancorbo
+     * @return JsonArray
+     *
+     */
     public JsonArray convertIntegerArrayToJSONArray(ArrayList<Integer> array){
         JsonArray jsonArray  = new JsonArray();     
         for(Integer i : array){
@@ -122,7 +148,13 @@ public class JSONParser {
        return jsonArray;
     }
     
-    
+    /**
+     * Convierte matriz de enteros a JSONArray
+     * @param array Matriz de enteros
+     * @author Manuel Pancorbo
+     * @return JsonArray
+     *
+     */
     public JsonArray convertIntegerMatrixtoJSONArray(ArrayList<ArrayList<Integer>> array){
         JsonArray matrix = new JsonArray();
        
@@ -134,6 +166,13 @@ public class JSONParser {
         return matrix;
     }
     
+    /**
+     * Convierte array de Strings a JSONArray
+     * @param array Array de Strings
+     * @author Manuel Pancorbo
+     * @return JsonArray
+     *
+     */
     public JsonArray convertStringArrayToJSONArray(ArrayList<String> array){
         JsonArray jsonArray = new JsonArray();
         for(String s : array){
