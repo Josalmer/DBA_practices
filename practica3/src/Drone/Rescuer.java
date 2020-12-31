@@ -171,11 +171,7 @@ public class Rescuer extends Drone {
             this.plan = null;
         } else {
             if (this.knowledge.rescuerNeedRecharge()) {
-                if ((this.plan != null && this.plan.size() > 0)) {
-                    this.previousStatus = DroneStatus.BUSY;
-                } else {
-                    this.previousStatus = DroneStatus.FREE;
-                }
+                this.previousStatus = this.status;
                 this.plan = null;
                 this.status = DroneStatus.NEED_RECHARGE;
                 print("Changed status to: " + this.status);
