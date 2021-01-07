@@ -65,6 +65,7 @@ public class Seeker extends Drone {
                     break;
                 case RECHARGING:
                     this.recharge();
+                    break;
                 case NEED_SENSOR:
                     this.readSensor();
                     break;
@@ -377,40 +378,80 @@ public class Seeker extends Drone {
         t1.add("y", 10);
         
         JsonObject t2 = new JsonObject();
-        t2.add("x", width/4);
+        t2.add("x", width/9);
         t2.add("y", 10);
         
         JsonObject t3 = new JsonObject();
-        t3.add("x", width/2);
+        t3.add("x", 2 * width/9);
         t3.add("y", 10);
         
         JsonObject t4 = new JsonObject();
-        t4.add("x", 3 * width/4);
+        t4.add("x", 3 * width/9);
         t4.add("y", 10);
         
         JsonObject t5 = new JsonObject();
-        t5.add("x", width -10);
+        t5.add("x", 4 * width/9);
         t5.add("y", 10);
+        
+        JsonObject t6 = new JsonObject();
+        t6.add("x", 5 * width/9);
+        t6.add("y", 10);
+        
+        JsonObject t7 = new JsonObject();
+        t7.add("x", 6 * width/9);
+        t7.add("y", 10);
+        
+        JsonObject t8 = new JsonObject();
+        t8.add("x", 7* width /9);
+        t8.add("y", 10);
+        
+        JsonObject t9 = new JsonObject();
+        t5.add("x", 8* width /9);
+        t5.add("y", 10);
+        
+        JsonObject t10 = new JsonObject();
+        t10.add("x", width -10);
+        t10.add("y", 10);
         
         JsonObject b1 = new JsonObject();
         b1.add("x", 10);
         b1.add("y", height -10);
         
         JsonObject b2 = new JsonObject();
-        b2.add("x", width/4);
+        b2.add("x", width/9);
         b2.add("y", height -10);
         
         JsonObject b3 = new JsonObject();
-        b3.add("x", width/2);
+        b3.add("x", 2 * width/9);
         b3.add("y", height -10);
         
         JsonObject b4 = new JsonObject();
-        b4.add("x", 3 * width/4);
+        b4.add("x", 3*width/9);
         b4.add("y", height -10);
         
         JsonObject b5 = new JsonObject();
-        b5.add("x", width -10);
+        b5.add("x", 4 * width/9);
         b5.add("y", height -10);
+        
+        JsonObject b6 = new JsonObject();
+        b6.add("x", 5 * width/9);
+        b6.add("y", height -10);
+        
+        JsonObject b7 = new JsonObject();
+        b7.add("x", 6 * width/9);
+        b7.add("y", height -10);
+        
+        JsonObject b8 = new JsonObject();
+        b8.add("x", 7 * width/9);
+        b8.add("y", height -10);
+        
+        JsonObject b9 = new JsonObject();
+        b9.add("x", 8 * width/9);
+        b9.add("y", height -10);
+        
+        JsonObject b10 = new JsonObject();
+        b10.add("x", width -10);
+        b10.add("y", height -10);
 
         if (this._communications.getDronesNumber() == 2) {
             this.targetPositions.add(b1);

@@ -317,6 +317,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     initialPos.x = initialPos.x - 5;
                     initialPos.y = initialPos.y - 5;
                 }
+                initialPos = new Coordinates(this.adminData.map.size() / 2 + 30, this.adminData.map.get(0).size() / 2 + 30);
                 this.adminData.initialPosition4 = initialPos;
                 break;
         }
