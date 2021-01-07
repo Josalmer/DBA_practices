@@ -372,114 +372,35 @@ public class Seeker extends Drone {
         int width = this.knowledge.mapWidth;
         int height = this.knowledge.mapHeight;
 
-        //(15,15) sería la casila central en la que el thermal Deluxe cubriría la esquina completa, consiguiendo poblar el mapa completo.
-        JsonObject t1 = new JsonObject();
-        t1.add("x", 10);
-        t1.add("y", 10);
-        
-        JsonObject t2 = new JsonObject();
-        t2.add("x", width/9);
-        t2.add("y", 10);
-        
-        JsonObject t3 = new JsonObject();
-        t3.add("x", 2 * width/9);
-        t3.add("y", 10);
-        
-        JsonObject t4 = new JsonObject();
-        t4.add("x", 3 * width/9);
-        t4.add("y", 10);
-        
-        JsonObject t5 = new JsonObject();
-        t5.add("x", 4 * width/9);
-        t5.add("y", 10);
-        
-        JsonObject t6 = new JsonObject();
-        t6.add("x", 5 * width/9);
-        t6.add("y", 10);
-        
-        JsonObject t7 = new JsonObject();
-        t7.add("x", 6 * width/9);
-        t7.add("y", 10);
-        
-        JsonObject t8 = new JsonObject();
-        t8.add("x", 7* width /9);
-        t8.add("y", 10);
-        
-        JsonObject t9 = new JsonObject();
-        t5.add("x", 8* width /9);
-        t5.add("y", 10);
-        
-        JsonObject t10 = new JsonObject();
-        t10.add("x", width -10);
-        t10.add("y", 10);
-        
-        JsonObject b1 = new JsonObject();
-        b1.add("x", 10);
-        b1.add("y", height -10);
-        
-        JsonObject b2 = new JsonObject();
-        b2.add("x", width/9);
-        b2.add("y", height -10);
-        
-        JsonObject b3 = new JsonObject();
-        b3.add("x", 2 * width/9);
-        b3.add("y", height -10);
-        
-        JsonObject b4 = new JsonObject();
-        b4.add("x", 3*width/9);
-        b4.add("y", height -10);
-        
-        JsonObject b5 = new JsonObject();
-        b5.add("x", 4 * width/9);
-        b5.add("y", height -10);
-        
-        JsonObject b6 = new JsonObject();
-        b6.add("x", 5 * width/9);
-        b6.add("y", height -10);
-        
-        JsonObject b7 = new JsonObject();
-        b7.add("x", 6 * width/9);
-        b7.add("y", height -10);
-        
-        JsonObject b8 = new JsonObject();
-        b8.add("x", 7 * width/9);
-        b8.add("y", height -10);
-        
-        JsonObject b9 = new JsonObject();
-        b9.add("x", 8 * width/9);
-        b9.add("y", height -10);
-        
-        JsonObject b10 = new JsonObject();
-        b10.add("x", width -10);
-        b10.add("y", height -10);
+        int halfWidth = width/2;
 
-        if (this._communications.getDronesNumber() == 2) {
-            this.targetPositions.add(b1);
-            this.targetPositions.add(b2);
-            this.targetPositions.add(t2);
-            this.targetPositions.add(t3);
-            this.targetPositions.add(b3);
-            this.targetPositions.add(b4);
-            this.targetPositions.add(t4);
-            this.targetPositions.add(t5);
-            this.targetPositions.add(b5);
-            this.targetPositions.add(t1);
-            this.targetPositions.add(b1);
-        } else {
-            if (this.getLocalName().equals("Buscador Saldaña")) {
-                this.targetPositions.add(b1);
-                this.targetPositions.add(b2);
-                this.targetPositions.add(t2);
-                this.targetPositions.add(t3);
-                this.targetPositions.add(b3);
-                this.targetPositions.add(t1);
+        int half = halfWidth;
+        if (!this.getLocalName().equals("Buscador Saldaña"))
+            half = 0;
+
+        //Esquinas de arriba
+        for(int i=0; i<halfWidth/30 + 1;i++){
+
+            JsonObject tUp = new JsonObject();
+            tUp.add("x", 15 + i * 30 + half);
+            tUp.add("y", 15);
+
+            JsonObject tBottom = new JsonObject();
+            tBottom.add("x", 15 + i*30 + half);
+            tBottom.add("y", height - 15);
+
+            if(i%2==0) {
+                this.targetPositions.add(tUp);
+                this.targetPositions.add(tBottom);
             } else {
-                this.targetPositions.add(t5);
-                this.targetPositions.add(t4);
-                this.targetPositions.add(b4);
-                this.targetPositions.add(b5);
+                this.targetPositions.add(tBottom);
+                this.targetPositions.add(tUp);
             }
         }
+
+        JsonObject firstTarget = targetPositions.get(0);
+        targetPositions.remove(firstTarget);
+        targetPositions.add(firstTarget);
 
     }
 
