@@ -27,7 +27,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
     ACLMessage currentRescuer1Conversation = new ACLMessage();
     ACLMessage currentRescuer2Conversation = new ACLMessage();
     ACLMessage currentRechargingConversation = new ACLMessage();
-    String problem = "World3";
+    String problem = "World6";
 
     public APBCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
@@ -303,7 +303,7 @@ public class APBCommunicationAssistant extends CommunicationAssistant {
         currentSeekerConversation.setSender(this.agentName);
 
         JsonObject params = new JsonObject();
-        if (found < 10) {
+        if (found < 9) {
             params.add("mission", "continue");
         } else {
             params.add("mission", "finish");

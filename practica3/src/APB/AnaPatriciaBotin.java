@@ -17,6 +17,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
     Administration adminData = new Administration();
     APBStatus status;
     APBjsonParser jsonParser = new APBjsonParser();
+    int finishedRescuer = 0;
 
     ProductCatalogue shopsInfo = new ProductCatalogue();
 
@@ -315,7 +316,6 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     initialPos.x = initialPos.x - 5;
                     initialPos.y = initialPos.y - 5;
                 }
-                initialPos = new Coordinates(90, 0);
                 this.adminData.initialPosition4 = initialPos;
                 break;
         }
@@ -346,7 +346,10 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                     }
                     break;
                 case "end":
-                    this.status = APBStatus.FINISHED;
+                    this.finishedRescuer++;
+                    if (this.finishedRescuer == this._communications.getDronesNumber() / 2) {
+                        this.status = APBStatus.FINISHED;
+                    }
                     break;
             }
         }

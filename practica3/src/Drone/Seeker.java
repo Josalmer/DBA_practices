@@ -424,7 +424,7 @@ public class Seeker extends Drone {
             this.targetPositions.add(b5);
             this.targetPositions.add(t1);
         } else {
-            if (this.getLocalName().equals("Buscador Domingo")) {
+            if (this.getLocalName().equals("Buscador Saldaña")) {
                 this.targetPositions.add(b1);
                 this.targetPositions.add(b2);
                 this.targetPositions.add(t2);
