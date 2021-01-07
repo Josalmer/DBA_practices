@@ -19,7 +19,7 @@ public class Rescuer extends Drone {
     // END CONFIGURATION ---------------------------------------------
     @Override
     public void plainExecute() {
-        this.printMessages = true;
+        this.printMessages = false;
         this.color = "\033[36m";
         this._communications.setPrintMessages(this.printMessages);
         

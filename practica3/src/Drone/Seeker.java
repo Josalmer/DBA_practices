@@ -24,7 +24,7 @@ public class Seeker extends Drone {
     @Override
     public void plainExecute() {
 
-        this.printMessages = false;
+        this.printMessages = true;
         this.color = "";
         this._communications.setPrintMessages(this.printMessages);
 
@@ -324,7 +324,7 @@ public class Seeker extends Drone {
      *
      */
     void readSensor() {
-        JsonObject response = this._communications.readSensor();
+        JsonObject response = this._communications.readSensorMessage();
         if (response.get("result").asString().equals("ok")) {
             print("Valores de los sensores leídos...");
             this.useEnergy(DroneAction.LECTURA_SENSORES);
@@ -423,6 +423,7 @@ public class Seeker extends Drone {
             this.targetPositions.add(t5);
             this.targetPositions.add(b5);
             this.targetPositions.add(t1);
+            this.targetPositions.add(b1);
         } else {
             if (this.getLocalName().equals("Buscador Saldaña")) {
                 this.targetPositions.add(b1);

@@ -296,7 +296,7 @@ public class DroneCommunicationAssistant extends CommunicationAssistant {
      * @author Domingo Lopez
      * @return JsonObject con la percepción
      */
-    public JsonObject readSensor() {
+    public JsonObject readSensorMessage() {
         //Creamos mensaje para leer sensores
         worldChannel.setSender(agentName);
         worldChannel.setPerformative(ACLMessage.QUERY_REF);
