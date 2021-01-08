@@ -382,7 +382,7 @@ public class Seeker extends Drone {
             half = halfWidth;
 
         //Esquinas de arriba
-        for(int i=0; i<halfWidth/30;i++){
+        for(int i=0; i<halfWidth/30 + 1;i++){
 
             JsonObject tUp = new JsonObject();
             tUp.add("x", 15 + i * 30 + half);
@@ -401,11 +401,7 @@ public class Seeker extends Drone {
             }
         }
 
-        if (this.getLocalName().equals("Buscador Saldaña")) {
-            JsonObject firstTarget = targetPositions.get(0);
-            targetPositions.remove(firstTarget);
-            targetPositions.add(firstTarget);
-        } else {
+        if (!this.getLocalName().equals("Buscador Saldaña")) {
             Collections.reverse(targetPositions);
         }
 
