@@ -4,6 +4,7 @@ import MapOption.Coordinates;
 import com.eclipsesource.json.*;
 import jade.lang.acl.ACLMessage;
 import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Clase seeker que hereda de Drone
@@ -372,11 +373,13 @@ public class Seeker extends Drone {
         int width = this.knowledge.mapWidth;
         int height = this.knowledge.mapHeight;
 
-        int halfWidth = width/2;
+        int nSeekers = this._communications.getDronesNumber() / 2;
 
-        int half = halfWidth;
+        int halfWidth = width/nSeekers;
+
+        int half = 0;
         if (!this.getLocalName().equals("Buscador Saldaña"))
-            half = 0;
+            half = halfWidth;
 
         //Esquinas de arriba
         for(int i=0; i<halfWidth/30 + 1;i++){
@@ -398,9 +401,9 @@ public class Seeker extends Drone {
             }
         }
 
-        JsonObject firstTarget = targetPositions.get(0);
-        targetPositions.remove(firstTarget);
-        targetPositions.add(firstTarget);
+        if (!this.getLocalName().equals("Buscador Saldaña")) {
+            Collections.reverse(targetPositions);
+        }
 
     }
 
