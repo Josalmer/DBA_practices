@@ -16,6 +16,9 @@ public class Practica3 {
         ConsoleBoot app = new ConsoleBoot("P3", args);
         app.selectConnection();
 
+        //Lanzamos Awacs primero
+        app.launchAgent("AWACSBancoSantander", Awacs.Awacs.class);
+        
         app.launchAgent("Ana Patricia Botin", AnaPatriciaBotin.class);
         app.launchAgent("Buscador Saldaña", Seeker.class);
         app.launchAgent("Buscador Domingo", Seeker.class);

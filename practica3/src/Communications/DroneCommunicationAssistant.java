@@ -6,248 +6,389 @@
 package Communications;
 
 import IntegratedAgent.IntegratedAgent;
+import MapOption.Coordinates;
 import PublicKeys.PublicCardID;
 import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
-/**
- *
- * @author manuel
- */
-public class DroneCommunicationAssistant extends CommunicationAssistant{
-    
+public class DroneCommunicationAssistant extends CommunicationAssistant {
+
+    boolean printMessages;
+
+    String APBName = "Ana Patricia Botin";
+
     ACLMessage APBChannel = new ACLMessage(); // Solo Drones
-    ArrayList<Integer> acceptedPerformative = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
+    ArrayList<Integer> acceptedPerformatives = new ArrayList<Integer>(Arrays.asList(ACLMessage.AGREE, ACLMessage.INFORM, ACLMessage.REFUSE)); // Posibles respuestas de APB a drones
 
     public DroneCommunicationAssistant(IntegratedAgent _agent, String identityManager, PublicCardID cardId) {
         super(_agent, identityManager, cardId);
     }
 
-     
     /**
      * Los drones solicitan la sessionId y el mapa a APB y esperan la respuesta
      *
      * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
-     * @param performative, content
      * @return JsonObject de respuesta
      */
-    public JsonObject requestSessionKeyToAPB() { 
-        System.out.println(this.agent.getLocalName() + " request sessionId to Ana Patricia Botin");
-        APBChannel.setSender(this.agent.getAID());
-        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
-        APBChannel.setPerformative(ACLMessage.QUERY_REF);
-        
+    public JsonObject requestSessionKeyToAPB() {
+        APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
+        APBChannel.setReplyWith("session");
+
         JsonObject content = new JsonObject();
         content.add("request", "session");
-        String parsedContent = content.toString();
-        
-        APBChannel.setContent(parsedContent);
-        APBChannel.setReplyWith("session");
+        APBChannel.setContent(content.toString());
+
+        this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
+
         ACLMessage in = this.agent.blockingReceive();
-        int resPerformative = in.getPerformative();
-        System.out.println(this.agent.getLocalName() + " sent Query Ref to Ana Patricia Botin and get: " + ACLMessage.getPerformative(resPerformative));
-        if (acceptedPerformative.contains(resPerformative)) {
-            APBChannel = in.createReply();
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            this.sessionId = parsedAnswer.get("sessiondId").asString();
-            return parsedAnswer; 
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while Query Ref to Ana Patricia Botin: " + parsedContent);
+
+        if (checkAPBError(in)) {
             return null;
         }
+
+        this.printReceiveMessage(in);
+        JsonObject parsedAnswer = Json.parse(in.getContent()).asObject();
+        this.sessionId = parsedAnswer.get("sessionId").asString();
+
+        return parsedAnswer;
     }
-    
+
     /**
      * Los drones mandan su dinero a APB
      *
      * @author Jose Saldaña, Domingo Lopez, Manuel Pancorbo
-     * @param performative, content
-     * @return JsonObject de respuesta
      */
     public void sendCashToAPB() {
-        System.out.println(this.agent.getLocalName() + " send cash to Ana Patricia Botin");
-        APBChannel.setSender(this.agent.getAID());
-        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
-        APBChannel.setPerformative(ACLMessage.INFORM);
-        
+        APBChannel = message(agentName, APBName, ACLMessage.INFORM, "REGULAR");
+        APBChannel.setReplyWith("money");
+
         JsonObject content = new JsonObject();
         content.add("cash", bitcoins);
-        String parsedContent = content.toString();
-        
-        APBChannel.setContent(parsedContent);
-        APBChannel.setReplyWith("money");
+
+        APBChannel.setContent(content.toString());
+
+        this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
     }
-    
-    
+
     /**
      * Manda un mensaje a Ana Patricia Botin y no espera respuesta
      *
-     * @param content
-     * @return ACLMessage de respuesta
+     * @author Jose Saldaña, Manuel Pancorbo, Domingo Lopez, Miguel García
+     * @param performative Perfomartiva del mensaje a enviar
+     * @param content Contenido del mensaje a enviar
+     * @param key (opcional) Clave del mensaje a enviar
      */
     public void sendMessageToAPB(int performative, JsonObject content, String key) {
-        String parsedContent = content.toString();
-        System.out.println(this.agent.getLocalName() + " " + ACLMessage.getPerformative(performative) + " to Ana Patricia Botin: " + parsedContent);
-        APBChannel.setSender(this.agent.getAID());
-        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
+        APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
+
         if (key != null) {
             APBChannel.setReplyWith(key);
         }
-        APBChannel.setPerformative(performative);
-        APBChannel.setContent(parsedContent);
+
+        APBChannel.setContent(content.toString());
+
+        this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
     }
-    
+
     /**
      * Manda un mensaje a Ana Patricia Botin y espera respuesta
      *
      * @author Jose Saldaña, Manuel Pancorbo
-     * @param performative, content
+     * @param performative Perfomartiva del mensaje a enviar
+     * @param content Contenido del mensaje a enviar
+     * @param key (opcional) Clave del mensaje a enviar
      * @return JsonObject de respuesta
      */
     public JsonObject sendAndReceiveToAPB(int performative, JsonObject content, String key) {
-        String parsedContent = content.toString();
-        System.out.println(this.agent.getLocalName() + " " + ACLMessage.getPerformative(performative) + " to Ana Patricia Botin: " + parsedContent);
-        APBChannel.setSender(this.agent.getAID());
-        APBChannel.addReceiver(new AID("Ana Patricia Botin", AID.ISLOCALNAME));
-        APBChannel.setPerformative(performative);
-        APBChannel.setContent(parsedContent);
-        APBChannel.setReplyWith(content.get("request").asString());
+        APBChannel = message(agentName, "Ana Patricia Botin", performative, "REGULAR");
+        APBChannel.setContent(content.toString());
+
         if (key != null) {
             APBChannel.setReplyWith(key);
         }
+
+        this.printSendMessage(APBChannel);
         this.agent.send(APBChannel);
+
         ACLMessage in = this.agent.blockingReceive();
-        int resPerformative = in.getPerformative();
-        System.out.println(this.agent.getLocalName() + " sent " + ACLMessage.getPerformative(performative) + " to Ana Patricia Botin and get: " + ACLMessage.getPerformative(resPerformative));
-        if (acceptedPerformative.contains(resPerformative)) {
-            APBChannel = in.createReply();
-            JsonObject response = new JsonObject();
-            response.add("performative", resPerformative);
-            JsonObject resContent = Json.parse(in.getContent()).asObject();
-            response.add("content", resContent);
-            return response;
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while " + ACLMessage.getPerformative(performative) + "to Ana Patricia Botin: " + parsedContent);
+
+        if (this.checkAPBError(in)) {
             return null;
         }
+
+        this.printReceiveMessage(in);
+        int resPerformative = in.getPerformative();
+
+        APBChannel = in.createReply();
+        JsonObject response = new JsonObject();
+        response.add("performative", resPerformative);
+        response.add("content", Json.parse(in.getContent()).asObject());
+        return response;
     }
-    
+
+    /**
+     * Espera un mensaje de APB
+     *
+     * @author Jose Saldaña, Manuel Pancorbo
+     * @param key, (opcional) clave del mensjae que se espera
+     * @return JsonObject de respuesta
+     */
+    public JsonObject receiveFromAPB(String key) {
+        ACLMessage in = new ACLMessage();
+
+        if (key != null) {
+            MessageTemplate t = MessageTemplate.MatchReplyWith(key);
+            in = this.agent.blockingReceive(t);
+        } else {
+            in = this.agent.blockingReceive();
+        }
+
+        if (this.checkAPBError(in)) {
+            return null;
+        }
+
+        this.printReceiveMessage(in);
+        int resPerformative = in.getPerformative();
+
+        APBChannel = in.createReply(); //Esto para que??
+        JsonObject response = new JsonObject();
+        response.add("performative", resPerformative);
+        response.add("content", Json.parse(in.getContent()).asObject());
+        return response;
+    }
+
     /**
      * Un dron pide recargar al WorldManager de un mundo
      *
-     * @author Miguel García
+     * @author Miguel García, Domingo Lopez
+     * @param ticket Ticket para recargar
      * @return resultado de la perticion
      */
     public String requestRecharge(String ticket) {
-        System.out.println(this.agent.getLocalName() + " REQUEST recharge with ticket: " + ticket);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
-        worldChannel.setPerformative(ACLMessage.REQUEST);
+        worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "REGULAR");
+        worldChannel.setConversationId(this.sessionId);
+
         JsonObject content = new JsonObject();
         content.add("operation", "recharge");
         content.add("recharge", ticket);
+        worldChannel.setContent(content.toString());
 
-        worldChannel.setContent(content.asString());
+        this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
+
         ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent recharge to " + "WorldManager " + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM) {
-            worldChannel = in.createReply();
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            String result = parsedAnswer.asObject().get("result").asString();
-            System.out.println(this.agent.getLocalName() + " was  recharged");
-            return result;
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + this.worldManager);
+        if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
+
+        worldChannel = in.createReply();
+        this.printReceiveMessage(in);
+        System.out.println(this.agent.getLocalName() + " was  recharged");
+        return "ok";
     }
 
     /**
      * Un drone manda un movimiento al worldManager
      *
-     * @author Miguel García
+     * @author Miguel García, Domingo Lopez
+     * @param content operación
      * @return resultado de la perticion
      */
-
     public String sendActionWorldManager(String content) {
-        System.out.println(this.agent.getLocalName() + " send action to WorldManager: " + content);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
+        worldChannel.setSender(agentName);
         worldChannel.setPerformative(ACLMessage.REQUEST);
-        worldChannel.setProtocol("ANALYTICS");
-        worldChannel.setEncoding(this._myCardID.getCardID());
+        worldChannel.setProtocol("REGULAR");
         worldChannel.setReplyWith("REPLY###");
+
         JsonObject request = new JsonObject();
         request.add("operation", content);
+        worldChannel.setContent(request.toString());
 
-        worldChannel.setContent(request.asString());
+        this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
+
         ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent action to " + "WorldManager " + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM) {
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            String result = parsedAnswer.asObject().get("result").asString();
-            System.out.println(this.agent.getLocalName() + " do action: " + content);
-            return result;
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + this.worldManager);
+        if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
+
+        worldChannel = in.createReply();
+        this.printReceiveMessage(in);
+        return "ok";
     }
 
     /**
-     * EL drone se logue en el mundo
+     * El drone se logea en el mundo con su posición y sensores
      *
-     * @author Miguel García
-     * @param role
-     * @param x
-     * @param y
-     * @param sensors
-     * @return
+     * @author Domingo Lopez, Miguel García
+     * @param role Role del drone
+     * @param x Posición x del drone
+     * @param y Posición y del drone
+     * @param sensors Array de sensores del
+     * @return resultado de la perticion
      */
     public String loginWorld(String role, int x, int y, ArrayList<String> sensors) {
-        System.out.println(this.agent.getLocalName() + " login to WorldManager: " + role);
-        worldChannel.setSender(this.agent.getAID());
-        worldChannel.addReceiver(new AID(this.worldManager, AID.ISLOCALNAME));
-        worldChannel.setPerformative(ACLMessage.REQUEST);
-        worldChannel.setProtocol("ANALYTICS");
-        worldChannel.setEncoding(this._myCardID.getCardID());
-        worldChannel.setReplyWith("REPLY###");
+        worldChannel = message(agentName, worldManager, ACLMessage.REQUEST, "REGULAR");
+        worldChannel.setConversationId(sessionId);
+
+        /*ACLARAR LO DEL SETREPLYWITH*/
+        worldChannel.setReplyWith("login" + role);
+
         JsonObject content = new JsonObject();
+        //Hacemos un JsonArray con el sensor
+        JsonArray sensorArray = new JsonArray();
+
         content.add("operation", "login");
         if (role.equals("rescuer")) {
-            content.add("attach", "[]");
-        } else if(role.equals("seeker")) {
-            content.add("attach","["+sensors.get(0)+"]");
+            content.add("attach", sensorArray); //JsonArray vacío
+        } else if (role.equals("seeker")) {
+            sensorArray.add(sensors.get(0));
+            content.add("attach", sensorArray); //JsonArray con el sensor
         }
-
         content.add("posx", x);
         content.add("posy", y);
+        worldChannel.setContent(content.toString());
 
-        worldChannel.setContent(content.asString());
+        this.printSendMessage(worldChannel);
         this.agent.send(worldChannel);
-        ACLMessage in = this.agent.blockingReceive();
-        System.out.println(this.agent.getLocalName() + " sent Login to " + "WorldManager " + " and get: " + in.getPerformative(in.getPerformative()));
-        if (in.getPerformative() == ACLMessage.CONFIRM) {
-            String response = in.getContent();
-            JsonObject parsedAnswer = Json.parse(response).asObject();
-            String result = parsedAnswer.asObject().get("result").asString();
-            System.out.println(this.agent.getLocalName() + " was  Logged to: " + this.worldManager);
-            return result;
-        } else {
-            System.out.println(this.agent.getLocalName() + " get ERROR while REQUEST to " + "WorldManager: " + this.worldManager);
+
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("login" + role);
+        ACLMessage in = this.agent.blockingReceive(t);
+
+        if (checkError(ACLMessage.INFORM, in)) {
             return "error";
         }
+
+        worldChannel = in.createReply();
+        this.printReceiveMessage(in);
+        return ok(in);
+    }
+
+    public String ok(ACLMessage in) {
+        return Json.parse(in.getContent()).asObject().get("result").asString();
+    }
+
+    public boolean checkAPBError(ACLMessage in) {
+        if (in.getPerformative() == ACLMessage.AGREE || in.getPerformative() == ACLMessage.INFORM || in.getPerformative() == ACLMessage.REFUSE) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public String getSessionID() {
+        return this.sessionId;
+    }
+
+    /**
+     * Lectura de sensores
+     *
+     * @author Domingo Lopez
+     * @return JsonObject con la percepción
+     */
+    public JsonObject readSensorMessage() {
+        //Creamos mensaje para leer sensores
+        worldChannel.setSender(agentName);
+        worldChannel.setPerformative(ACLMessage.QUERY_REF);
+        worldChannel.setProtocol("REGULAR");
+
+        JsonObject content = new JsonObject();
+        content.add("operation", "read");
+        this.worldChannel.setContent(content.toString());
+
+        //Enviamos mensaje para leer sensores
+        this.printSendMessage(worldChannel);
+        this.agent.send(this.worldChannel);
+
+        ACLMessage in = this.agent.blockingReceive();
+
+        if (this.checkError(ACLMessage.INFORM, in)) {
+            return null;
+        }
+
+        this.printReceiveMessage(in);
+
+        JsonObject parsedResponse = Json.parse(in.getContent()).asObject();
+        return parsedResponse;
+
+    }
+
+    /**
+     * Informa de que se ha encontrado un aleman
+     *
+     * @author Jose Saldaña, Domingo Lopez
+     * @param x coordenada x del aleman
+     * @param y coordenada y del aleman
+     * @return booleano que indica si se continua buscando alemanes
+     */
+    public boolean informGermanFound(int x, int y) {
+        APBChannel = message(agentName, APBName, ACLMessage.QUERY_REF, "REGULAR");
+        APBChannel.setReplyWith("aleman");
+
+        JsonObject aleman = new JsonObject();
+        aleman.set("x", x);
+        aleman.set("y", y);
+
+        APBChannel.setContent(aleman.toString());
+        this.printSendMessage(APBChannel);
+        this.agent.send(APBChannel);
+
+        MessageTemplate t = MessageTemplate.MatchInReplyTo("aleman");
+        ACLMessage in = this.agent.blockingReceive(t);
+
+        if (this.checkError(ACLMessage.INFORM, in)) {
+            return false;
+        }
+
+        this.printReceiveMessage(in);
+
+        String mission = Json.parse(in.getContent()).asObject().get("mission").asString();
+        return mission.equals("continue");
+    }
+
+    /**
+     * Informa que se ha recogido el último aleman
+     *
+     * @author Jose Saldaña
+     */
+    public void sendFinishMsgToAPB() {
+        APBChannel.setPerformative(ACLMessage.INFORM);
+        APBChannel.setSender(agentName);
+        APBChannel.setReplyWith("end");
+
+        this.printSendMessage(APBChannel);
+        this.agent.send(APBChannel);
+    }
+
+    /**
+     * Comprueba si la posición a la que se quiere mover el drone esta libre o
+     * no
+     *
+     * @author Jose Saldaña, Domingo Lopez, Miguel García
+     * @param newPosition Coordenadas de posición objetivo (x, y)
+     * @param z Altura objetivo
+     * @return booleano que indica si esta libre o no
+     */
+    public boolean checkIfFree(Coordinates newPosition, int z) {
+        boolean free = true;
+        // Pendiente de desarrollar el checkeo de posición en radio
+//        ACLMessage in = this.agent.blockingReceive();
+//
+//        if (checkError(ACLMessage.INFORM, in)) {
+//            return false;
+//        }
+//        this.printReceiveMessage(in);
+
+        return free;
     }
 }

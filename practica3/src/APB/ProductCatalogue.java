@@ -9,9 +9,10 @@ import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+
 /**
- * 
- * @author manuel, jose
+ *
+ * @author Manuel Pancorbo, Jose Saldaña
  */
 class Product {
 
@@ -26,46 +27,57 @@ class Product {
         this.shop = _shop;
         this.price = _price;
     }
-    
-    String getSensorTicket(){ return this.sensorTicket; }
-      
-    String getShop(){ return this.shop; }
-    
-    String getName(){ return this.name; }
-    
-    int getPrice(){ return this.price; }
+
+    String getSensorTicket() {
+        return this.sensorTicket;
+    }
+
+    String getShop() {
+        return this.shop;
+    }
+
+    String getName() {
+        return this.name;
+    }
+
+    int getPrice() {
+        return this.price;
+    }
+
+    @Override
+    public String toString() {
+        return "\nProduct{" + "name=" + name + ", shop=" + shop + ", sensorTicket=" + sensorTicket + ", price=" + price + '}';
+    }
 }
 
-
 public class ProductCatalogue {
-    
-    private static final String S_THERMALDLX = "THERMALDLX";
+
+    private static final String S_THERMALDELUX = "THERMALDELUX";
     private static final String S_THERMALHQ = "THERMALHQ";
     private static final String S_RECHARGE = "CHARGE";
-    
+
     private PriorityQueue<Product> thermalDLX;
     private PriorityQueue<Product> thermalHQ;
     private PriorityQueue<Product> recharge;
-    
-    
+
     /**
      * @author Manuel Pancorbo Castro
      */
     ProductCatalogue() {
         Comparator<Product> comparator = new Comparator<Product>() {
-        @Override
-        public int compare(Product arg0, Product arg1) {
-            return Double.compare(arg0.getPrice(), arg1.getPrice());
-        }
+            @Override
+            public int compare(Product arg0, Product arg1) {
+                return Double.compare(arg0.getPrice(), arg1.getPrice());
+            }
         };
-        
+
         this.thermalDLX = new PriorityQueue(comparator);
         this.thermalHQ = new PriorityQueue(comparator);
-        this.recharge = new PriorityQueue(comparator);   
+        this.recharge = new PriorityQueue(comparator);
     }
-    
-    public void setCatalogue(JsonArray catalogue){
-        for(int i=0; i<catalogue.size(); i++){
+
+    public void setCatalogue(JsonArray catalogue) {
+        for (int i = 0; i < catalogue.size(); i++) {
             JsonObject shop = catalogue.get(i).asObject();
             this.update(shop.get("shop").asString(), shop.get("products").asArray());
         }
@@ -77,93 +89,97 @@ public class ProductCatalogue {
      * @param catalogue array de productos disponibles en la tienda
      */
     private void update(String shoppingCenter, JsonArray catalogue) {
-        for(int i = 0 ; i<catalogue.size(); i++){
+        for (int i = 0; i < catalogue.size(); i++) {
             JsonObject product = catalogue.get(i).asObject();
-        
-            String ticket = product.get("reference").asString(); 
+
+            String ticket = product.get("reference").asString();
             String[] split = ticket.split("#");
             String name = split[0];
-        
+
             int price = product.get("price").asInt();
-        
+
             this.addProduct(name, new Product(name, shoppingCenter, ticket, price));
         }
     }
-    
+
     /**
      * @author Manuel Pancorbo Castro, Jose Saldaña
-     * @param sensorName nombre del producto para identificar la cola
+     * @param productName nombre del producto para identificar la cola
      * @param order indica la prioridad que queremos (0-el mejor)
+     * @return Mejor opción (producto + shoppping center + precio)
      */
     public Product bestOption(String productName, Integer order) {
         PriorityQueue<Product> queue = this.getQueue(productName);
+        if (queue == null || order < 0 || order > queue.size()) {
+            return null;
+        }
 
-	if(queue == null || order < 0 || order > queue.size())
-	 return null;
-       
         return (Product) queue.toArray()[order];
     }
-    
+
     /**
      * @author Manuel Pancorbo Castro
      * @param sensorName nombre del producto para identificar la cola
      * @param product el producto a introducir en la cola
      */
-    private void addProduct(String sensorName, Product product){
+    private void addProduct(String sensorName, Product product) {
         sensorName = sensorName.toUpperCase();
-        switch(sensorName){
-            case ProductCatalogue.S_THERMALDLX:
+        switch (sensorName) {
+            case ProductCatalogue.S_THERMALDELUX:
                 this.thermalDLX.add(product);
                 break;
-                
+
             case ProductCatalogue.S_THERMALHQ:
                 this.thermalHQ.add(product);
                 break;
-                
+
             case ProductCatalogue.S_RECHARGE:
                 this.recharge.add(product);
                 break;
         }
     }
-    
+
     /**
      * @author Manuel Pancorbo Castro
      * @param sensorName producto del que queremos la coleccion
      * @return devolvemos la cola correspondiente segun sensorName
      */
-    private PriorityQueue<Product> getQueue(String sensorName){
+    private PriorityQueue<Product> getQueue(String sensorName) {
         sensorName = sensorName.toUpperCase();
         PriorityQueue<Product> queue = null;
-        switch(sensorName){
-            case ProductCatalogue.S_THERMALDLX:
+        switch (sensorName) {
+            case ProductCatalogue.S_THERMALDELUX:
                 queue = this.thermalDLX;
                 break;
-                
+
             case ProductCatalogue.S_THERMALHQ:
                 queue = this.thermalHQ;
                 break;
-                
+
             case ProductCatalogue.S_RECHARGE:
                 queue = this.recharge;
                 break;
         }
         return queue;
     }
-    
-    
+
     //Alternativa intuitiva a coger por prioridad (bestOption)
-     /**
+    /**
      * @author Manuel Pancorbo Castro
      * @param sensorName producto del que queremos la mejor opcion
-     * @return Devolvemos el producto mas barato y se descarta para la siguiente consulta
+     * @return Devolvemos el producto mas barato y se descarta para la siguiente
+     * consulta
      */
-    Product getAndDiscardBestOption(String sensorName){
+    Product getAndDiscardBestOption(String sensorName) {
         PriorityQueue<Product> queue = this.getQueue(sensorName);
-	Product product = queue != null ? queue.poll() : null;
-       	
-	return product;
-    }
-    
+        Product product = queue != null ? queue.poll() : null;
 
-    
+        return product;
+    }
+
+    @Override
+    public String toString() {
+        return "ProductCatalogue{" + "thermalDLX=" + thermalDLX + ", thermalHQ=" + thermalHQ + ", recharge=" + recharge + '}';
+    }
+
 }

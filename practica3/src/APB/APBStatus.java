@@ -7,7 +7,7 @@ package APB;
 
 /**
  * Distintos estados en los que puede estar un agente
- * 
+ *
  * @author Jose Saldaña
  */
 public enum APBStatus {

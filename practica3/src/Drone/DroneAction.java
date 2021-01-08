@@ -11,5 +11,5 @@ package Drone;
  * @author Domingo Lopez
  */
 public enum DroneAction {
-    moveF, moveUP, moveD, rotateL, rotateR, touchD, LECTURA_SENSORES, recharge
+    moveF, moveUP, moveD, rotateL, rotateR, touchD, LECTURA_SENSORES, recharge, rescue
 }
