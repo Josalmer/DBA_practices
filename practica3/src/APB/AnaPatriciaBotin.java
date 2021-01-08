@@ -303,7 +303,7 @@ public class AnaPatriciaBotin extends IntegratedAgent {
                 break;
             case 3:
                 initialPos.x = xSize - 15;
-                initialPos.y = ySize - 15;
+                initialPos.y = 15;
                 while (this.adminData.map.get(initialPos.x).get(initialPos.y) > this.adminData.maxFlight) {
                     initialPos.x--;
                     initialPos.y--;

@@ -156,7 +156,7 @@ public class Drone extends IntegratedAgent{
   
     /**
      * Consumir energía de los drones
-     * @param DroneAction
+     * @param action Acción a ejeutar
      * @author Domingo López, Jose Saldaña
      */
     void useEnergy(DroneAction action) {

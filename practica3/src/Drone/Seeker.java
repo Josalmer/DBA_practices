@@ -382,7 +382,7 @@ public class Seeker extends Drone {
             half = halfWidth;
 
         //Esquinas de arriba
-        for(int i=0; i<halfWidth/30 + 1;i++){
+        for(int i=0; i<halfWidth/30;i++){
 
             JsonObject tUp = new JsonObject();
             tUp.add("x", 15 + i * 30 + half);
